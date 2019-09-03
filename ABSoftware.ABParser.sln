@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29209.62
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ABSoftware.ABParser", "ABSoftware.ABParser\ABSoftware.ABParser.csproj", "{DFD01552-DACC-4DEB-BF23-6203932CE7FF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9705EB22-0B01-4C90-9643-8FCD16AA4597} = {9705EB22-0B01-4C90-9643-8FCD16AA4597}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSoftware.ABParser.Core", "ABSoftware.ABParser.Core\ABSoftware.ABParser.Core.vcxproj", "{9705EB22-0B01-4C90-9643-8FCD16AA4597}"
 EndProject

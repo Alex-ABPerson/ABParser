@@ -41,6 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ABParser.cs" />
+    <Compile Include="ABParserToken.cs" />
+    <Compile Include="Internal\ContinueExecutionResult.cs" />
     <Compile Include="Internal\NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
