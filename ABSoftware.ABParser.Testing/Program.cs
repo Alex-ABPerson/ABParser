@@ -14,13 +14,17 @@ namespace ABSoftware.ABParser.Testing
 
         public static void Main()
         {
-            var parser = new ABParser(new ABParserToken[0]);
-            parser.Start(new char[] { 'H', 'i' });
+            var parser = new ABParser(new ABParserToken[] {
+                new ABParserToken("NumberOne", "1"),
+                new ABParserToken("Foo", "Foo")
+            });
+            parser.Start("Hi");
 
             //var result = new StringBuilder(6);
             //SayHello(result);
 
             //Console.WriteLine(result);
+            Console.WriteLine("Done!");
             Console.ReadLine();
 
             // We're now done with it.

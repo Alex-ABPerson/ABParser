@@ -20,10 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ABParserBase.h" />
+    <ClInclude Include="ABParserFutureToken.h" />
+    <ClInclude Include="Debugging.h" />
     <ClInclude Include="PlatformImplementation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ABParserBase.cpp" />
+    <ClCompile Include="Debugging.cpp" />
     <ClCompile Include="ExportedMethods.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

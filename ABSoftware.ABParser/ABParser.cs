@@ -1,6 +1,7 @@
 ﻿using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,21 +31,29 @@ namespace ABSoftware.ABParser
         {
             // Put all of the tokens down into an array of an array of token data.
             var arrayOfTokenData = new StringBuilder[tokens.Length];
+            var arrayOfTokenLengths = new int[tokens.Length];
 
+            // Initialize the tokens.
+            InitializeTokens(tokens, arrayOfTokenData, arrayOfTokenLengths);
+
+        }
+
+        internal void InitializeTokens(ABParserToken[] tokens, StringBuilder[] arrayOfTokenData, int[] arrayOfTokenLengths)
+        {
             // Go through all of the tokens and put their token data into this array.
             for (int i = 0; i < tokens.Length; i++)
+            {
                 arrayOfTokenData[i] = tokens[i].TokenData;
+                arrayOfTokenLengths[i] = tokens[i].TokenData.Length;
+            }
 
             // Finally, give this data to the base parser - to initialize it.
-            _baseParser = NativeMethods.CreateBaseParser(arrayOfTokenData, tokens.Length);
-
+            _baseParser = NativeMethods.CreateBaseParser(arrayOfTokenData, arrayOfTokenLengths, tokens.Length);
         }
 
         internal void SetBaseParserText(char[] text) => NativeMethods.SetText(_baseParser, text, text.Length);
         internal void SetBaseParserText(string text) => NativeMethods.SetText(_baseParser, text, text.Length);
         internal void SetBaseParserText(StringBuilder text) => NativeMethods.SetText(_baseParser, text, text.Length);
-
-        public void Dispose() => NativeMethods.DeleteBaseParser(_baseParser);
 
         #endregion
 
@@ -62,13 +71,13 @@ namespace ABSoftware.ABParser
             // Just keep on executing until we hit the "Stop" result.
             while (result != ContinueExecutionResult.Stop)
             {
-                result = NativeMethods.ContinueExecution(data);
+                result = NativeMethods.ContinueExecution(_baseParser, data);
 
                 // Do whatever the result said to do.
                 switch (result)
                 {
                     case ContinueExecutionResult.OnTokenProcessed:
-
+                        Debugger.Break();
                         break;
                 }
             }
@@ -78,17 +87,25 @@ namespace ABSoftware.ABParser
 
         #region Public Methods
 
+        public void Start(string text)
+        {
+            SetBaseParserText(text.ToCharArray());
+            Execute();
+        }
+
         public void Start(char[] text)
         {
             // Set the text for the parser.
             SetBaseParserText(text);
+            Execute();
         }
 
         #endregion
 
-        #region Constructor
+        #region Constructor / Dispose
 
         public ABParser(ABParserToken[] tokens) => InitializeABParser(tokens);
+        public void Dispose() => NativeMethods.DeleteBaseParser(_baseParser);
 
         #endregion
     }

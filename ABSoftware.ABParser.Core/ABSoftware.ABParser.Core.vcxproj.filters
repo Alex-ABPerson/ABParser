@@ -21,12 +21,21 @@
     <ClInclude Include="ABParserBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ABParserFutureToken.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExportedMethods.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ABParserBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

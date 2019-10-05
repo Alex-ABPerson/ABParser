@@ -1,5 +1,6 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
+#include "Debugging.h"
 #include <wchar.h>
 
 using namespace std;
@@ -10,16 +11,16 @@ extern "C" {
 		wcscpy(out, str);
 	}
 
-	EXPORT ABParserBase* CreateBaseParser(wchar_t** tokens, int textLength) {
-		return new ABParserBase(tokens, textLength);
+	EXPORT ABParserBase* CreateBaseParser(wchar_t** tokens, int* tokenLengths, int numberOfTokens) {
+		return new ABParserBase(tokens, tokenLengths, numberOfTokens);
 	}
 
 	EXPORT void SetText(ABParserBase* parser, wchar_t* text, int textLength) {
 		parser->InitString(text, textLength);
 	}
 
-	EXPORT int ContinueExecution(wchar_t* leadingOutput, wchar_t* trailingOutput) {
-		return 0;
+	EXPORT int ContinueExecution(ABParserBase* parser, int* outData) {
+		return parser->ContinueExecution();
 	}
 
 	EXPORT void DeleteBaseParser(ABParserBase* baseParser) {

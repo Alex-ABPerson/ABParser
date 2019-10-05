@@ -14,7 +14,7 @@ namespace ABSoftware.ABParser.Internal
         internal const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern IntPtr CreateBaseParser(StringBuilder[] tokenData, int tokenDataLength);
+        internal static extern IntPtr CreateBaseParser(StringBuilder[] tokenData, int[] tokenLengths, int tokenDataLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void SetText(IntPtr parser, string output, int textLength);
@@ -26,7 +26,7 @@ namespace ABSoftware.ABParser.Internal
         internal static extern void SetText(IntPtr parser, StringBuilder output, int textLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern ContinueExecutionResult ContinueExecution(int[] data);
+        internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, int[] outData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DeleteBaseParser(IntPtr baseParser);
