@@ -1,11 +1,12 @@
 #pragma once
+#include "MultiCharToken.h"
 
 class ABParserFutureToken {
 public:
-	int Token;
+	MultiCharToken* Token;
 	bool Finished;
 
-	ABParserFutureToken(int token) {
+	ABParserFutureToken(MultiCharToken* token) {
 		Token = token;
 		Finished = false;
 	}

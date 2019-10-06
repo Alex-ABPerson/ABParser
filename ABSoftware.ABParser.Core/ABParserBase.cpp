@@ -1,6 +1,8 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
 #include "Debugging.h"
+#include "SingleCharToken.h"
+#include "MultiCharToken.h"
 #include <wchar.h>
 
 using namespace std;
@@ -75,8 +77,8 @@ void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 			// If it does, we're going to check if this futureToken was completed, and, if so, go ahead and mark it as completed.
 			// If it doesn't, we're going to kill this futureToken.
 			int nextTokenCharacterPosition = (i - currentPosition) * -1;
-			if (MultiCharTokens[futureTokens[i][j]->Token][nextTokenCharacterPosition] == ch) {
-				if (MultiCharTokenLengths[futureTokens[i][j]->Token] == nextTokenCharacterPosition + 1)
+			if (futureTokens[i][j]->Token->TokenContents[nextTokenCharacterPosition] == ch) {
+				if (futureTokens[i][j]->Token->TokenLength == nextTokenCharacterPosition + 1)
 					MarkFinishedFutureToken(i, j);
 			} else DisableFutureToken(i, j);
 
@@ -88,15 +90,15 @@ void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 
 void ABParserBase::AddNewFutureTokens(wchar_t ch) {
 
-	debugLog("Adding future tokens. FirstMultiChar:");
+	debugLog("Adding future tokens.");
 
 	// Expand the futureTokens by 1.
 	futureTokensTail++;
 
 	// Add all of the futureTokens - remember, the futureTokens can only be multiple characters long.
 	for (int i = 0; i < MultiCharCurrentTokensLength; i++)
-		if (*MultiCharCurrentTokens[i] == ch)
-			AddFutureToken(i);
+		if (MultiCharCurrentTokens[i].TokenContents[0] == ch)
+			AddFutureToken(&(MultiCharCurrentTokens[i]));
 }
 
 int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
@@ -105,11 +107,7 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 	//int inishedTokenFirstIndex;
 
-	// First, we'll deal with the single character tokens, then we'll deal with the multiple character tokens (which are futureTokens).
-	for (int i = 0; i < SingleCharCurrentTokensLength; i++)
-		if (SingleCharCurrentTokens[i] == ch)
-			FinalizeSingleCharToken(i);
-
+	// We deal with the multiple character long futureTokens because they might contain single character tokens, which wouldn't be any good for us.
 	// We'll start from the head, since longer futureTokens are more important than shorter ones.
 	for (int i = futureTokensHead; i < futureTokensTail; i++) {
 
@@ -123,13 +121,11 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 			if (futureTokens[i][j]->Finished) {
 
-				// Here what's going to happen:
-				// If this token was somewhere after the "head", we MAY need to "verify" it.
-				// If it DOES need verification, then we will start the verification process, instead of finalizing it straight away.
-				if (CheckIfTokenNeedsVerification(futureTokens[i][j], i))
+				// If we need to verify it, do that, otherwise, finalize it.
+				if (MultiCharNeedsVerification(futureTokens[i][j], i))
 					StartVerify(futureTokens[i][j], i);
 				else
-					return StartFinalize(futureTokens[i][j], i);
+					return FinalizeToken(futureTokens[i][j], i);
 			}
 
 
@@ -137,30 +133,80 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 
 	}
+
+	// Then, we'll deal with the single character tokens.
+	for (int i = 0; i < SingleCharCurrentTokensLength; i++)
+		if (SingleCharCurrentTokens[i].TokenChar == ch)
+
+			// If we need to verify it, do that, otherwise, finalize it.
+			if (SingleCharNeedsVerification(ch, &(SingleCharCurrentTokens[i])))
+				StartVerify(&SingleCharCurrentTokens[i]);
+			else
+				return FinalizeToken(i);
+
+	return 0;
 }
 
 // ======================
 // VERIFY
 // ======================
 
-bool ABParserBase::CheckIfTokenNeedsVerification(ABParserFutureToken* token, int index) {
+bool ABParserBase::SingleCharNeedsVerification(wchar_t ch, SingleCharToken* token) {
+	bool needsToBeVerified = false;
+
+	// Check to see if any futureTokens contain this character.
+	for (int i = futureTokensHead; i < futureTokensTail; i++)
+		for (int j = 0; j < futureTokenLengths[i]; j++) {
+
+			MultiCharToken* multiCharToken = futureTokens[i][j]->Token;
+			int length = multiCharToken->TokenLength;
+
+			for (int k = 0; k < length; k++)
+				if (multiCharToken->TokenContents[k] == ch) {
+
+					needsToBeVerified = true;
+
+					// Log all of the multiCharTokens that could be an issue for us.
+					verifyTriggers.push_back(VerifyToken(multiCharToken));
+				}
+
+		}
+
+	if (needsToBeVerified) {
+		isVerifying = true;
+		verifyTokens.push_back(VerifyToken(token));
+	}
+
+	return needsToBeVerified;
+}
+
+bool ABParserBase::MultiCharNeedsVerification(ABParserFutureToken* token, int index) {
 	return false;
 }
 
-void ABParserBase::StartVerify(ABParserFutureToken* token, int index) {
+void ABParserBase::StartVerify(SingleCharToken* token) {
+	return;
+}
 
+void ABParserBase::StartVerify(ABParserFutureToken* token, int index) {
+	return;
 }
 
 // ======================
 // FINALIZE
 // ======================
 
-int ABParserBase::StartFinalize(ABParserFutureToken* token, int index) {
+int ABParserBase::FinalizeToken(int tokenIdx) {
+	return 0;
+}
+
+int ABParserBase::FinalizeToken(ABParserFutureToken* token, int index) {
+
 	return 3;
 }
 
-void ABParserBase::FinalizeSingleCharToken(int tokenIdx) {
-
+void ABParserBase::PrepareLeading() {
+	return;
 }
 
 // ============
@@ -181,7 +227,7 @@ void ABParserBase::DisableFutureToken(int firstDimension, int secondDimension) {
 	futureTokenLengths[firstDimension]--;
 }
 
-void ABParserBase::AddFutureToken(int token) {
+void ABParserBase::AddFutureToken(MultiCharToken* token) {
 	debugLog("Adding futureToken: %d", token);
 	futureTokens[currentPosition][futureTokenLengths[currentPosition]] = new ABParserFutureToken(token);
 }
@@ -201,10 +247,10 @@ void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int single
 	SingleCharCurrentTokensIsTokens = false;
 	MultiCharCurrentTokensIsTokens = false;
 
-	SingleCharCurrentTokens = new wchar_t[singleCharLength];
+	SingleCharCurrentTokens = new SingleCharToken[singleCharLength];
 	SingleCharCurrentTokensLength = 0;
 
-	MultiCharCurrentTokens = new wchar_t*[multiCharLength];
+	MultiCharCurrentTokens = new MultiCharToken[multiCharLength];
 	MultiCharCurrentTokensLength = 0;
 
 	// Copy all of the single character tokens over, only including the ones that are in the "validSingleCharTokens" array.
@@ -278,11 +324,10 @@ void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfT
 	// So, we will write to a temporary array that is the maximum number it could be, then copy that to a correctly-sized array.
 
 	// Initialize the arrays the results will go into.
-	wchar_t* singleCharTokens = new wchar_t[numberOfTokens];
+	SingleCharToken* singleCharTokens = new SingleCharToken[numberOfTokens];
 	int singleCharTokensLength = 0;
 
-	wchar_t** multiCharTokens = new wchar_t*[numberOfTokens];
-	int* multiCharTokenLengths = new int[numberOfTokens];
+	MultiCharToken* multiCharTokens = new MultiCharToken[numberOfTokens];
 	int multiCharTokensLength = 0;
 
 	debugLog("Initializing Tokens");
@@ -290,47 +335,31 @@ void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfT
 	// Go through each token, if it is only one character long, then put into the "singleCharTokens".
 	for (int i = 0; i < numberOfTokens; i++) {
 		debugLog("Processing token %d", i);
-		if (tokenLengths[i] == 1)
-			singleCharTokens[singleCharTokensLength++] = *tokens[i];
-		else {
-			// We have a more intense process when copying all of the 
-			int length = tokenLengths[i];
-			multiCharTokens[multiCharTokensLength] = new wchar_t[length];
-			wcsncpy(multiCharTokens[multiCharTokensLength], tokens[multiCharTokensLength], length);
-			multiCharTokenLengths[multiCharTokensLength++] = length;
+		if (tokenLengths[i] == 1) {
+			singleCharTokens[singleCharTokensLength].MixedIdx = i;
+			singleCharTokens[singleCharTokensLength].TokenChar = *tokens[i];
+		} else {
+			multiCharTokens[i].MixedIdx = i;
 
+			// Copy across the characters and the length.
+			int length = tokenLengths[i];
+			wchar_t** tokenContents = &multiCharTokens[multiCharTokensLength].TokenContents;
+			*tokenContents = new wchar_t[length];
+			wcsncpy(*tokenContents, tokens[i], length);
+			multiCharTokens[multiCharTokensLength++].TokenLength = length;
+
+			//debugLog("1: ", multiCharTokens[i].TokenContents);
 		}
 	}
 
 	// Copy the single character tokens.
 	debugLog("Copying single character tokens...");
-	SingleCharTokens = new wchar_t[singleCharTokensLength];
+	SingleCharTokens = singleCharTokens;
 	NumberOfSingleCharTokens = singleCharTokensLength;
-	wcsncpy(SingleCharTokens, singleCharTokens, singleCharTokensLength);
 
 	debugLog("Copying multi-character tokens...");
+	MultiCharTokens = multiCharTokens;
 	NumberOfMultiCharTokens = multiCharTokensLength;
-
-	// Copy across the lengths.
-	MultiCharTokenLengths = new int[NumberOfMultiCharTokens];
-	memcpy(MultiCharTokenLengths, multiCharTokenLengths, NumberOfMultiCharTokens * sizeof(wchar_t));
-
-	// Then, copy the actual multiChar tokens.
-	MultiCharTokens = new wchar_t*[NumberOfMultiCharTokens];
-	for (int i = 0; i < NumberOfMultiCharTokens; i++) {
-		MultiCharTokens[i] = new wchar_t[multiCharTokenLengths[i]];
-		// wcsncpy gives warnings about non-null terminated strings.
-		memcpy(MultiCharTokens[i], multiCharTokens[i], multiCharTokenLengths[i] * sizeof(wchar_t));
-	}
-
-	//// Print them out.
-	//debugLog("SingleCharTokens: %ws", SingleCharTokens);
-
-	// Finally, delete our temporary arrays.
-	delete[] singleCharTokens;
-	delete[] multiCharTokens;
-	delete[] multiCharTokenLengths;
-
 }
 
 ABParserBase::ABParserBase(wchar_t** tokens, int* tokenLengths, int numberOfTokens)

@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include "ABParserFutureToken.h"
+#include "VerifyToken.h"
+#include "SingleCharToken.h"
+#include "MultiCharToken.h"
 using namespace std;
 
 class ABParserBase {
@@ -14,17 +17,18 @@ private:
 	int currentPosition;
 
 	bool isVerifying;
-	vector<int> verifyTokens;
+	vector<VerifyToken> verifyTokens;
+	vector<VerifyToken> verifyTriggers;
 	vector<wchar_t*> verifyBuildUp;
 
 public:
 	int PublicPosition;
+	int OnTokenProcessed;
 
-	wchar_t* SingleCharTokens;
+	SingleCharToken* SingleCharTokens;
 	int NumberOfSingleCharTokens;
 
-	wchar_t** MultiCharTokens;
-	int* MultiCharTokenLengths;
+	MultiCharToken* MultiCharTokens;
 	int NumberOfMultiCharTokens;
 
 	wchar_t* PrimaryBuildUp;
@@ -32,17 +36,19 @@ public:
 	wchar_t* SecondaryBuildUp;
 	int SecondaryBuildUpLength;
 
-	int QueuedItem;
+	bool UsingPrimaryBuildUp;
+
+	int QueuedToken;
 
 	// Whether the "CurrentTokens" array actually just points to the "Tokens" array.
 	// We can use this to decide whether to "delete" CurrentTokens when configuring/resetting it.
 	bool SingleCharCurrentTokensIsTokens;
 	bool MultiCharCurrentTokensIsTokens;
 
-	wchar_t* SingleCharCurrentTokens;
+	SingleCharToken* SingleCharCurrentTokens;
 	int SingleCharCurrentTokensLength;
 
-	wchar_t** MultiCharCurrentTokens;
+	MultiCharToken* MultiCharCurrentTokens;
 	int MultiCharCurrentTokensLength;
 
 	wchar_t* Text;
@@ -64,15 +70,21 @@ public:
 	int ProcessFinishedTokens(wchar_t ch);
 
 	// VERIFY
+	void StartVerify(SingleCharToken* token);
 	void StartVerify(ABParserFutureToken* token, int index);
-	bool CheckIfTokenNeedsVerification(ABParserFutureToken* token, int index);
+
+	bool SingleCharNeedsVerification(wchar_t ch, SingleCharToken* token);
+	bool MultiCharNeedsVerification(ABParserFutureToken* token, int index);
 	
 	// FINALIZE
-	int StartFinalize(ABParserFutureToken* token, int index);
-	void FinalizeSingleCharToken(int tokenIdx);
+	int FinalizeToken(int tokenIdx);
+	int FinalizeToken(ABParserFutureToken* token, int index);
+	int HandleQueuedToken();
 
-	// Helpers
-	void AddFutureToken(int token);
+	void PrepareLeading();
+
+	// HELPERS
+	void AddFutureToken(MultiCharToken* token);
 	void MarkFinishedFutureToken(int firstDimension, int secondDimension);
 	void TrimFutureTokens();
 	void DisableFutureToken(int firstDimension, int secondDimension);

@@ -27,6 +27,15 @@
     <ClInclude Include="Debugging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VerifyToken.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiCharToken.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleCharToken.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExportedMethods.cpp">
