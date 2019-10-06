@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="ABParserBase.h" />
     <ClInclude Include="ABParserFutureToken.h" />
+    <ClInclude Include="ABParserToken.h" />
     <ClInclude Include="Debugging.h" />
     <ClInclude Include="MultiCharToken.h" />
     <ClInclude Include="PlatformImplementation.h" />

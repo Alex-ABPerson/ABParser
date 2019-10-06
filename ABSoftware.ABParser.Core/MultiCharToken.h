@@ -1,9 +1,9 @@
 #pragma once
+#include "ABParserToken.h"
 
-class MultiCharToken {
+class MultiCharToken : public ABParserToken {
 public:
 	// When we created an instance of ABParser, the single-char tokens and multi-char tokens were mixed together, this is at what index this token would've been mixed in.
-	int MixedIdx;
 	wchar_t* TokenContents;
 	int TokenLength;
 

@@ -21,35 +21,36 @@ private:
 	vector<VerifyToken> verifyTriggers;
 	vector<wchar_t*> verifyBuildUp;
 
+	ABParserToken queuedToken;
+
+	wchar_t* primaryBuildUp;
+	int primaryBuildUpLength;
+	wchar_t* secondaryBuildUp;
+	int secondaryBuildUpLength;
+
+	bool usingPrimaryBuildUp;
+
+	// Whether the "CurrentTokens" array actually just points to the "Tokens" array.
+	// We can use this to decide whether to "delete" CurrentTokens when configuring/resetting it.
+	bool singleCharCurrentTokensIsTokens;
+	bool multiCharCurrentTokensIsTokens;
+
+	SingleCharToken* singleCharCurrentTokens;
+	int singleCharCurrentTokensLength;
+
+	MultiCharToken* multiCharCurrentTokens;
+	int multiCharCurrentTokensLength;
+
+
 public:
 	int PublicPosition;
-	int OnTokenProcessed;
+	ABParserToken OnTokenProcessed;
 
 	SingleCharToken* SingleCharTokens;
 	int NumberOfSingleCharTokens;
 
 	MultiCharToken* MultiCharTokens;
 	int NumberOfMultiCharTokens;
-
-	wchar_t* PrimaryBuildUp;
-	int PrimaryBuildUpLength;
-	wchar_t* SecondaryBuildUp;
-	int SecondaryBuildUpLength;
-
-	bool UsingPrimaryBuildUp;
-
-	int QueuedToken;
-
-	// Whether the "CurrentTokens" array actually just points to the "Tokens" array.
-	// We can use this to decide whether to "delete" CurrentTokens when configuring/resetting it.
-	bool SingleCharCurrentTokensIsTokens;
-	bool MultiCharCurrentTokensIsTokens;
-
-	SingleCharToken* SingleCharCurrentTokens;
-	int SingleCharCurrentTokensLength;
-
-	MultiCharToken* MultiCharCurrentTokens;
-	int MultiCharCurrentTokensLength;
 
 	wchar_t* Text;
 	int TextLength;

@@ -96,9 +96,9 @@ void ABParserBase::AddNewFutureTokens(wchar_t ch) {
 	futureTokensTail++;
 
 	// Add all of the futureTokens - remember, the futureTokens can only be multiple characters long.
-	for (int i = 0; i < MultiCharCurrentTokensLength; i++)
-		if (MultiCharCurrentTokens[i].TokenContents[0] == ch)
-			AddFutureToken(&(MultiCharCurrentTokens[i]));
+	for (int i = 0; i < multiCharCurrentTokensLength; i++)
+		if (multiCharCurrentTokens[i].TokenContents[0] == ch)
+			AddFutureToken(&(multiCharCurrentTokens[i]));
 }
 
 int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
@@ -135,12 +135,12 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 	}
 
 	// Then, we'll deal with the single character tokens.
-	for (int i = 0; i < SingleCharCurrentTokensLength; i++)
-		if (SingleCharCurrentTokens[i].TokenChar == ch)
+	for (int i = 0; i < singleCharCurrentTokensLength; i++)
+		if (singleCharCurrentTokens[i].TokenChar == ch)
 
 			// If we need to verify it, do that, otherwise, finalize it.
-			if (SingleCharNeedsVerification(ch, &(SingleCharCurrentTokens[i])))
-				StartVerify(&SingleCharCurrentTokens[i]);
+			if (SingleCharNeedsVerification(ch, &(singleCharCurrentTokens[i])))
+				StartVerify(&singleCharCurrentTokens[i]);
 			else
 				return FinalizeToken(i);
 
@@ -172,6 +172,7 @@ bool ABParserBase::SingleCharNeedsVerification(wchar_t ch, SingleCharToken* toke
 
 		}
 
+	// If this token needs to be verified, then we'll add it to the verifyTokens.
 	if (needsToBeVerified) {
 		isVerifying = true;
 		verifyTokens.push_back(VerifyToken(token));
@@ -206,7 +207,9 @@ int ABParserBase::FinalizeToken(ABParserFutureToken* token, int index) {
 }
 
 void ABParserBase::PrepareLeading() {
-	return;
+	
+	// This will trim the leading down to what it is.
+
 }
 
 // ============
@@ -239,26 +242,26 @@ void ABParserBase::MarkFinishedFutureToken(int firstDimension, int secondDimensi
 void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength) {
 
 	// If the "CurrentTokens" variable isn't pointing to "Tokens", then we can safely delete it, otherwise we'll leave it since we don't want to delete "Tokens".
-	if (!SingleCharCurrentTokensIsTokens)
-		delete[] SingleCharCurrentTokens;
-	if (!MultiCharCurrentTokensIsTokens)
-		delete[] MultiCharCurrentTokens;
+	if (!singleCharCurrentTokensIsTokens)
+		delete[] singleCharCurrentTokens;
+	if (!multiCharCurrentTokensIsTokens)
+		delete[] multiCharCurrentTokens;
 
-	SingleCharCurrentTokensIsTokens = false;
-	MultiCharCurrentTokensIsTokens = false;
+	singleCharCurrentTokensIsTokens = false;
+	multiCharCurrentTokensIsTokens = false;
 
-	SingleCharCurrentTokens = new SingleCharToken[singleCharLength];
-	SingleCharCurrentTokensLength = 0;
+	singleCharCurrentTokens = new SingleCharToken[singleCharLength];
+	singleCharCurrentTokensLength = 0;
 
-	MultiCharCurrentTokens = new MultiCharToken[multiCharLength];
-	MultiCharCurrentTokensLength = 0;
+	multiCharCurrentTokens = new MultiCharToken[multiCharLength];
+	multiCharCurrentTokensLength = 0;
 
 	// Copy all of the single character tokens over, only including the ones that are in the "validSingleCharTokens" array.
 	for (int i = 0; i < NumberOfSingleCharTokens; i++)
 		for (int j = 0; j < singleCharLength; j++)
 			if (i == validSingleCharTokens[j]) {
-				SingleCharCurrentTokens[SingleCharCurrentTokensLength] = SingleCharTokens[i];
-				SingleCharCurrentTokens++;
+				singleCharCurrentTokens[singleCharCurrentTokensLength] = SingleCharTokens[i];
+				singleCharCurrentTokens++;
 				break;
 			}
 
@@ -266,8 +269,8 @@ void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int single
 	for (int i = 0; i < NumberOfMultiCharTokens; i++)
 		for (int j = 0; j < multiCharLength; j++)
 			if (i == validMultiCharTokens[j]) {
-				MultiCharCurrentTokens[MultiCharCurrentTokensLength] = MultiCharTokens[i];
-				MultiCharCurrentTokens++;
+				multiCharCurrentTokens[multiCharCurrentTokensLength] = MultiCharTokens[i];
+				multiCharCurrentTokens++;
 				break;
 			}
 
@@ -278,21 +281,21 @@ void ABParserBase::ResetCurrentTokens() {
 
 
 	// If the "SingleCharCurrentTokens" variable is already pointing to "SingleCharTokens", then we won't need to bother resetting it again.
-	if (!SingleCharCurrentTokensIsTokens) {
+	if (!singleCharCurrentTokensIsTokens) {
 
-		delete[] SingleCharCurrentTokens;
-		SingleCharCurrentTokensIsTokens = true;
-		SingleCharCurrentTokens = SingleCharTokens;
-		SingleCharCurrentTokensLength = NumberOfSingleCharTokens;
+		delete[] singleCharCurrentTokens;
+		singleCharCurrentTokensIsTokens = true;
+		singleCharCurrentTokens = SingleCharTokens;
+		singleCharCurrentTokensLength = NumberOfSingleCharTokens;
 
 	}
 
-	if (!MultiCharCurrentTokensIsTokens) {
+	if (!multiCharCurrentTokensIsTokens) {
 
-		delete[] MultiCharCurrentTokens;
-		MultiCharCurrentTokensIsTokens = true;
-		MultiCharCurrentTokens = MultiCharTokens;
-		MultiCharCurrentTokensLength = NumberOfMultiCharTokens;
+		delete[] multiCharCurrentTokens;
+		multiCharCurrentTokensIsTokens = true;
+		multiCharCurrentTokens = MultiCharTokens;
+		multiCharCurrentTokensLength = NumberOfMultiCharTokens;
 
 	}
 }
@@ -307,8 +310,8 @@ void ABParserBase::InitString(wchar_t* text, int textLength) {
 	TextLength = textLength;
 	Leading = new wchar_t[textLength + 1];
 	Trailing = new wchar_t[textLength + 1];
-	PrimaryBuildUp = new wchar_t[TextLength + 1];
-	SecondaryBuildUp = new wchar_t[TextLength + 1];
+	primaryBuildUp = new wchar_t[TextLength + 1];
+	secondaryBuildUp = new wchar_t[TextLength + 1];
 	wcsncpy(Text, text, textLength);
 
 	// Now that we know the text size, we can initialize the futureTokens.
@@ -382,8 +385,8 @@ ABParserBase::ABParserBase(wchar_t** tokens, int* tokenLengths, int numberOfToke
 	isVerifying = false;
 	futureTokensHead = 0;
 	futureTokensTail = 0;
-	PrimaryBuildUp = NULL;
-	SecondaryBuildUp = NULL;
+	primaryBuildUp = NULL;
+	secondaryBuildUp = NULL;
 	verifyTokens.reserve(4);
 	//verifyTokens = new vector<int>();
 }
@@ -392,12 +395,12 @@ ABParserBase::~ABParserBase() {
 	delete[] Text;
 	delete[] Leading;
 	delete[] Trailing;
-	delete[] PrimaryBuildUp;
-	delete[] SecondaryBuildUp;
+	delete[] primaryBuildUp;
+	delete[] secondaryBuildUp;
 	delete[] SingleCharTokens;
 	delete[] MultiCharTokens;
-	delete[] SingleCharCurrentTokens;
-	delete[] MultiCharCurrentTokens;
+	delete[] singleCharCurrentTokens;
+	delete[] multiCharCurrentTokens;
 
 	// Clear up all of the futureTokens we left lying around.
 	for (int i = 0; i < futureTokensTail; i++)
