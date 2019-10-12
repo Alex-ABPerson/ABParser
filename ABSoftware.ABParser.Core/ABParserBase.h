@@ -1,9 +1,9 @@
 #pragma once
-#include <vector>
 #include "ABParserFutureToken.h"
 #include "VerifyToken.h"
 #include "SingleCharToken.h"
 #include "MultiCharToken.h"
+#include <vector>
 using namespace std;
 
 class ABParserBase {
@@ -11,7 +11,10 @@ private:
 
 	// NOTE: futureTokens can only be multiple characters.
 	ABParserFutureToken*** futureTokens;
-	int* futureTokenLengths;
+
+	// When we add "futureTokens" we need to keep track of how many futureTokens we've already added so far in order to know at what second dimension to place the futureToken.
+	int currentPositionFutureTokensLength;
+	//int* futureTokenLengths;
 	int futureTokensHead;
 	int futureTokensTail;
 	int currentPosition;
@@ -21,14 +24,11 @@ private:
 	vector<VerifyToken> verifyTriggers;
 	vector<wchar_t*> verifyBuildUp;
 
-	ABParserToken queuedToken;
+	ABParserToken* queuedToken;
+	bool hasQueuedToken;
 
-	wchar_t* primaryBuildUp;
-	int primaryBuildUpLength;
-	wchar_t* secondaryBuildUp;
-	int secondaryBuildUpLength;
-
-	bool usingPrimaryBuildUp;
+	wchar_t* buildUp;
+	int buildUpLength;
 
 	// Whether the "CurrentTokens" array actually just points to the "Tokens" array.
 	// We can use this to decide whether to "delete" CurrentTokens when configuring/resetting it.
@@ -40,7 +40,9 @@ private:
 
 	MultiCharToken* multiCharCurrentTokens;
 	int multiCharCurrentTokensLength;
-
+	
+	wchar_t** buildUpsToDelete;
+	int buildUpsToDeleteLength;
 
 public:
 	int PublicPosition;
@@ -55,11 +57,11 @@ public:
 	wchar_t* Text;
 	int TextLength;
 
-	wchar_t* Leading;
-	int LeadingLength;
+	wchar_t* OnTokenProcessedLeading;
+	int OnTokenProcessedLeadingLength;
 
-	wchar_t* Trailing;
-	int TrailingLength;
+	wchar_t* OnTokenProcessedTrailing;
+	int OnTokenProcessedTrailingLength;
 
 	// GENERAL
 	int ContinueExecution();
@@ -78,23 +80,23 @@ public:
 	bool MultiCharNeedsVerification(ABParserFutureToken* token, int index);
 	
 	// FINALIZE
-	int FinalizeToken(int tokenIdx);
+	int FinalizeToken(SingleCharToken* token);
 	int FinalizeToken(ABParserFutureToken* token, int index);
-	int HandleQueuedToken();
 
-	void PrepareLeading();
+	void PrepareLeadingAndTrailing();
+	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, bool hasQueuedToken);
 
 	// HELPERS
 	void AddFutureToken(MultiCharToken* token);
 	void MarkFinishedFutureToken(int firstDimension, int secondDimension);
 	void TrimFutureTokens();
 	void DisableFutureToken(int firstDimension, int secondDimension);
-	void ResetCurrentTokens();
+	void ResetCurrentTokens(bool deleteCurrentTokens);
 	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength);
 	
-	void InitString(wchar_t* text, int textLength);
-	void InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfTokens);
-	ABParserBase(wchar_t** tokens, int* tokenLengths, int numberOfTokens);
+	void InitString(unsigned short* text, int textLength);
+	void InitTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens);
+	ABParserBase(unsigned short** tokens, int* tokenLengths, int numberOfTokens);
 	~ABParserBase();
 
 };

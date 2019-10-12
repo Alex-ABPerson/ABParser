@@ -11,15 +11,21 @@ extern "C" {
 		wcscpy(out, str);
 	}
 
-	EXPORT ABParserBase* CreateBaseParser(wchar_t** tokens, int* tokenLengths, int numberOfTokens) {
+	EXPORT int GetWideCharacterSize() {
+		return sizeof(wchar_t);
+	}
+
+	EXPORT ABParserBase* CreateBaseParser(unsigned short** tokens, int* tokenLengths, int numberOfTokens) {
 		return new ABParserBase(tokens, tokenLengths, numberOfTokens);
 	}
 
-	EXPORT void SetText(ABParserBase* parser, wchar_t* text, int textLength) {
+	EXPORT void SetText(ABParserBase* parser, unsigned short* text, int textLength) {
 		parser->InitString(text, textLength);
 	}
 
-	EXPORT int ContinueExecution(ABParserBase* parser, int* outData) {
+	EXPORT int ContinueExecution(ABParserBase* parser, unsigned char* outData) {
+		/*outData[0] = 215;
+		outData[1] = 245;*/
 		return parser->ContinueExecution();
 	}
 

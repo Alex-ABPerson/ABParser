@@ -1,0 +1,212 @@
+{
+  "protocol_version" : "0.0.4",
+  "configuration" : {
+    "version" : "(6.0.0.319) (tarball)",
+    "tlc" : "__thread",
+    "sigsgev" : "altstack",
+    "notifications" : "epoll",
+    "architecture" : "amd64",
+    "disabled_features" : "none",
+    "smallconfig" : "disabled",
+    "bigarrays" : "disabled",
+    "softdebug" : "enabled",
+    "interpreter" : "enabled",
+    "llvm_support" : "600",
+    "suspend" : "hybrid"
+  },
+  "memory" : {
+    "minor_gc_time" : "0",
+    "major_gc_time" : "0",
+    "minor_gc_count" : "0",
+    "major_gc_count" : "0",
+    "major_gc_time_concurrent" : "0"
+ },
+  "threads" : [
+ {
+    "is_managed" : true,
+    "offset_free_hash" : "0x2db0fc225",
+    "offset_rich_hash" : "0x2db0fc2bd",
+    "crashed" : true,
+    "native_thread_id" : "0x7f925b1f5780",
+    "thread_info_addr" : "0x559d6ad9f190",
+    "thread_name" : "mono",
+    "ctx" : {
+      "IP" : "0x7f9259ccbe97",
+      "SP" : "0x7ffc1c6a5fd0",
+      "BP" : "0x7ffc1c6a6340"
+  },
+    "managed_frames" : [
+  {
+      "native_address" : "unregistered"
+   }
+,
+  {
+      "is_managed" : "true",
+      "guid" : "7E22D493-3C5E-45F2-9766-358438D2DF3B",
+      "token" : "0x00000",
+      "native_offset" : "0x0",
+      "filename" : "ABSoftware.ABParser.dll",
+      "sizeofimage" : "0x8000",
+      "timestamp" : "0xb21c1cac",
+      "il_offset" : "0x0000c"
+   }
+,
+  {
+      "is_managed" : "true",
+      "guid" : "7E22D493-3C5E-45F2-9766-358438D2DF3B",
+      "token" : "0x600000a",
+      "native_offset" : "0x0",
+      "filename" : "ABSoftware.ABParser.dll",
+      "sizeofimage" : "0x8000",
+      "timestamp" : "0xb21c1cac",
+      "il_offset" : "0x00000"
+   }
+,
+  {
+      "is_managed" : "true",
+      "guid" : "1751A798-7CB3-45B7-A69B-82663043B70A",
+      "token" : "0x6000002",
+      "native_offset" : "0x0",
+      "filename" : "ABSoftware.ABParser.Testing.exe",
+      "sizeofimage" : "0x8000",
+      "timestamp" : "0xad24ad61",
+      "il_offset" : "0x00062"
+   }
+,
+  {
+      "is_managed" : "true",
+      "guid" : "15C98672-4BDC-4802-9390-9469513CFDB3",
+      "token" : "0x00000",
+      "native_offset" : "0x0",
+      "filename" : "mscorlib.dll",
+      "sizeofimage" : "0x462000",
+      "timestamp" : "0xe2bf570a",
+      "il_offset" : "0x0002a"
+   }
+
+  ],
+  "unmanaged_frames" : [
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+
+ ]
+},
+{
+  "is_managed" : false,
+  "offset_free_hash" : "0x0",
+  "offset_rich_hash" : "0x0",
+  "crashed" : false,
+  "native_thread_id" : "0x7f92592bd700",
+  "thread_info_addr" : "0x7f9250000b20",
+  "thread_name" : "Finalizer",
+  "ctx" : {
+    "IP" : "0x7f925a9cd6d6",
+    "SP" : "0x7f92592bcc80",
+    "BP" : "0x559d6a9eba80"
+ },
+  "unmanaged_frames" : [
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+,
+ {
+    "native_address" : "unregistered"
+  }
+
+ ]
+}
+]
+}

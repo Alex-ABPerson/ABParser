@@ -15,10 +15,10 @@ namespace ABSoftware.ABParser.Testing
         public static void Main()
         {
             var parser = new ABParser(new ABParserToken[] {
-                new ABParserToken("NumberOne", "1"),
-                new ABParserToken("Foo", "Foo")
+                new ABParserToken(new ABParserText("NumberOne"), new ABParserText("1")),
+                new ABParserToken(new ABParserText("Foo"), new ABParserText("Foo"))
             });
-            parser.Start("Hi");
+            parser.Start("Hi1&Foo");
 
             //var result = new StringBuilder(6);
             //SayHello(result);

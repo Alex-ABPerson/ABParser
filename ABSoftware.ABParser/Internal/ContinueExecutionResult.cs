@@ -11,6 +11,6 @@ namespace ABSoftware.ABParser.Internal
         None = 0,
         Stop = 1,
         BeforeTokenProcessed = 2,
-        OnTokenProcessed = 3
+        OnAndBeforeTokenProcessed = 3
     }
 }

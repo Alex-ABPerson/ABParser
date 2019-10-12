@@ -11,12 +11,12 @@ public:
 	VerifyToken(SingleCharToken* singleChar) {
 		IsSingleChar = false;
 		SingleChar = singleChar;
-		MultiChar = NULL;
+		MultiChar = 0;
 	}
 
 	VerifyToken(MultiCharToken* multiChar) {
 		IsSingleChar = true;
 		MultiChar = multiChar;
-		SingleChar = NULL;
+		SingleChar = 0;
 	}
 };

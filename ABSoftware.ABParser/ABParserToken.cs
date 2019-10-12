@@ -12,50 +12,16 @@ namespace ABSoftware.ABParser
         /// <summary>
         /// The name this token can be given to identify it.
         /// </summary>
-        public char[] TokenName;
+        public ABParserText TokenName;
 
         /// <summary>
         /// The data this token is made up of.
         /// </summary>
-        public StringBuilder TokenData;
+        public ABParserText TokenData;
 
-        public ABParserToken(char[] tokenName, string tokenData)
+        public ABParserToken(ABParserText tokenName, ABParserText tokenData)
         {
             TokenName = tokenName;
-            TokenData = new StringBuilder();
-            TokenData.Append(tokenData);
-        }
-
-        public ABParserToken(char[] tokenName, StringBuilder tokenData)
-        {
-            TokenName = tokenName;
-            TokenData = tokenData;
-        }
-
-        public ABParserToken(char[] tokenName, char[] tokenData)
-        {
-            TokenName = tokenName;
-            TokenData = new StringBuilder();
-            TokenData.Append(tokenData);
-        }
-
-        public ABParserToken(string tokenName, string tokenData)
-        {
-            TokenName = tokenName.ToCharArray();
-            TokenData = new StringBuilder();
-            TokenData.Append(tokenData);
-        }
-
-        public ABParserToken(string tokenName, char[] tokenData)
-        {
-            TokenName = tokenName.ToCharArray();
-            TokenData = new StringBuilder();
-            TokenData.Append(tokenData);
-        }
-
-        public ABParserToken(string tokenName, StringBuilder tokenData)
-        {
-            TokenName = tokenName.ToCharArray();
             TokenData = tokenData;
         }
     }

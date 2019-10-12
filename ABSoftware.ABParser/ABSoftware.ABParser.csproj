@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ABParser.cs" />
+    <Compile Include="ABParserText.cs" />
     <Compile Include="ABParserToken.cs" />
     <Compile Include="Internal\ContinueExecutionResult.cs" />
     <Compile Include="Internal\NativeMethods.cs" />

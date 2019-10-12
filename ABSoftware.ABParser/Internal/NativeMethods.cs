@@ -13,20 +13,19 @@ namespace ABSoftware.ABParser.Internal
         internal const CharSet CHARSET = CharSet.Unicode;
         internal const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
-        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern IntPtr CreateBaseParser(StringBuilder[] tokenData, int[] tokenLengths, int tokenDataLength);
+        internal static int WideCharacterSize = GetWideCharacterSize();
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void SetText(IntPtr parser, string output, int textLength);
+        internal static extern int GetWideCharacterSize();
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void SetText(IntPtr parser, char[] output, int textLength);
+        internal static extern IntPtr CreateBaseParser(string[] tokenData, int[] tokenLengths, int tokenDataLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void SetText(IntPtr parser, StringBuilder output, int textLength);
+        internal static extern void SetText(IntPtr parser, string text, int textLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, int[] outData);
+        internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, byte[] outData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DeleteBaseParser(IntPtr baseParser);

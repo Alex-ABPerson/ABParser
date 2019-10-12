@@ -3,6 +3,7 @@
 #include "Debugging.h"
 #include "SingleCharToken.h"
 #include "MultiCharToken.h"
+#include <cstring>
 #include <wchar.h>
 
 using namespace std;
@@ -16,16 +17,18 @@ int ABParserBase::ContinueExecution() {
 
 	debugLog("Continuing execution... Finished: %c ", (currentPosition < TextLength) ? 'F' : 'T');
 	debugLog("Text Length: %d", TextLength);
-	debugLog("Current Position: %d", currentPosition);
 
 	// Continue going through characters.
 	for (; currentPosition < TextLength; currentPosition++) {
-		debugLog("Processing char %d.", currentPosition);
+		debugLog("Current Position: %d", currentPosition);
 		int res = ProcessChar(Text[currentPosition]);
 
-		// If we got a result back from the "ProcessChar", return that, otherwise just keep going.
-		if (res != 0)
+		// If we got a result back from the "ProcessChar", return that, otherwise just keep going - make sure to increment the currentPosition, however, so that way when we get back, it will be incremented by one.
+		if (res != 0) {
+			currentPosition++;
 			return res;
+		}
+			
 	}
 
 	// If we got here, then we reached the end of the string, so, we'll return a "1" to stop.
@@ -43,9 +46,7 @@ int ABParserBase::ProcessChar(wchar_t ch) {
 	AddNewFutureTokens(ch);
 
 	// Finally, process any finished futureTokens.
-	ProcessFinishedTokens(ch);
-
-	return 0;
+	return ProcessFinishedTokens(ch);
 
 }
 
@@ -56,33 +57,40 @@ int ABParserBase::ProcessChar(wchar_t ch) {
 void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 
 	debugLog("Updating future tokens.");
+	bool hasUnfinalizedFutureToken = false;
+
 	// NOTE: You can only have futureTokens on multi-character tokens.
 
 	// Go through the first dimension of the futureTokens.
 	for (int i = futureTokensHead; i < futureTokensTail; i++)
 	{
-		int itemLength = futureTokenLengths[i];
-
-		if (i == futureTokensHead && itemLength == 0)
-			TrimFutureTokens();
-
-		// Then go through each of the futureTokens within that, once we reach a "-1", that means this is the end of it.
-		for (int j = 0; j < itemLength; j++)
+		// Then go through each of the futureTokens within that.
+		for (int j = 0; j < NumberOfMultiCharTokens; j++)
 		{
-			// If it's a "-1", then that means that this futureToken has been either been killed or was finished - so we'll ignore it.
+			// If this futureToken is NULL, then that's the end of the array, there's nothing more.
 			if (futureTokens[i][j] == NULL)
+				break;
+
+			// If this token was finalized, then we'll ignore it.
+			if (futureTokens[i][j]->Disabled)
 				continue;
+
+			hasUnfinalizedFutureToken = true;
 
 			// This complex if statement checks to see that the next character in the futureToken does actually match this character.
 			// If it does, we're going to check if this futureToken was completed, and, if so, go ahead and mark it as completed.
 			// If it doesn't, we're going to kill this futureToken.
 			int nextTokenCharacterPosition = (i - currentPosition) * -1;
-			if (futureTokens[i][j]->Token->TokenContents[nextTokenCharacterPosition] == ch) {
+			if ((unsigned short)futureTokens[i][j]->Token->TokenContents[nextTokenCharacterPosition] == (unsigned short)ch) {
 				if (futureTokens[i][j]->Token->TokenLength == nextTokenCharacterPosition + 1)
 					MarkFinishedFutureToken(i, j);
 			} else DisableFutureToken(i, j);
 
 		}
+
+		// If there aren't any futureTokens left for this character, then we'll finally remove it from our range (if it is at our head, otherwise we'll do it when it is).
+		if (i == futureTokensHead && !hasUnfinalizedFutureToken)
+			TrimFutureTokens();
 	}
 
 
@@ -92,12 +100,16 @@ void ABParserBase::AddNewFutureTokens(wchar_t ch) {
 
 	debugLog("Adding future tokens.");
 
-	// Expand the futureTokens by 1.
+	// Expand the futureTokens by 1, and reset the "currentPositionFutureTokensLength", since this is a new character.
 	futureTokensTail++;
+	currentPositionFutureTokensLength = 0;
+
+	// Make sure the very first item is set to NULL, so that way if we don't add any items, anything read the futureTokens will see the NULL and stop there.
+	futureTokens[currentPosition][0] = NULL;
 
 	// Add all of the futureTokens - remember, the futureTokens can only be multiple characters long.
 	for (int i = 0; i < multiCharCurrentTokensLength; i++)
-		if (multiCharCurrentTokens[i].TokenContents[0] == ch)
+		if ((unsigned short)multiCharCurrentTokens[i].TokenContents[0] == (unsigned short)ch)
 			AddFutureToken(&(multiCharCurrentTokens[i]));
 }
 
@@ -113,13 +125,20 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 		// Look to see if there are any finished futureTokens. 
 		// We will only look at the first finished futureToken because literally the only way that two futureTokens could have been completed on the same character is if they were identical, meaning we'll just ignore the second one (because you shouldn't have duplicate tokens).
-		for (int j = 0; j < futureTokenLengths[i]; j++) {
+		for (int j = 0; j < NumberOfSingleCharTokens; j++) {
 
-			// Ignore any "null" futureTokens.
+			// If this futureToken is NULL, then that's the end of the array, there's nothing more.
 			if (futureTokens[i][j] == NULL)
+				break;
+
+			// Ignore any finalized futureTokens.
+			if (futureTokens[i][j]->Disabled)
 				continue;
 
+			// If it is finished and hasn't been finalized, do that now.
 			if (futureTokens[i][j]->Finished) {
+
+				debugLog("Finished multi-char token!");
 
 				// If we need to verify it, do that, otherwise, finalize it.
 				if (MultiCharNeedsVerification(futureTokens[i][j], i))
@@ -135,14 +154,19 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 	}
 
 	// Then, we'll deal with the single character tokens.
-	for (int i = 0; i < singleCharCurrentTokensLength; i++)
-		if (singleCharCurrentTokens[i].TokenChar == ch)
+	for (int i = 0; i < singleCharCurrentTokensLength; i++) {
+		debugLog("Testing single-char: %c vs %c", singleCharCurrentTokens[i].TokenChar, ch);
+		if ((unsigned short)singleCharCurrentTokens[i].TokenChar == (unsigned short)ch) {
+
+			debugLog("Finished single-char token!");
 
 			// If we need to verify it, do that, otherwise, finalize it.
 			if (SingleCharNeedsVerification(ch, &(singleCharCurrentTokens[i])))
 				StartVerify(&singleCharCurrentTokens[i]);
 			else
-				return FinalizeToken(i);
+				return FinalizeToken(&singleCharCurrentTokens[i]);
+		}
+	}
 
 	return 0;
 }
@@ -152,11 +176,18 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 // ======================
 
 bool ABParserBase::SingleCharNeedsVerification(wchar_t ch, SingleCharToken* token) {
+
+	debugLog("Checking if single-char token requires verification.");
+
 	bool needsToBeVerified = false;
 
 	// Check to see if any futureTokens contain this character.
 	for (int i = futureTokensHead; i < futureTokensTail; i++)
-		for (int j = 0; j < futureTokenLengths[i]; j++) {
+		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
+
+			// If this futureToken is NULL, then that's the end of the array, there's nothing more.
+			if (futureTokens[i][j] == NULL)
+				break;
 
 			MultiCharToken* multiCharToken = futureTokens[i][j]->Token;
 			int length = multiCharToken->TokenLength;
@@ -174,6 +205,7 @@ bool ABParserBase::SingleCharNeedsVerification(wchar_t ch, SingleCharToken* toke
 
 	// If this token needs to be verified, then we'll add it to the verifyTokens.
 	if (needsToBeVerified) {
+		debugLog("Single-char token does require verification.");
 		isVerifying = true;
 		verifyTokens.push_back(VerifyToken(token));
 	}
@@ -197,18 +229,61 @@ void ABParserBase::StartVerify(ABParserFutureToken* token, int index) {
 // FINALIZE
 // ======================
 
-int ABParserBase::FinalizeToken(int tokenIdx) {
-	return 0;
+int ABParserBase::FinalizeToken(SingleCharToken* token) {
+
+	debugLog("Finalizing single-char token");
+
+	// First, we need to sort out the leading and trailing.
+	PrepareLeadingAndTrailing();
+
+	// And, finally, we'll queue up the token and return the correct result.
+	return QueueTokenAndReturnFinalizeResult(token, hasQueuedToken);
 }
 
 int ABParserBase::FinalizeToken(ABParserFutureToken* token, int index) {
 
-	return 3;
+	debugLog("Finalizing multi-char token");
+
+	// First, we need to sort out the leading and trailing.
+	PrepareLeadingAndTrailing();
+
+	// Then, we'll null mark this token as having been finalized.
+	token->Disabled = true;
+
+	// Finally, we'll queue up the token and return the correct result.
+	return QueueTokenAndReturnFinalizeResult(token->Token, hasQueuedToken);
 }
 
-void ABParserBase::PrepareLeading() {
+int ABParserBase::QueueTokenAndReturnFinalizeResult(ABParserToken* token, bool hadQueuedToken) {
+
+	// We'll queue the token.
+	queuedToken = token;
+	hasQueuedToken = true;
+
+	// Based on whether there was a queued-up token before, we'll either trigger "BeforeTokenProcessed" or both that and "OnTokenProcessed".
+	if (hadQueuedToken)
+		return 3;
+	else
+		return 2;
+}
+
+void ABParserBase::PrepareLeadingAndTrailing() {
+
+	debugLog("Preparing leading and trailing for token.");
 	
-	// This will trim the leading down to what it is.
+	// First, we need to move the trailing to the leading.
+	// NOTE: We delete data at the end because CPU usage is more important than just a tiny bit of RAM usage, so we just store the leading on our array of things buildUps to delete.
+	//delete[] OnTokenProcessedLeading;
+	buildUpsToDelete[buildUpsToDeleteLength++] = OnTokenProcessedLeading;
+	OnTokenProcessedLeading = OnTokenProcessedTrailing;
+	OnTokenProcessedLeadingLength = OnTokenProcessedTrailingLength;
+	
+	// Next, we need to create the new trailing, so, we'll take the buildUp, but shorten it just to the part that matters.
+	OnTokenProcessedTrailing = new wchar_t[buildUpLength + 1];
+	wcsncpy(OnTokenProcessedTrailing, buildUp, buildUpLength + 1);
+
+	// Finally, reset the buildUp.
+	buildUpLength = 0;
 
 }
 
@@ -224,15 +299,14 @@ void ABParserBase::TrimFutureTokens() {
 }
 
 void ABParserBase::DisableFutureToken(int firstDimension, int secondDimension) {
-	futureTokens[firstDimension][secondDimension] = NULL;
-
-	// That's one less item in there.
-	futureTokenLengths[firstDimension]--;
+	futureTokens[firstDimension][secondDimension]->Disabled = true;
 }
 
 void ABParserBase::AddFutureToken(MultiCharToken* token) {
-	debugLog("Adding futureToken: %d", token);
-	futureTokens[currentPosition][futureTokenLengths[currentPosition]] = new ABParserFutureToken(token);
+	futureTokens[currentPosition][currentPositionFutureTokensLength++] = new ABParserFutureToken(token);
+
+	// Make sure that the next one is set to NULL, just in case this is going to be the last item in the array.
+	futureTokens[currentPosition][currentPositionFutureTokensLength] = NULL;
 }
 
 void ABParserBase::MarkFinishedFutureToken(int firstDimension, int secondDimension) {
@@ -277,13 +351,15 @@ void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int single
 };
 
 
-void ABParserBase::ResetCurrentTokens() {
+void ABParserBase::ResetCurrentTokens(bool deleteCurrentTokens) {
 
 
 	// If the "SingleCharCurrentTokens" variable is already pointing to "SingleCharTokens", then we won't need to bother resetting it again.
 	if (!singleCharCurrentTokensIsTokens) {
 
-		delete[] singleCharCurrentTokens;
+		debugLog("Resetting single character current tokens... NumberOfSingleCharTokens: %d", NumberOfSingleCharTokens);
+		if (deleteCurrentTokens)
+			delete[] singleCharCurrentTokens;
 		singleCharCurrentTokensIsTokens = true;
 		singleCharCurrentTokens = SingleCharTokens;
 		singleCharCurrentTokensLength = NumberOfSingleCharTokens;
@@ -292,7 +368,9 @@ void ABParserBase::ResetCurrentTokens() {
 
 	if (!multiCharCurrentTokensIsTokens) {
 
-		delete[] multiCharCurrentTokens;
+		debugLog("Resetting multi-character current tokens... NumberOfMultiCharTokens: %d", NumberOfMultiCharTokens);
+		if (deleteCurrentTokens)
+			delete[] multiCharCurrentTokens;
 		multiCharCurrentTokensIsTokens = true;
 		multiCharCurrentTokens = MultiCharTokens;
 		multiCharCurrentTokensLength = NumberOfMultiCharTokens;
@@ -304,25 +382,29 @@ void ABParserBase::ResetCurrentTokens() {
 // INITIALIZATION/DISPOSE
 // ============
 
-void ABParserBase::InitString(wchar_t* text, int textLength) {
-	debugLog("Initializing String. Text Length: %d ", textLength);
+// (We're using an "unsigned short*" because Linux and Windows' wchar_t size may differ.)
+void ABParserBase::InitString(unsigned short* text, int textLength) {
+	debugLog("Initializing String. Text Length: %d", textLength);
 	Text = new wchar_t[textLength + 1];
 	TextLength = textLength;
-	Leading = new wchar_t[textLength + 1];
-	Trailing = new wchar_t[textLength + 1];
-	primaryBuildUp = new wchar_t[TextLength + 1];
-	secondaryBuildUp = new wchar_t[TextLength + 1];
-	wcsncpy(Text, text, textLength);
+	OnTokenProcessedLeading = new wchar_t[textLength + 1];
+	OnTokenProcessedTrailing = new wchar_t[textLength + 1];
+	buildUp = new wchar_t[textLength + 1];
+	buildUpsToDelete = new wchar_t*[textLength];
+	for (int i = 0; i < textLength; i++)
+		memcpy(&Text[i], &text[i], sizeof(unsigned short));
 
 	// Now that we know the text size, we can initialize the futureTokens.
 	futureTokens = new ABParserFutureToken**[TextLength];
-	futureTokenLengths = new int[TextLength];
 	for (int i = 0; i < TextLength; i++)
 		futureTokens[i] = new ABParserFutureToken*[NumberOfMultiCharTokens];
+	
 }
 
-void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfTokens) {
-	
+void ABParserBase::InitTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens) {
+
+	debugLog("Initializing Tokens");
+
 	// We write to a temporary array first, because we don't know how many single character and multi character tokens there will be.
 	// So, we will write to a temporary array that is the maximum number it could be, then copy that to a correctly-sized array.
 
@@ -333,14 +415,12 @@ void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfT
 	MultiCharToken* multiCharTokens = new MultiCharToken[numberOfTokens];
 	int multiCharTokensLength = 0;
 
-	debugLog("Initializing Tokens");
-
 	// Go through each token, if it is only one character long, then put into the "singleCharTokens".
 	for (int i = 0; i < numberOfTokens; i++) {
 		debugLog("Processing token %d", i);
 		if (tokenLengths[i] == 1) {
 			singleCharTokens[singleCharTokensLength].MixedIdx = i;
-			singleCharTokens[singleCharTokensLength].TokenChar = *tokens[i];
+			singleCharTokens[singleCharTokensLength++].TokenChar = *tokens[i];
 		} else {
 			multiCharTokens[i].MixedIdx = i;
 
@@ -348,10 +428,10 @@ void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfT
 			int length = tokenLengths[i];
 			wchar_t** tokenContents = &multiCharTokens[multiCharTokensLength].TokenContents;
 			*tokenContents = new wchar_t[length];
-			wcsncpy(*tokenContents, tokens[i], length);
+			for (int j = 0; j < length; j++)
+				memcpy(&(*tokenContents)[j], &tokens[i][j], sizeof(unsigned short));
 			multiCharTokens[multiCharTokensLength++].TokenLength = length;
 
-			//debugLog("1: ", multiCharTokens[i].TokenContents);
 		}
 	}
 
@@ -365,38 +445,42 @@ void ABParserBase::InitTokens(wchar_t** tokens, int* tokenLengths, int numberOfT
 	NumberOfMultiCharTokens = multiCharTokensLength;
 }
 
-ABParserBase::ABParserBase(wchar_t** tokens, int* tokenLengths, int numberOfTokens)
+ABParserBase::ABParserBase(unsigned short** tokens, int* tokenLengths, int numberOfTokens)
 {
 	// Process the tokens into "singleChar" and "multiChar".
 	InitTokens(tokens, tokenLengths, numberOfTokens);
 
 	// Configure the current tokens.
-	ResetCurrentTokens();
+	ResetCurrentTokens(false);
 
 	// Default values:
 	Text = NULL;
 	TextLength = 0;
-	Leading = NULL;
-	LeadingLength = 0;
-	Trailing = NULL;
-	TrailingLength = 0;
+	OnTokenProcessedLeading = NULL;
+	OnTokenProcessedLeadingLength = 0;
+	OnTokenProcessedTrailing = NULL;
+	OnTokenProcessedTrailingLength = 0;
 	currentPosition = 0;
 	PublicPosition = 0;
+	singleCharCurrentTokensIsTokens = false;
+	multiCharCurrentTokensIsTokens = false;
 	isVerifying = false;
 	futureTokensHead = 0;
 	futureTokensTail = 0;
-	primaryBuildUp = NULL;
-	secondaryBuildUp = NULL;
+	buildUp = NULL;
+	buildUpsToDelete = NULL;
+	buildUpsToDeleteLength = 0;
 	verifyTokens.reserve(4);
 	//verifyTokens = new vector<int>();
 }
 
 ABParserBase::~ABParserBase() {
+	debugLog("Disposing data.");
+
 	delete[] Text;
-	delete[] Leading;
-	delete[] Trailing;
-	delete[] primaryBuildUp;
-	delete[] secondaryBuildUp;
+	delete[] OnTokenProcessedLeading;
+	delete[] OnTokenProcessedTrailing;
+	delete[] buildUp;
 	delete[] SingleCharTokens;
 	delete[] MultiCharTokens;
 	delete[] singleCharCurrentTokens;
@@ -406,6 +490,9 @@ ABParserBase::~ABParserBase() {
 	for (int i = 0; i < futureTokensTail; i++)
 		delete[] futureTokens[futureTokensHead];
 
+	// Clear up all of the buildUps we left lying around.
+	for (int i = 0; i < buildUpsToDeleteLength; i++)
+		delete[] buildUpsToDelete[i];
+
 	delete[] futureTokens;
-	delete[] futureTokenLengths;
 }
