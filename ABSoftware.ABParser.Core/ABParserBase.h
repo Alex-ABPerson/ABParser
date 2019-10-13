@@ -41,7 +41,7 @@ private:
 	MultiCharToken* multiCharCurrentTokens;
 	int multiCharCurrentTokensLength;
 	
-	wchar_t** buildUpsToDelete;
+	wchar_t** thingsToDelete;
 	int buildUpsToDeleteLength;
 
 public:

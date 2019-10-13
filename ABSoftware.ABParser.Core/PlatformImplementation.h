@@ -1,6 +1,6 @@
 //#pragma once
 
-//#define COMPILE_DLL
+#define COMPILE_DLL
 
 #ifdef COMPILE_DLL
 

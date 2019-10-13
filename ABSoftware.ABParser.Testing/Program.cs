@@ -29,6 +29,7 @@ namespace ABSoftware.ABParser.Testing
 
             // We're now done with it.
             parser.Dispose();
+            Console.ReadLine();
         }
     }
 }

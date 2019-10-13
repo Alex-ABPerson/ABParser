@@ -125,7 +125,7 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 		// Look to see if there are any finished futureTokens. 
 		// We will only look at the first finished futureToken because literally the only way that two futureTokens could have been completed on the same character is if they were identical, meaning we'll just ignore the second one (because you shouldn't have duplicate tokens).
-		for (int j = 0; j < NumberOfSingleCharTokens; j++) {
+		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
 
 			// If this futureToken is NULL, then that's the end of the array, there's nothing more.
 			if (futureTokens[i][j] == NULL)
@@ -274,7 +274,7 @@ void ABParserBase::PrepareLeadingAndTrailing() {
 	// First, we need to move the trailing to the leading.
 	// NOTE: We delete data at the end because CPU usage is more important than just a tiny bit of RAM usage, so we just store the leading on our array of things buildUps to delete.
 	//delete[] OnTokenProcessedLeading;
-	buildUpsToDelete[buildUpsToDeleteLength++] = OnTokenProcessedLeading;
+	thingsToDelete[buildUpsToDeleteLength++] = OnTokenProcessedLeading;
 	OnTokenProcessedLeading = OnTokenProcessedTrailing;
 	OnTokenProcessedLeadingLength = OnTokenProcessedTrailingLength;
 	
@@ -314,6 +314,8 @@ void ABParserBase::MarkFinishedFutureToken(int firstDimension, int secondDimensi
 }
 
 void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength) {
+
+	debugLog("Configuring CurrentTokens");
 
 	// If the "CurrentTokens" variable isn't pointing to "Tokens", then we can safely delete it, otherwise we'll leave it since we don't want to delete "Tokens".
 	if (!singleCharCurrentTokensIsTokens)
@@ -390,15 +392,14 @@ void ABParserBase::InitString(unsigned short* text, int textLength) {
 	OnTokenProcessedLeading = new wchar_t[textLength + 1];
 	OnTokenProcessedTrailing = new wchar_t[textLength + 1];
 	buildUp = new wchar_t[textLength + 1];
-	buildUpsToDelete = new wchar_t*[textLength];
+	thingsToDelete = new wchar_t*[textLength * 2];
 	for (int i = 0; i < textLength; i++)
 		memcpy(&Text[i], &text[i], sizeof(unsigned short));
 
 	// Now that we know the text size, we can initialize the futureTokens.
-	futureTokens = new ABParserFutureToken**[TextLength];
+	futureTokens = new ABParserFutureToken**[TextLength + 1];
 	for (int i = 0; i < TextLength; i++)
 		futureTokens[i] = new ABParserFutureToken*[NumberOfMultiCharTokens];
-	
 }
 
 void ABParserBase::InitTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens) {
@@ -447,11 +448,6 @@ void ABParserBase::InitTokens(unsigned short** tokens, int* tokenLengths, int nu
 
 ABParserBase::ABParserBase(unsigned short** tokens, int* tokenLengths, int numberOfTokens)
 {
-	// Process the tokens into "singleChar" and "multiChar".
-	InitTokens(tokens, tokenLengths, numberOfTokens);
-
-	// Configure the current tokens.
-	ResetCurrentTokens(false);
 
 	// Default values:
 	Text = NULL;
@@ -468,9 +464,15 @@ ABParserBase::ABParserBase(unsigned short** tokens, int* tokenLengths, int numbe
 	futureTokensHead = 0;
 	futureTokensTail = 0;
 	buildUp = NULL;
-	buildUpsToDelete = NULL;
+	thingsToDelete = NULL;
 	buildUpsToDeleteLength = 0;
 	verifyTokens.reserve(4);
+
+	// Process the tokens into "singleChar" and "multiChar".
+	InitTokens(tokens, tokenLengths, numberOfTokens);
+
+	// Configure the current tokens.
+	ResetCurrentTokens(false);
 	//verifyTokens = new vector<int>();
 }
 
@@ -483,16 +485,25 @@ ABParserBase::~ABParserBase() {
 	delete[] buildUp;
 	delete[] SingleCharTokens;
 	delete[] MultiCharTokens;
-	delete[] singleCharCurrentTokens;
-	delete[] multiCharCurrentTokens;
 
-	// Clear up all of the futureTokens we left lying around.
-	for (int i = 0; i < futureTokensTail; i++)
-		delete[] futureTokens[futureTokensHead];
+	if (!singleCharCurrentTokensIsTokens)
+		delete[] singleCharCurrentTokens;
+	if (!multiCharCurrentTokensIsTokens)
+		delete[] multiCharCurrentTokens;
 
-	// Clear up all of the buildUps we left lying around.
+	debugLog("-");
+
+	// Clear up any futureTokens that are still left in the array.
+	for (int i = 0; i < futureTokensTail; i++) {
+		int j = 0;
+		while (futureTokens[i][j] != NULL)
+			delete futureTokens[i][j++];
+	}
+
+	// Clear up anything else we left lying around that we need to delete.
 	for (int i = 0; i < buildUpsToDeleteLength; i++)
-		delete[] buildUpsToDelete[i];
+		delete[] thingsToDelete[i];
 
 	delete[] futureTokens;
+	delete[] thingsToDelete;
 }
