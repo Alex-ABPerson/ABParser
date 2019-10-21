@@ -24,7 +24,6 @@ private:
 	vector<VerifyToken> verifyTriggers;
 	vector<wchar_t*> verifyBuildUp;
 
-	ABParserToken* queuedToken;
 	bool hasQueuedToken;
 
 	wchar_t* buildUp;
@@ -44,30 +43,9 @@ private:
 	wchar_t** thingsToDelete;
 	int buildUpsToDeleteLength;
 
-public:
-	int PublicPosition;
-	ABParserToken OnTokenProcessed;
-
-	SingleCharToken* SingleCharTokens;
-	int NumberOfSingleCharTokens;
-
-	MultiCharToken* MultiCharTokens;
-	int NumberOfMultiCharTokens;
-
-	wchar_t* Text;
-	int TextLength;
-
-	wchar_t* OnTokenProcessedLeading;
-	int OnTokenProcessedLeadingLength;
-
-	wchar_t* OnTokenProcessedTrailing;
-	int OnTokenProcessedTrailingLength;
-
-	// GENERAL
-	int ContinueExecution();
-
 	// COLLECT
 	int ProcessChar(wchar_t ch);
+	void AddCharacterToBuildUp(wchar_t ch);
 	void UpdateCurrentFutureTokens(wchar_t ch);
 	void AddNewFutureTokens(wchar_t ch);
 	int ProcessFinishedTokens(wchar_t ch);
@@ -78,13 +56,13 @@ public:
 
 	bool SingleCharNeedsVerification(wchar_t ch, SingleCharToken* token);
 	bool MultiCharNeedsVerification(ABParserFutureToken* token, int index);
-	
+
 	// FINALIZE
-	int FinalizeToken(SingleCharToken* token);
+	int FinalizeToken(SingleCharToken* token, int index);
 	int FinalizeToken(ABParserFutureToken* token, int index);
 
-	void PrepareLeadingAndTrailing();
-	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, bool hasQueuedToken);
+	void PrepareLeadingAndTrailing(int tokenLength);
+	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hasQueuedToken);
 
 	// HELPERS
 	void AddFutureToken(MultiCharToken* token);
@@ -93,10 +71,36 @@ public:
 	void DisableFutureToken(int firstDimension, int secondDimension);
 	void ResetCurrentTokens(bool deleteCurrentTokens);
 	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength);
-	
+	void InitTokens(SingleCharToken* singleCharTokens, int singleCharTokensLength, MultiCharToken* multiCharTokens, int multiCharTokensLength);
+
+public:
+	SingleCharToken* SingleCharTokens;
+	int NumberOfSingleCharTokens;
+
+	MultiCharToken* MultiCharTokens;
+	int NumberOfMultiCharTokens;
+
+	int BeforeTokenProcessedTokenStart;
+	ABParserToken* BeforeTokenProcessedToken;
+
+	int OnTokenProcessedTokenStart;
+	ABParserToken* OnTokenProcessedToken;
+
+	int OnTokenProcessedPreviousTokenStart;
+	ABParserToken* OnTokenProcessedPreviousToken;
+
+	wchar_t* Text;
+	int TextLength;
+
+	wchar_t* OnTokenProcessedLeading;
+	int OnTokenProcessedLeadingLength;
+
+	wchar_t* OnTokenProcessedTrailing;
+	int OnTokenProcessedTrailingLength;
+
 	void InitString(unsigned short* text, int textLength);
-	void InitTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens);
-	ABParserBase(unsigned short** tokens, int* tokenLengths, int numberOfTokens);
+	int ContinueExecution();
+	ABParserBase(SingleCharToken* singleCharTokens, int singleCharTokensLength, MultiCharToken* multiCharTokens, int multiCharTokensLength);
 	~ABParserBase();
 
 };

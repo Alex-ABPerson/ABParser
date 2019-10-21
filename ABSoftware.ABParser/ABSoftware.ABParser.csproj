@@ -21,14 +21,16 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -44,8 +46,12 @@
     <Compile Include="ABParser.cs" />
     <Compile Include="ABParserText.cs" />
     <Compile Include="ABParserToken.cs" />
+    <Compile Include="ABParserTokensArray.cs" />
+    <Compile Include="Events\BeforeTokenProcessedEventArgs.cs" />
+    <Compile Include="Events\TokenProcessedEventArgs.cs" />
     <Compile Include="Internal\ContinueExecutionResult.cs" />
     <Compile Include="Internal\NativeMethods.cs" />
+    <Compile Include="Events\OnTokenProcessedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

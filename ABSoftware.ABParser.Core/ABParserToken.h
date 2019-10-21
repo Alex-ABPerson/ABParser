@@ -2,5 +2,8 @@
 
 class ABParserToken {
 public:
-	int MixedIdx;
+	unsigned short MixedIdx = 0;
+	virtual int GetLength() {
+		return 0;
+	}
 };

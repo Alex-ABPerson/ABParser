@@ -20,3 +20,4 @@ bin
 obj
 Debug
 Release
+mono_crash.*

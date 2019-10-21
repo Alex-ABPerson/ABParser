@@ -1,23 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using ABSoftware.ABParser.Events;
 
 namespace ABSoftware.ABParser.Testing
 {
+    public class TestParser : ABParser
+    {
+        static readonly ABParserTokensArray TestParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[]
+        {
+            new ABParserToken(new ABParserText("NumberOne"), new ABParserText("1")),
+            new ABParserToken(new ABParserText("Foo"), new ABParserText("Foo"))
+        });
+
+        public TestParser() : base(TestParserTokens) { }
+
+        protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
+        {
+            Console.WriteLine("C# BEFORETOKENPROCESSED HIT");
+        }
+
+        protected override void OnTokenProcessed(OnTokenProcessedEventArgs args)
+        {
+            Console.WriteLine("C# ONTOKENPROCESSED HIT");
+        }
+    }
+
     public class Program
     {
-        [DllImport("ABParserCore", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void SayHello(StringBuilder output);
 
         public static void Main()
         {
-            var parser = new ABParser(new ABParserToken[] {
-                new ABParserToken(new ABParserText("NumberOne"), new ABParserText("1")),
-                new ABParserToken(new ABParserText("Foo"), new ABParserText("Foo"))
-            });
+            var parser = new TestParser();
             parser.Start("Hi1&Foo");
 
             //var result = new StringBuilder(6);

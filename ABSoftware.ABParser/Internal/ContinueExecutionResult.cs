@@ -12,5 +12,6 @@ namespace ABSoftware.ABParser.Internal
         Stop = 1,
         BeforeTokenProcessed = 2,
         OnAndBeforeTokenProcessed = 3
+
     }
 }

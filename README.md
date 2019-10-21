@@ -22,7 +22,7 @@ When compiling, you must make sure that in the header file `PlatformImplementati
 
 Then, if you're compiling for Windows, it's recommended that you use MSBuild Because, the `.vcxproj` has been configured to place `__cdecl` on all of the methods. And if you're not using the MSBuild it won't pick up on that, causing the `DllImport` to not work. MSBuild is configured to compile straight into the same directory as the C# testing program.
 
-If you're compiling for Linux, there's a `makefile`, which is already configured (provided you don't add any files). So, just type "make" in the same directory as it and it will just compile. Leaving you with the "SO" file, which you can then copy into the same directory as the C# testing "debug" or "release" folder in order to see if it works with the C# wrapper. Feel free to automate this if you want, of course.
+If you're compiling for Linux, there's a `makefile` on the C++ project, which is already configured (provided you don't add any files). So, just type "make compileAndCopy" which will compile the project and copy it to the C# test project. You can also use "make testWithMono" which will copy the files and actually launch the project!
 
 ## License
 
