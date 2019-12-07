@@ -1,14 +1,16 @@
 ﻿using System;
 using ABSoftware.ABParser.Events;
+using ABSoftware.ABParser.Testing.JSTest;
 
 namespace ABSoftware.ABParser.Testing
 {
+
     public class TestParser : ABParser
     {
         static readonly ABParserTokensArray TestParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("NumberOne"), new ABParserText("1")),
-            new ABParserToken(new ABParserText("Foo"), new ABParserText("Foo"))
+            new ABParserToken(new ABParserText("the"), new ABParserText("the")),
+            new ABParserToken(new ABParserText("they"), new ABParserText("they"))
         });
 
         public TestParser() : base(TestParserTokens) { }
@@ -29,8 +31,9 @@ namespace ABSoftware.ABParser.Testing
 
         public static void Main()
         {
-            var parser = new TestParser();
-            parser.Start("Hi1&Foo");
+            var parser = new JSMinificationParser();
+            //parser.Start("Atheyarh{215}");
+            parser.Start("ahah   function hi(a,b,c)");
 
             //var result = new StringBuilder(6);
             //SayHello(result);

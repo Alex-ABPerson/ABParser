@@ -1,8 +1,8 @@
 #pragma once
 #include "ABParserFutureToken.h"
-#include "VerifyToken.h"
 #include "SingleCharToken.h"
 #include "MultiCharToken.h"
+#include "ABParserVerifyToken.h"
 #include <vector>
 using namespace std;
 
@@ -20,9 +20,15 @@ private:
 	int currentPosition;
 
 	bool isVerifying;
-	vector<VerifyToken> verifyTokens;
-	vector<VerifyToken> verifyTriggers;
+	bool isFinalizingVerifyToken;
+	bool lastTokenWasOriginalVerified;
+
+	// This states the position that verify started on.
+	int verifyStartPosition;
+	vector<ABParserVerifyToken*> verifyTokens;
+	vector<ABParserFutureToken*> verifyTriggers;
 	vector<wchar_t*> verifyBuildUp;
+	vector<int> verifyBuildUpLengths;
 
 	bool hasQueuedToken;
 
@@ -51,24 +57,27 @@ private:
 	int ProcessFinishedTokens(wchar_t ch);
 
 	// VERIFY
-	void StartVerify(SingleCharToken* token);
-	void StartVerify(ABParserFutureToken* token, int index);
-
-	bool SingleCharNeedsVerification(wchar_t ch, SingleCharToken* token);
-	bool MultiCharNeedsVerification(ABParserFutureToken* token, int index);
+	void StartVerify(ABParserVerifyToken* token);
+	void StopVerify();
+	bool PrepareSingleCharForVerification(wchar_t ch, SingleCharToken* token);
+	bool PrepareMultiCharForVerification(ABParserFutureToken* token, int index);
+	void CheckDisabledFutureToken(ABParserFutureToken* token, int index);
+	int CheckFinishedFutureToken(ABParserFutureToken* token, int index);
+	int FinalizeNextVerifyToken();
 
 	// FINALIZE
+	int FinalizeToken(ABParserVerifyToken* verifyToken);
 	int FinalizeToken(SingleCharToken* token, int index);
-	int FinalizeToken(ABParserFutureToken* token, int index);
+	int FinalizeToken(ABParserFutureToken* token, int index, bool isVerifyTriggerToken);
 
-	void PrepareLeadingAndTrailing(int tokenLength);
+	void PrepareLeadingAndTrailing(int tokenLength, bool isVerifyTriggerToken, bool endOfText);
 	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hasQueuedToken);
 
 	// HELPERS
 	void AddFutureToken(MultiCharToken* token);
-	void MarkFinishedFutureToken(int firstDimension, int secondDimension);
+	void MarkFinishedFutureToken(ABParserFutureToken* futureToken);
 	void TrimFutureTokens();
-	void DisableFutureToken(int firstDimension, int secondDimension);
+	void DisableFutureToken(ABParserFutureToken* futureToken, int index);
 	void ResetCurrentTokens(bool deleteCurrentTokens);
 	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength);
 	void InitTokens(SingleCharToken* singleCharTokens, int singleCharTokensLength, MultiCharToken* multiCharTokens, int multiCharTokensLength);

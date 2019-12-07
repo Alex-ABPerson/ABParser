@@ -22,12 +22,12 @@
     <ClInclude Include="ABParserBase.h" />
     <ClInclude Include="ABParserFutureToken.h" />
     <ClInclude Include="ABParserToken.h" />
+    <ClInclude Include="ABParserVerifyToken.h" />
     <ClInclude Include="Debugging.h" />
     <ClInclude Include="MultiCharToken.h" />
     <ClInclude Include="PlatformImplementation.h" />
     <ClInclude Include="SingleCharToken.h" />
     <ClInclude Include="TokenManagement.h" />
-    <ClInclude Include="VerifyToken.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ABParserBase.cpp" />

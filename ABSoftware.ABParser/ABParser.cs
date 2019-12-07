@@ -98,7 +98,7 @@ namespace ABSoftware.ABParser
                     // Copy across all of the data from what the Core ABParser gave us.
                     eventArgs.TokenIndex = Data[0];
                     eventArgs.TokenStart = TwoShortsToInteger(Data, 1);
-                    eventArgs.HasPreviousToken = !FirstBeforeTokenProcessed;
+                    eventArgs.HasPreviousToken = result == ContinueExecutionResult.Stop ? !FirstOnTokenProcessed : !FirstBeforeTokenProcessed;
                     eventArgs.PreviousTokenIndex = FirstBeforeTokenProcessed ? (ushort)0 : Data[3];
                     eventArgs.PreviousTokenStart = FirstBeforeTokenProcessed ? TwoShortsToInteger(Data, 4) : 0;
 
@@ -120,19 +120,19 @@ namespace ABSoftware.ABParser
                     // Otherwise, if we're creating a "BeforeTokenProcessed" event, then set the "BeforeTokenProcessedArgs".
                     else BeforeTokenProcessedArgs = (BeforeTokenProcessedEventArgs)eventArgs;
 
-                    // If we're still going, then this wasn't a 
-
-
                     break;
                 case ContinueExecutionResult.OnAndBeforeTokenProcessed:
 
                     // When reading this code, just remember that the BeforeTokenProcessed is for the token AFTER the OnTokenProcessed.
 
                     // Create the two new eventArgs - the "OnTokenProcessed" will, of course, have a next token in this case.
-                    var beforeTokenProcessedArgs = new BeforeTokenProcessedEventArgs(this);
+                    var beforeTokenProcessedArgs = new BeforeTokenProcessedEventArgs(this)
+                    {
+                        HasPreviousToken = true
+                    };
                     var onTokenProcessedArgs = new OnTokenProcessedEventArgs(this)
                     {
-                        HasPreviousToken = FirstOnTokenProcessed,
+                        HasPreviousToken = !FirstOnTokenProcessed,
                         HasNextToken = true
                     };
 
@@ -221,12 +221,12 @@ namespace ABSoftware.ABParser
         /// <summary>
         /// Called before a token's trailing has been generated - mainly used to generate TokenLimits!
         /// </summary>
-        protected abstract void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args);
+        protected virtual void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args) { }
 
         /// <summary>
         /// Called when a token has been fully processed, and its leading and trailing have been generated.
         /// </summary>
-        protected abstract void OnTokenProcessed(OnTokenProcessedEventArgs args);
+        protected virtual void OnTokenProcessed(OnTokenProcessedEventArgs args) { }
 
         #endregion
 
