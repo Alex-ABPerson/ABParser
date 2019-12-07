@@ -18,7 +18,8 @@ namespace ABSoftware.ABParser
         // Check ABSoftware.ABParser.Core and the ABSoftware Docs for more info.
 
         #region Public Data
-        
+
+        public ABParserText Text;
         public int TextLength;
         public ABParserToken[] Tokens;
 
@@ -170,6 +171,9 @@ namespace ABSoftware.ABParser
 
         internal void Execute()
         {
+            // Trigger the "OnStart".
+            OnStart();
+
             // This is how execution works on this side.
             // Quite simply, we will run "ContinueExecution", and that will do all of the work in C++.
             // Then, whenever the C++ code wants us to do something - like calling "OnTokenProcessed", it will return a result, and we will act on that.
@@ -212,11 +216,19 @@ namespace ABSoftware.ABParser
                         break;
                 }
             }
+
+            // Then, run "OnEnd" - for the leading, if we've never hit an "OnTokenProcessed", then this will just be the entire text, otherwise, we'll just pull the trailing from the last OnTokenProcessed to get this leading.
+            OnEnd(FirstOnTokenProcessed ? Text : OnTokenProcessedArgs.Trailing);
+
         }
 
         #endregion
 
         #region Events
+
+        protected virtual void OnStart() { }
+
+        protected virtual void OnEnd(ABParserText leading) { }
 
         /// <summary>
         /// Called before a token's trailing has been generated - mainly used to generate TokenLimits!
@@ -232,30 +244,9 @@ namespace ABSoftware.ABParser
 
         #region Public Methods
 
-        public void Start(string text)
-        {
-            SetBaseParserText(new ABParserText(text));
-            Execute();
-        }
-
-        public void Start(char[] text)
-        {
-            // Set the text for the parser.
-            SetBaseParserText(new ABParserText(text));
-            Execute();
-        }
-
-        public void Start(StringBuilder text)
-        {
-            // Set the text for the parser.
-            SetBaseParserText(new ABParserText(text));
-            Execute();
-        }
-
         public void Start(ABParserText text)
         {
-            // Set the text for the parser.
-            SetBaseParserText(text);
+            SetBaseParserText(Text = text);
             Execute();
         }
 

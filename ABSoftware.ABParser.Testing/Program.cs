@@ -33,7 +33,7 @@ namespace ABSoftware.ABParser.Testing
         {
             var parser = new JSMinificationParser();
             //parser.Start("Atheyarh{215}");
-            parser.Start("ahah   function hi(a,b,c)");
+            parser.Start(new ABParserText("ahah   function hi(a,b,c)"));
 
             //var result = new StringBuilder(6);
             //SayHello(result);

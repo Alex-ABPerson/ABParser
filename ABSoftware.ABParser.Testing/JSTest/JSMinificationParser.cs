@@ -13,6 +13,16 @@ namespace ABSoftware.ABParser.Testing.JSTest
 
         public JSMinificationParser() : base(JSParserTokens) { }
 
+        protected override void OnStart()
+        {
+            Console.WriteLine("Parser started!");
+        }
+
+        protected override void OnEnd(ABParserText leading)
+        {
+            Console.WriteLine("Parser finished!");
+        }
+
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {
             Console.WriteLine("BeforeTokenProcessed hit!");

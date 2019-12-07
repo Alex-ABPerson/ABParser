@@ -19,10 +19,16 @@ namespace ABSoftware.ABParser
         /// </summary>
         public ABParserText TokenData;
 
-        public ABParserToken(ABParserText tokenName, ABParserText tokenData)
+        /// <summary>
+        /// If you want to attach extra data alongside the token, you can use this to do that.
+        /// </summary>
+        public object TokenTag;
+
+        public ABParserToken(ABParserText tokenName, ABParserText tokenData, object tag = null)
         {
             TokenName = tokenName;
             TokenData = tokenData;
+            TokenTag = tag;
         }
     }
 }
