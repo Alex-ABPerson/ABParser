@@ -26,21 +26,12 @@ int ConvertStringToShorts(wchar_t* str, int strLen, unsigned short* data, int in
 }
 
 extern "C" {
-	EXPORT void SayHello(wchar_t* out) {
-		const wchar_t* str = L"Hello";
-		wcscpy(out, str);
-	}
-
 	EXPORT void InitializeTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens, SingleCharToken** singleCharTokens, MultiCharToken** multiCharTokens, int* numberOfSingleCharTokens, int* numberOfMultiCharTokens) {
 		SortTokens(tokens, tokenLengths, numberOfTokens, singleCharTokens, multiCharTokens, numberOfSingleCharTokens, numberOfMultiCharTokens);
 	}
 
 	EXPORT ABParserBase* CreateBaseParser(SingleCharToken* singleCharTokens, MultiCharToken* multiCharTokens, int singleCharTokensLength, int multiCharTokensLength) {
 		return new ABParserBase(singleCharTokens, singleCharTokensLength, multiCharTokens, multiCharTokensLength);
-	}
-
-	EXPORT void SetText(ABParserBase* parser, unsigned short* text, int textLength) {
-		parser->InitString(text, textLength);
 	}
 
 	EXPORT void DeleteBaseParser(ABParserBase* baseParser) {
@@ -95,5 +86,13 @@ extern "C" {
 		}
 
 		return result;
+	}
+
+	EXPORT void PrepareForParse(ABParserBase* parser, unsigned short* text, int textLength) {
+		parser->PrepareForParse(text, textLength);
+	}
+
+	EXPORT void DisposeDataForNextParse(ABParserBase* parser) {
+		parser->DisposeDataForNextParse();
 	}
 }

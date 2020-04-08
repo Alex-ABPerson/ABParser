@@ -21,3 +21,5 @@ obj
 Debug
 Release
 mono_crash.*
+packages/**/*
+!packages/repositories.config

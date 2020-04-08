@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using ABSoftware.ABParser.Events;
 using ABSoftware.ABParser.Testing.JSTest;
 
@@ -7,23 +8,14 @@ namespace ABSoftware.ABParser.Testing
 
     public class TestParser : ABParser
     {
-        static readonly ABParserTokensArray TestParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[]
+        static readonly ABParserTokensArray ParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("the"), new ABParserText("the")),
-            new ABParserToken(new ABParserText("they"), new ABParserText("they"))
+            new ABParserToken(new ABParserText("they"), new ABParserText("they")),
+            new ABParserToken(new ABParserText("theyare"), new ABParserText("theyare"))
         });
 
-        public TestParser() : base(TestParserTokens) { }
-
-        protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
-        {
-            Console.WriteLine("C# BEFORETOKENPROCESSED HIT");
-        }
-
-        protected override void OnTokenProcessed(OnTokenProcessedEventArgs args)
-        {
-            Console.WriteLine("C# ONTOKENPROCESSED HIT");
-        }
+        public TestParser() : base(ParserTokens) { }
     }
 
     public class Program
@@ -31,9 +23,15 @@ namespace ABSoftware.ABParser.Testing
 
         public static void Main()
         {
-            var parser = new JSMinificationParser();
-            //parser.Start("Atheyarh{215}");
-            parser.Start(new ABParserText("ahah   function hi(a,b,c)"));
+            for (int i = 0; i < 1000; i++)
+                using (var parser = new JSMinificationParser())
+                {
+                    //var stopwatch = Stopwatch.StartNew();
+                    //parser.Start(new ABParserText("AtheBtheyCtheyarDtheyareE"));
+                    parser.Start(new ABParserText("ahah   function hi(a,b,c)"));
+                    //stopwatch.Stop();
+                    //Console.WriteLine(stopwatch.ElapsedMilliseconds / 100);
+                }
 
             //var result = new StringBuilder(6);
             //SayHello(result);
@@ -43,7 +41,6 @@ namespace ABSoftware.ABParser.Testing
             Console.ReadLine();
 
             // We're now done with it.
-            parser.Dispose();
             Console.ReadLine();
         }
     }

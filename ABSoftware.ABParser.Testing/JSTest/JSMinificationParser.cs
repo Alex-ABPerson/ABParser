@@ -15,12 +15,12 @@ namespace ABSoftware.ABParser.Testing.JSTest
 
         protected override void OnStart()
         {
-            Console.WriteLine("Parser started!");
+            //Console.WriteLine("Parser started!");
         }
 
         protected override void OnEnd(ABParserText leading)
         {
-            Console.WriteLine("Parser finished!");
+            //Console.WriteLine("Parser finished!");
         }
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)

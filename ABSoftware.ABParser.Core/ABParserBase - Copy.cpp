@@ -39,7 +39,7 @@ int ABParserBase::ContinueExecution() {
 
 	// If there's a token left, we'll prepare the leading and trailing for it so that when we trigger the "stop" result, it can be the final OnTokenProcessed.
 	if (BeforeTokenProcessedToken != NULL)
-		PrepareLeadingAndTrailing(BeforeTokenProcessedToken->GetLength(), (currentPosition - 1) - BeforeTokenProcessedToken->GetLength(), buildUp, buildUpLength, false, true);
+		PrepareLeadingAndTrailing(BeforeTokenProcessedToken->GetLength(), (currentPosition - 1) - BeforeTokenProcessedToken->GetLength(), buildUp, buildUpLength, false);
 
 	// If we got here, then we reached the end of the string, so, we'll return a "1" to stop.
 	return 1;
@@ -50,7 +50,7 @@ int ABParserBase::ProcessChar(wchar_t ch) {
 	debugLog("Processing character: %c", ch);
 
 	// First, we'll update our current futureTokens with this character.
-	UpdateCurrentFutureTokens(ch);
+	if (UpdateCurrentFutureTokens(ch) == -1);
 
 	// Next, we'll add any new futureTokens for this character.
 	AddNewFutureTokens(ch);
@@ -85,7 +85,7 @@ void ABParserBase::AddCharacterToBuildUp(wchar_t ch) {
 		buildUp[buildUpLength++] = ch;
 }
 
-void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
+int ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 
 	debugLog("Updating future tokens.");
 	bool hasUnfinalizedFutureToken = false;
@@ -116,7 +116,7 @@ void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 					MarkFinishedFutureToken(futureTokens[i][j]);
 			// If it doesn't, we're going to disable this futureToken.
 			} else
-				DisableFutureToken(futureTokens[i][j], i);
+				return DisableFutureToken(futureTokens[i][j], i);
 
 		}
 
@@ -125,7 +125,7 @@ void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 			TrimFutureTokens();
 	}
 
-
+	return 0;
 }
 
 void ABParserBase::AddNewFutureTokens(wchar_t ch) {
@@ -175,8 +175,7 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 				// If we are currently verifying, then we need to do some extra checks on it.
 				if (isVerifying)
 					if (int result = CheckFinishedFutureToken(futureTokens[i][j], i))
-						if (result == -1) return 0;
-						else return result;
+						return result;
 
 				// If we need to verify it, do that, otherwise, finalize it.
 				if (PrepareMultiCharForVerification(futureTokens[i][j], i))
@@ -332,7 +331,7 @@ void ABParserBase::StopVerify(int tokenIndex, bool wasFinalized) {
 	else RemoveVerifyToken(tokenIndex);
 }
 
-// Returns -1 if the caller should not finalize/verify this token, 0 if the caller should just continue like normal, and any other value should be returned by the caller.
+// Returns -1 if the caller should go straight onto the next character, 0 if the caller should just continue like normal, and any other value should be returned from "ContinueExecution".
 int ABParserBase::CheckFinishedFutureToken(ABParserFutureToken* token, int index) {
 	debugLog("Checking finished future token...");
 
@@ -384,7 +383,8 @@ int ABParserBase::CheckFinishedFutureToken(ABParserFutureToken* token, int index
 	return 0;
 }
 
-void ABParserBase::CheckDisabledFutureToken(ABParserFutureToken* token, int index) {
+// Returns - 1 if the caller should go straight onto the next character, and 0 if the caller should just continue like normal.
+int ABParserBase::CheckDisabledFutureToken(ABParserFutureToken* token, int index) {
 
 	debugLog("Checking disabled future token...");
 
@@ -405,14 +405,17 @@ void ABParserBase::CheckDisabledFutureToken(ABParserFutureToken* token, int inde
 			else hasRemainingTriggers = true;
 		}
 
-		// If there are no more triggers left in this token, then it WAS actually the token in the text - not the triggers! So, we'll go ahead and get ready to start finalizing this token.
+		// If there are no more triggers left in this token, then it's not the triggers. So, we'll go ahead and get ready to start finalizing this token.
 		if (!hasRemainingTriggers) {
 			verifyTokens[i]->HasNoTriggers = true;
 			finalizingVerifyTokensCurrentToken = 0;
 			lastVerifyToken = nullptr;
 			isFinalizingVerifyTokens = true;
+			return -1;
 		}
 	}
+
+	return 0;
 
 }
 
@@ -432,10 +435,8 @@ int ABParserBase::FinalizeNextVerifyToken() {
 	if (nextItem == nullptr) {
 
 		isFinalizingVerifyTokens = false;
-
-		// We're adding 1 and pushing the length back by 1 because the first character in the "trailingBuildUp" is the last character of the token.
-		buildUp = lastVerifyToken->TrailingBuildUp + 1;
-		buildUpLength = lastVerifyToken->TrailingBuildUpLength - 1;
+		buildUp = lastVerifyToken->TrailingBuildUp;
+		buildUpLength = lastVerifyToken->TrailingBuildUpLength;
 
 		// The character we're currently on never got added to the buildUp, so, we'll add it to the buildUp now.
 		StopVerify(0, true);
@@ -495,7 +496,7 @@ int ABParserBase::FinalizeToken(SingleCharToken* token, int index, wchar_t* buil
 	debugLog("Finalizing single-char token");
 
 	// First, we need to sort out the leading and trailing.
-	PrepareLeadingAndTrailing(1, index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
+	PrepareLeadingAndTrailing(1, index, buildUpToUse, buildUpToUseLength, resetBuildUp);
 
 	// And, finally, we'll queue up the token and return the correct result.
 	return QueueTokenAndReturnFinalizeResult(token, index, hasQueuedToken);
@@ -506,7 +507,7 @@ int ABParserBase::FinalizeToken(ABParserFutureToken* token, int index, wchar_t* 
 	debugLog("Finalizing multi-char token");
 
 	// First, we need to sort out the leading and trailing.
-	PrepareLeadingAndTrailing(token->Token->TokenLength, index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
+	PrepareLeadingAndTrailing(token->Token->TokenLength, index, buildUpToUse, buildUpToUseLength, resetBuildUp);
 
 	// Then, we'll mark this token as having been finalized.
 	token->Disabled = true;
@@ -535,7 +536,7 @@ int ABParserBase::QueueTokenAndReturnFinalizeResult(ABParserToken* token, int in
 		return 2;
 }
 
-void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp, bool isEnd) {
+void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
 
 	debugLog("Preparing leading and trailing for token.");
 	
@@ -548,11 +549,7 @@ void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wc
 	OnTokenProcessedLeadingLength = OnTokenProcessedTrailingLength;
 
 	// Now, we need to work out how much of the buildUp is what we really want, because the buildUp will contain this token or part of it at the end, and need to trim that off.
-	int trailingLength;
-	if (isEnd)
-		trailingLength = buildUpToUseLength;
-	else
-		trailingLength = tokenStart - (BeforeTokenProcessedToken == nullptr ? 0 : BeforeTokenProcessedTokenStart + BeforeTokenProcessedToken->GetLength());
+	int trailingLength = tokenStart - (BeforeTokenProcessedToken == nullptr ? 0 : BeforeTokenProcessedTokenStart + BeforeTokenProcessedToken->GetLength());
 
 	// Next, we need to create the new trailing, so, we'll take the buildUp, but shorten it just to the part that matters.
 	OnTokenProcessedTrailing = new wchar_t[trailingLength + 1];
@@ -567,6 +564,7 @@ void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wc
 	// Finally, reset the buildUp.
 	if (resetBuildUp)
 		buildUpLength = 0;
+
 }
 
 // ============
@@ -580,13 +578,13 @@ void ABParserBase::TrimFutureTokens() {
 	futureTokensHead++;
 }
 
-void ABParserBase::DisableFutureToken(ABParserFutureToken* futureToken, int index) {
+int ABParserBase::DisableFutureToken(ABParserFutureToken* futureToken, int index) {
 
 	futureToken->Disabled = true;
 
 	// If we're verifying, then make sure to check this disabled futureToken.
 	if (isVerifying)
-		CheckDisabledFutureToken(futureToken, index);
+		return CheckDisabledFutureToken(futureToken, index);
 }
 
 void ABParserBase::AddFutureToken(MultiCharToken* token) {

@@ -4,23 +4,48 @@
 
 class ABParserVerifyToken {
 public:
+	bool IsSingleChar;
 	SingleCharToken* SingleChar;
 	ABParserFutureToken* MultiChar;
-	bool IsSingleChar;
-	int Start;
 
-	ABParserVerifyToken(SingleCharToken* singleChar, int start) {
+	ABParserFutureToken** Triggers;
+	int TriggersLength;
+
+	wchar_t* TrailingBuildUp;
+	int TrailingBuildUpLength;
+
+	int* TriggerStarts;
+	int TriggerStartsLength;
+
+	int Start;
+	bool HasNoTriggers;
+
+	ABParserVerifyToken(SingleCharToken* singleChar, int start, wchar_t* trailingBuildUp) {
 		SingleChar = singleChar;
 		IsSingleChar = true;
 		MultiChar = nullptr;
 		Start = start;
+		Triggers = nullptr;
+		TriggersLength = 0;
+		TriggerStarts = nullptr;
+		TriggerStartsLength = 0;
+		HasNoTriggers = false;
+		TrailingBuildUp = trailingBuildUp;
+		TrailingBuildUpLength = 0;
 	}
 
-	ABParserVerifyToken(ABParserFutureToken* multiChar, int start) {
+	ABParserVerifyToken(ABParserFutureToken* multiChar, int start, wchar_t* trailingBuildUp) {
 		SingleChar = nullptr;
 		IsSingleChar = false;
 		MultiChar = multiChar;
 		Start = start;
+		Triggers = nullptr;
+		TriggersLength = 0;
+		TriggerStarts = nullptr;
+		TriggerStartsLength = 0;
+		HasNoTriggers = false;
+		TrailingBuildUp = trailingBuildUp;
+		TrailingBuildUpLength = 0;
 	}
 
 };

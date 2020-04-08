@@ -58,7 +58,7 @@ private:
 	// COLLECT
 	int ProcessChar(wchar_t ch);
 	void AddCharacterToBuildUp(wchar_t ch);
-	void UpdateCurrentFutureTokens(wchar_t ch);
+	int UpdateCurrentFutureTokens(wchar_t ch);
 	void AddNewFutureTokens(wchar_t ch);
 	int ProcessFinishedTokens(wchar_t ch);
 
@@ -67,7 +67,7 @@ private:
 	void StopVerify(int tokenIndex, bool wasFinalized);
 	bool PrepareSingleCharForVerification(wchar_t ch, SingleCharToken* token);
 	bool PrepareMultiCharForVerification(ABParserFutureToken* token, int index);
-	void CheckDisabledFutureToken(ABParserFutureToken* token, int index);
+	int CheckDisabledFutureToken(ABParserFutureToken* token, int index);
 	int CheckFinishedFutureToken(ABParserFutureToken* token, int index);
 	int FinalizeNextVerifyToken();
     ABParserVerifyToken* LoadCurrentTriggersInto(ABParserVerifyToken* token);
@@ -78,14 +78,14 @@ private:
 	int FinalizeToken(SingleCharToken* token, int index, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp);
 	int FinalizeToken(ABParserFutureToken* token, int index, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp);
 
-	void PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp, bool isEnd);
+	void PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wchar_t* buildUpToUse, int buildUpToUseLength, bool resetBuildUp);
 	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hasQueuedToken);
 
 	// HELPERS
 	void AddFutureToken(MultiCharToken* token);
 	void MarkFinishedFutureToken(ABParserFutureToken* futureToken);
 	void TrimFutureTokens();
-	void DisableFutureToken(ABParserFutureToken* futureToken, int index);
+	int DisableFutureToken(ABParserFutureToken* futureToken, int index);
 	void ResetCurrentTokens(bool deleteCurrentTokens);
 	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength);
 	void InitTokens(SingleCharToken* singleCharTokens, int singleCharTokensLength, MultiCharToken* multiCharTokens, int multiCharTokensLength);

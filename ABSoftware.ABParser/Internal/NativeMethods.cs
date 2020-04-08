@@ -20,10 +20,13 @@ namespace ABSoftware.ABParser.Internal
         internal static extern void InitializeTokens(string[] tokenData, int[] tokenLengths, int tokenDataLength, ref IntPtr outSingleCharTokens, ref IntPtr outMultiCharTokens, ref int outSingleCharTokensLength, ref int outMultiCharTokensLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void SetText(IntPtr parser, string text, int textLength);
+        internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort[] outData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort[] outData);
+        internal static extern void PrepareForParse(IntPtr parser, string text, int textLength);
+
+        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
+        internal static extern void DisposeDataForNextParse(IntPtr parser);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DeleteBaseParser(IntPtr baseParser);

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ABSoftware.ABParser
@@ -43,6 +44,10 @@ namespace ABSoftware.ABParser
         BeforeTokenProcessedEventArgs BeforeTokenProcessedArgs;
         OnTokenProcessedEventArgs OnTokenProcessedArgs;
 
+        bool _disposeAtDestruction = false;
+        bool _disposeAsyncronously = true;
+        bool _currentlyDisposing = false;
+
         #endregion
 
         #region Internal Management
@@ -59,13 +64,26 @@ namespace ABSoftware.ABParser
 
         internal void InitializeBaseParser(ABParserTokensArray tokens) => _baseParser = NativeMethods.CreateBaseParser(tokens.SingleCharTokensPointer, tokens.MultiCharTokensPointer, tokens.SingleCharTokensLength, tokens.MultiCharTokensLength);
 
-        internal void SetBaseParserText(ABParserText text)
+        internal void PrepareForParse(ABParserText text)
         {
             TextLength = text.GetLength();
-            NativeMethods.SetText(_baseParser, text.AsString(), TextLength);
+            NativeMethods.PrepareForParse(_baseParser, text.AsString(), TextLength);
 
             // Now that we know the size of text, we can generate the maximum size of the data.
-            Data = new ushort[text.GetLength() * 2 + 11];
+            Data = new ushort[TextLength * 2 + 11];
+        }
+
+        internal void DisposeDataForNextParse()
+        {
+            if (_disposeAsyncronously)
+            {
+                _currentlyDisposing = true;
+                Task.Run(() =>
+                {
+                    NativeMethods.DisposeDataForNextParse(_baseParser);
+                    _currentlyDisposing = false;
+                });
+            } else NativeMethods.DisposeDataForNextParse(_baseParser);
         }
 
         internal int TwoShortsToInteger(ushort[] arr, int index) => (arr[index] >> 16) + arr[index + 1];
@@ -171,6 +189,13 @@ namespace ABSoftware.ABParser
 
         internal void Execute()
         {
+            // If we're currently disposing, then wait until we're done before moving on.
+            while (_currentlyDisposing)
+                Thread.Sleep(1);
+
+            // Get ourselves ready for this parse.
+            PrepareForParse(Text);
+
             // Trigger the "OnStart".
             OnStart();
 
@@ -220,6 +245,10 @@ namespace ABSoftware.ABParser
             // Then, run "OnEnd" - for the leading, if we've never hit an "OnTokenProcessed", then this will just be the entire text, otherwise, we'll just pull the trailing from the last OnTokenProcessed to get this leading.
             OnEnd(FirstOnTokenProcessed ? Text : OnTokenProcessedArgs.Trailing);
 
+            // Finally, dispose all of the data - ready for the next parse.
+            if (!_disposeAtDestruction)
+                DisposeDataForNextParse();
+
         }
 
         #endregion
@@ -246,8 +275,14 @@ namespace ABSoftware.ABParser
 
         public void Start(ABParserText text)
         {
-            SetBaseParserText(Text = text);
+            Text = text;
             Execute();
+        }
+
+        public void ChangeDisposeConfiguration(bool disposeAtDestruction, bool disposeAsyncronously)
+        {
+            _disposeAtDestruction = disposeAtDestruction;
+            _disposeAsyncronously = disposeAsyncronously;
         }
 
         #endregion
@@ -255,7 +290,15 @@ namespace ABSoftware.ABParser
         #region Constructor / Dispose
 
         protected ABParser(ABParserTokensArray tokens) => InitializeABParser(tokens);
-        public void Dispose() => NativeMethods.DeleteBaseParser(_baseParser);
+        public async void Dispose()
+        {
+            while (_currentlyDisposing)
+                await Task.Delay(1);
+
+            if (_disposeAtDestruction)
+                DisposeDataForNextParse();
+            NativeMethods.DeleteBaseParser(_baseParser);
+        }
 
         #endregion
     }

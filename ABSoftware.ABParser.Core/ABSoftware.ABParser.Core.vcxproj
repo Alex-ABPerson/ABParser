@@ -90,7 +90,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\ABSoftware.ABParser.Testing\bin\Debug\</OutDir>
+    <OutDir>..\CoreBin\</OutDir>
     <TargetName>ABParserCore</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,6 +123,15 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemoryTests\bin\Debug"</Command>
+      <Message>Copies files to all test executable directories</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
