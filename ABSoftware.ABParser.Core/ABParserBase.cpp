@@ -11,11 +11,14 @@ using namespace std;
 
 // RESULTS:
 // 0 - None
-// 1 - Do Nothing
 // 2 - Stop
 // 3 - BeforeTokenProcessed
 // 4 - BeforeTokenProcessed+OnTokenProcessed
 int ABParserBase::ContinueExecution() {
+
+	// If we've only just started parsing the text, then reset everything and start again.
+	if (currentPosition == 0)
+		PrepareForParse();
 
 	// If we're finalizing all of the "verifyTokens", finalize the next one.
 	if (isFinalizingVerifyTokens)
@@ -540,7 +543,7 @@ void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wc
 	debugLog("Preparing leading and trailing for token.");
 	
 	// First, we need to move the trailing to the leading.
-	// NOTE: We delete data at the end because CPU usage is more important than just a tiny bit of RAM usage, so we just store the leading on our array of buildUps to delete.
+	// NOTE: We delete data at the end because CPU usage is more important than just a tiny bit of RAM usage, so we just store the leading on our array of buildUps to delete at the end.
 	// We are only deleting the leading, and not the buildUp because the buildUp is only ever allocated once, whereas the leading, which is set to the previous trailing, is allocated everytime, as you can see below.
 	if (OnTokenProcessedLeading)
 		buildUpsToDelete.push_back(OnTokenProcessedLeading);
@@ -561,8 +564,6 @@ void ABParserBase::PrepareLeadingAndTrailing(int tokenLength, int tokenStart, wc
 	for (int i = 0; i < trailingLength; i++)
 		OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
 	OnTokenProcessedTrailing[trailingLength] = 0;
-
-	buildUpsToDelete.push_back(buildUp);
 
 	// Finally, reset the buildUp.
 	if (resetBuildUp)
@@ -627,7 +628,7 @@ void ABParserBase::ConfigureCurrentTokens(int* validSingleCharTokens, int single
 };
 
 
-void ABParserBase::ResetCurrentTokens(bool deleteCurrentTokens) {
+void ABParserBase::ResetCurrentTokens() {
 
 
 	// If the "SingleCharCurrentTokens" variable is already pointing to "SingleCharTokens", then we won't need to bother resetting it again.
@@ -743,7 +744,7 @@ ABParserBase::~ABParserBase() {
 
 }
 
-void ABParserBase::PrepareForParse(unsigned short* text, int textLength) {
+void ABParserBase::PrepareForParse() {
 	debugLog("Preparing for a parse.");
 
 	OnTokenProcessedLeading = NULL;
@@ -755,11 +756,8 @@ void ABParserBase::PrepareForParse(unsigned short* text, int textLength) {
 	futureTokensTail = 0;
 	buildUpLength = 0;
 
-	// Initialize the string.
-	InitString(text, textLength);
-
 	// Configure the current tokens.
-	ResetCurrentTokens(false);
+	ResetCurrentTokens();
 }
 
 void ABParserBase::DisposeDataForNextParse() {

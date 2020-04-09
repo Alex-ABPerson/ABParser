@@ -23,7 +23,7 @@ namespace ABSoftware.ABParser.Internal
         internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort[] outData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void PrepareForParse(IntPtr parser, string text, int textLength);
+        internal static extern void InitString(IntPtr parser, string text, int textLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DisposeDataForNextParse(IntPtr parser);

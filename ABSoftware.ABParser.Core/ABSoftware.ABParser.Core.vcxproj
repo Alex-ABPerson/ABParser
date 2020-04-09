@@ -129,7 +129,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemoryTests\bin\Debug"</Command>
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemoryTests\bin\Debug" 
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"</Command>
       <Message>Copies files to all test executable directories</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

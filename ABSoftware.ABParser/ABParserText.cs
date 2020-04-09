@@ -12,6 +12,8 @@ namespace ABSoftware.ABParser
     /// </summary>
     public class ABParserText
     {
+        public static readonly ABParserText Empty = new ABParserText(new char[] { });
+
         enum OriginalDataType
         {
             StringBuilder,

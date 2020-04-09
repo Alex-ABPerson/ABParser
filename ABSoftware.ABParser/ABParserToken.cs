@@ -30,5 +30,12 @@ namespace ABSoftware.ABParser
             TokenData = tokenData;
             TokenTag = tag;
         }
+
+        public ABParserToken(ABParserText nameAndData, object tag = null)
+        {
+            TokenName = nameAndData;
+            TokenData = nameAndData;
+            TokenTag = tag;
+        }
     }
 }

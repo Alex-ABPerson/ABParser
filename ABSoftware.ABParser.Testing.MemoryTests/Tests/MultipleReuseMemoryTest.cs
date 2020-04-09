@@ -15,8 +15,9 @@ namespace ABSoftware.ABParser.Testing.MemoryTests.Tests
         {
             using (var parser = new TestParser())
             {
+                parser.SetText(new ABParserText("AtheBtheyCtheyarDtheyareE"));
                 for (int i = 0; i < 1000; i++)
-                    parser.Start(new ABParserText("AtheBtheyCtheyarDtheyareE"));
+                    parser.Start();
             }
         }
     }

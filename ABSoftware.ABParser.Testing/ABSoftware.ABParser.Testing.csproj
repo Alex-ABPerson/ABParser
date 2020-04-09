@@ -52,6 +52,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ABSoftware.ABParser.Testing.UnitTests\ABSoftware.ABParser.Testing.UnitTests.csproj">
+      <Project>{a2216946-7510-435c-8dad-15d652788c11}</Project>
+      <Name>ABSoftware.ABParser.Testing.UnitTests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ABSoftware.ABParser\ABSoftware.ABParser.csproj">
       <Project>{dfd01552-dacc-4deb-bf23-6203932ce7ff}</Project>
       <Name>ABSoftware.ABParser</Name>

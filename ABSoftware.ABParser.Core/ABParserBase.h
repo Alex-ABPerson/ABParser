@@ -86,7 +86,7 @@ private:
 	void MarkFinishedFutureToken(ABParserFutureToken* futureToken);
 	void TrimFutureTokens();
 	void DisableFutureToken(ABParserFutureToken* futureToken, int index);
-	void ResetCurrentTokens(bool deleteCurrentTokens);
+	void ResetCurrentTokens();
 	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength);
 	void InitTokens(SingleCharToken* singleCharTokens, int singleCharTokensLength, MultiCharToken* multiCharTokens, int multiCharTokensLength);
 	void AddVerifyToken(ABParserVerifyToken* token);
@@ -123,7 +123,7 @@ public:
 	~ABParserBase();
 
 	// Prepares for the next parse.
-	void PrepareForParse(unsigned short* text, int textLength);
+	void PrepareForParse();
 
 	// Disposes data after a parse has been completed.
 	void DisposeDataForNextParse();

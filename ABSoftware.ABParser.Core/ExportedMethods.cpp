@@ -49,10 +49,12 @@ extern "C" {
 		case 1: // Stop
 		case 2: // BeforeTokenProcessed
 			{
-				outData[0] = parser->BeforeTokenProcessedToken->MixedIdx;
-				ConvertIntegerToTwoShorts(parser->BeforeTokenProcessedTokenStart, outData, 1);
+				// The wrapper will know whether these events have been triggered, and will ignore these if so.
+				if (parser->BeforeTokenProcessedToken != NULL) {
+					outData[0] = parser->BeforeTokenProcessedToken->MixedIdx;
+					ConvertIntegerToTwoShorts(parser->BeforeTokenProcessedTokenStart, outData, 1);
+				}
 
-				// The wrapper will know whether this is the first BeforeTokenProcessed or not, and will ignore this if so.
 				if (parser->OnTokenProcessedToken != NULL) {
 					outData[3] = parser->OnTokenProcessedToken->MixedIdx;
 					ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 4);
@@ -88,8 +90,8 @@ extern "C" {
 		return result;
 	}
 
-	EXPORT void PrepareForParse(ABParserBase* parser, unsigned short* text, int textLength) {
-		parser->PrepareForParse(text, textLength);
+	EXPORT void InitString(ABParserBase* parser, unsigned short* text, int textLength) {
+		parser->InitString(text, textLength);
 	}
 
 	EXPORT void DisposeDataForNextParse(ABParserBase* parser) {

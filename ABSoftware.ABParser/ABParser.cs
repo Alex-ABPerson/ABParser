@@ -42,6 +42,8 @@ namespace ABSoftware.ABParser
         bool FirstOnTokenProcessed = true;
 
         BeforeTokenProcessedEventArgs BeforeTokenProcessedArgs;
+
+        bool EndHasOnTokenProcessed;
         OnTokenProcessedEventArgs OnTokenProcessedArgs;
 
         bool _disposeAtDestruction = false;
@@ -64,20 +66,33 @@ namespace ABSoftware.ABParser
 
         internal void InitializeBaseParser(ABParserTokensArray tokens) => _baseParser = NativeMethods.CreateBaseParser(tokens.SingleCharTokensPointer, tokens.MultiCharTokensPointer, tokens.SingleCharTokensLength, tokens.MultiCharTokensLength);
 
-        internal void PrepareForParse(ABParserText text)
+        internal void InitString(ABParserText text)
         {
+            Text = text;
             TextLength = text.GetLength();
-            NativeMethods.PrepareForParse(_baseParser, text.AsString(), TextLength);
+            NativeMethods.InitString(_baseParser, text.AsString(), TextLength);
 
-            // Now that we know the size of text, we can generate the maximum size of the data.
+            // Now that we know the size of text, we can generate the maximum size of the data we will recieve for events.
             Data = new ushort[TextLength * 2 + 11];
+        }
+
+        internal void ResetInfo()
+        {
+            BeforeTokenProcessedArgs = null;
+            OnTokenProcessedArgs = null;
+            EndHasOnTokenProcessed = false;
+            FirstBeforeTokenProcessed = true;
+            FirstOnTokenProcessed = true;
         }
 
         internal void DisposeDataForNextParse()
         {
             if (_disposeAsyncronously)
             {
+                if (_currentlyDisposing) 
+                    return;
                 _currentlyDisposing = true;
+                
                 Task.Run(() =>
                 {
                     NativeMethods.DisposeDataForNextParse(_baseParser);
@@ -111,6 +126,13 @@ namespace ABSoftware.ABParser
                 case ContinueExecutionResult.Stop:
                 case ContinueExecutionResult.BeforeTokenProcessed:
 
+                    // If this is a stop and we haven't had a single "BeforeTokenProcessed" yet, then we encountered no tokens and we shouldn't do anything.
+                    if (result == ContinueExecutionResult.Stop && FirstBeforeTokenProcessed)
+                    {
+                        EndHasOnTokenProcessed = false;
+                        return;
+                    }
+
                     // If this is a "Stop" command, we'll generate some "OnTokenProcessedEventArgs", otherwise, we'll generate a "BeforeTokenProcessedEventArgs".
                     var eventArgs = result == ContinueExecutionResult.Stop ? (TokenProcessedEventArgs)new OnTokenProcessedEventArgs(this) : new BeforeTokenProcessedEventArgs(this);
 
@@ -134,6 +156,7 @@ namespace ABSoftware.ABParser
                         // Give it the trailing.
                         ShortsToString(Data, leadingEnd, out var trailing);
                         OnTokenProcessedArgs.Trailing = trailing;
+                        EndHasOnTokenProcessed = true;
                     }
 
                     // Otherwise, if we're creating a "BeforeTokenProcessed" event, then set the "BeforeTokenProcessedArgs".
@@ -187,14 +210,18 @@ namespace ABSoftware.ABParser
 
         #region Main Execution
 
-        internal void Execute()
+        internal async Task Execute()
         {
+            // Don't do anything if there isn't any text to parse.
+            if (TextLength == 0)
+            {
+                OnStart();
+                OnEnd(new ABParserText(""));
+            }
+
             // If we're currently disposing, then wait until we're done before moving on.
             while (_currentlyDisposing)
-                Thread.Sleep(1);
-
-            // Get ourselves ready for this parse.
-            PrepareForParse(Text);
+                await Task.Delay(1);
 
             // Trigger the "OnStart".
             OnStart();
@@ -214,6 +241,9 @@ namespace ABSoftware.ABParser
                 switch (result)
                 {
                     case ContinueExecutionResult.Stop:
+
+                        if (!EndHasOnTokenProcessed)
+                            break;
 
                         OnTokenProcessed(OnTokenProcessedArgs);
                         break;
@@ -242,8 +272,8 @@ namespace ABSoftware.ABParser
                 }
             }
 
-            // Then, run "OnEnd" - for the leading, if we've never hit an "OnTokenProcessed", then this will just be the entire text, otherwise, we'll just pull the trailing from the last OnTokenProcessed to get this leading.
-            OnEnd(FirstOnTokenProcessed ? Text : OnTokenProcessedArgs.Trailing);
+            // Then, run "OnEnd", simply using the trailing from the past "OnTokenProcessed".
+            OnEnd(OnTokenProcessedArgs == null ? Text : OnTokenProcessedArgs.Trailing);
 
             // Finally, dispose all of the data - ready for the next parse.
             if (!_disposeAtDestruction)
@@ -273,10 +303,24 @@ namespace ABSoftware.ABParser
 
         #region Public Methods
 
-        public void Start(ABParserText text)
+        public void SetText(ABParserText text) => SetTextAsync(text).Wait();
+
+        public Task SetTextAsync(ABParserText text)
         {
-            Text = text;
-            Execute();
+            return Task.Run(() =>
+            {
+                InitString(text);
+            });
+        }
+
+        public void Start() => StartAsync().Wait();
+
+        public async Task StartAsync()
+        {
+            if (Text == null)
+                throw new Exception("The text hasn't been initialized yet!");
+            ResetInfo();
+            await Execute();
         }
 
         public void ChangeDisposeConfiguration(bool disposeAtDestruction, bool disposeAsyncronously)
