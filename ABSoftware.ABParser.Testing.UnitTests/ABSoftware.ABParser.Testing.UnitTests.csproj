@@ -50,10 +50,15 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ABParserBasicFunctionality.cs" />
-    <Compile Include="BasicFunctionality\ABParserSingleTokenParser.cs" />
+    <Compile Include="BasicFunctionality\NoVerifyTests.cs" />
+    <Compile Include="Parsers\NoTokensParser.cs" />
+    <Compile Include="Parsers\SingleTokenParser.cs" />
+    <Compile Include="Parsers\TheyParser.cs" />
+    <Compile Include="BasicFunctionality\VerifyTests.cs" />
+    <Compile Include="Other\UniqueScenarioTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrackingParser.cs" />
+    <Compile Include="UnitTestBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -63,6 +68,9 @@
       <Project>{dfd01552-dacc-4deb-bf23-6203932ce7ff}</Project>
       <Name>ABSoftware.ABParser</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\General\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

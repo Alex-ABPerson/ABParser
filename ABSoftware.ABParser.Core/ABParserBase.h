@@ -32,13 +32,18 @@ private:
 	ABParserVerifyToken* currentVerifyToken;
 	
 	// As we're preparing a token for verification, we'll use this temporaily.
-	vector<ABParserFutureToken*> currentVerifyTriggers; // TODO: WTF is this?!
+	vector<ABParserFutureToken*> currentVerifyTriggers;
 	vector<int> currentVerifyTriggerStarts;
 
 	bool hasQueuedToken;
 
+	// When verify tokens are finalized, the buildUp is pushed forwards to make it point towards the last verify tokens' trailing, since that is the correct leading for the next token. This is the buildUp without any of that "movement".
+	wchar_t* buildUpStart;
+
 	wchar_t* buildUp;
 	int buildUpLength;
+
+	int buildUpOffset;
 
 	// Whether the "CurrentTokens" array actually just points to the "Tokens" array.
 	// We can use this to decide whether to "delete" CurrentTokens when configuring/resetting it.
@@ -127,5 +132,6 @@ public:
 
 	// Disposes data after a parse has been completed.
 	void DisposeDataForNextParse();
+	void DisposeForTextChange(bool disposeBuildUpAndFutureTokens);
 
 };

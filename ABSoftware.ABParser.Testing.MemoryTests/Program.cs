@@ -27,7 +27,7 @@ namespace ABSoftware.ABParser.Testing.MemoryTests
 
             // 2. Start debugging, and the program will break on the line below, then, go into the diagnostic tools, and the "Memory Usage" tab, and choose "Take Snapshot" - ensure "Heap Profiling" is turned on.
             // 3. Then, click on "Continue".
-            //Debugger.Break();
+            Debugger.Break();
 
             for (int i = 0; i < tests.Length; i++)
                 tests[i].Run();
@@ -36,7 +36,7 @@ namespace ABSoftware.ABParser.Testing.MemoryTests
 
             // 4. The program will break on this line after a while. Then, click on "Take Snapshot" AGAIN.
             // 5. Now, if you look at the second snapshot you can see the size changes - but, we're mainly interesting in looking at the native objects left. So, on the "Native Allocations" columns, click on the number (not the one with the arrow after).
-            //Debugger.Break();
+            Debugger.Break();
 
             // 6. You can now see all of the objects that were left lying around! The ONLY objects that SHOULD be there are the tokens and one wchar_t array for each of those tokens.
             // 7. If you do see others objects in there, try firstly increasing the 5 seconds up there to something higher, and if that still doesn't fix it - then there's a memory leak in ABParser!

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using ABSoftware.ABParser.Events;
-using ABSoftware.ABParser.Testing.JSTest;
-using ABSoftware.ABParser.Testing.UnitTests;
-using ABSoftware.ABParser.Testing.UnitTests.BasicFunctionality;
+using ABSoftware.ABParser.Testing.UnitTests.Parsers;
 
 namespace ABSoftware.ABParser.Testing
 {
@@ -26,8 +24,9 @@ namespace ABSoftware.ABParser.Testing
         public static void Main()
         {
             //for (int i = 0; i < 1000; i++)
-            using (var parser = new ABParserSingleTokenParser())
+            using (var parser = new ABParserTheyParser())
             {
+                parser.SetText(new ABParserText("AtheBtheyCtheyarDtheyareE"));
                 //var stopwatch = Stopwatch.StartNew();
                 //parser.Start(new ABParserText("AtheBtheyCtheyarDtheyareE"));
                 parser.Start();

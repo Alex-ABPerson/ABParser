@@ -48,4 +48,13 @@ public:
 		TrailingBuildUpLength = 0;
 	}
 
+	~ABParserVerifyToken() {
+		delete[] Triggers;
+		delete[] TriggerStarts;
+		TrailingBuildUp = nullptr;
+		SingleChar = nullptr;
+		MultiChar = nullptr;
+
+	}
+
 };

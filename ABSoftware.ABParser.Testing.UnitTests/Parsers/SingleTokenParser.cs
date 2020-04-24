@@ -6,7 +6,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ABSoftware.ABParser.Testing.UnitTests.BasicFunctionality
+namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
     public class ABParserSingleTokenParser : TrackingParser
     {

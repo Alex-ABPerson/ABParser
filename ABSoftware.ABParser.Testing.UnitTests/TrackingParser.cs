@@ -22,6 +22,21 @@ namespace ABSoftware.ABParser.Testing.UnitTests
 
         public string EndLeading;
 
+        protected override void OnStart()
+        {
+            BeforeTokenProcessedLeadings = new List<string>();
+            BeforeTokenProcessedPreviousTokens = new List<string>();
+            BeforeTokenProcessedTokens = new List<string>();
+
+            OnTokenProcessedLeadings = new List<string>();
+            OnTokenProcessedTrailings = new List<string>();
+            OnTokenProcessedPreviousTokens = new List<string>();
+            OnTokenProcessedTokens = new List<string>();
+            OnTokenProcessedNextTokens = new List<string>();
+
+            EndLeading = null;
+        }
+
         public TrackingParser(ABParserTokensArray tokensArray) : base(tokensArray) { }
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
@@ -43,6 +58,19 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         protected override void OnEnd(ABParserText leading)
         {
             EndLeading = leading.AsString();
+        }
+        
+        public TrackingParser Test(string toTest, string[] expected, string leadingEndExpected)
+        {
+            switch (toTest)
+            {
+                case "Leadings": return TestLeadings(expected, leadingEndExpected);
+                case "Trailings": return TestTrailings(expected);
+                case "PreviousTokens": return TestPreviousTokens(expected);
+                case "Tokens": return TestTokens(expected);
+                case "NextTokens": return TestNextTokens(expected);
+                default: throw new Exception("INVALID TEST MODE");
+            }
         }
 
         public TrackingParser TestLeadings(string[] expected, string endExpected) => TestLeadings(expected, expected, endExpected);

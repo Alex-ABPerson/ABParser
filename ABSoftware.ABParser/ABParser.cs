@@ -46,6 +46,7 @@ namespace ABSoftware.ABParser
         bool EndHasOnTokenProcessed;
         OnTokenProcessedEventArgs OnTokenProcessedArgs;
 
+        bool _disposedForNextParse = false;
         bool _disposeAtDestruction = false;
         bool _disposeAsyncronously = true;
         bool _currentlyDisposing = false;
@@ -85,15 +86,18 @@ namespace ABSoftware.ABParser
             FirstOnTokenProcessed = true;
         }
 
-        internal void DisposeDataForNextParse()
+        internal async void DisposeDataForNextParse()
         {
+            if (_disposedForNextParse)
+                return;
+            _disposedForNextParse = true;
             if (_disposeAsyncronously)
             {
                 if (_currentlyDisposing) 
                     return;
                 _currentlyDisposing = true;
-                
-                Task.Run(() =>
+
+                await Task.Run(() =>
                 {
                     NativeMethods.DisposeDataForNextParse(_baseParser);
                     _currentlyDisposing = false;
@@ -276,6 +280,7 @@ namespace ABSoftware.ABParser
             OnEnd(OnTokenProcessedArgs == null ? Text : OnTokenProcessedArgs.Trailing);
 
             // Finally, dispose all of the data - ready for the next parse.
+            _disposedForNextParse = false;
             if (!_disposeAtDestruction)
                 DisposeDataForNextParse();
 
@@ -338,8 +343,7 @@ namespace ABSoftware.ABParser
         {
             while (_currentlyDisposing)
                 await Task.Delay(1);
-
-            if (_disposeAtDestruction)
+            if (_disposeAtDestruction && !_disposedForNextParse)
                 DisposeDataForNextParse();
             NativeMethods.DeleteBaseParser(_baseParser);
         }
