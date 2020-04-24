@@ -1,9 +1,7 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
+#include "HelperClasses.h"
 #include "Debugging.h"
-#include "SingleCharToken.h"
-#include "MultiCharToken.h"
-#include "ABParserVerifyToken.h"
 #include <cstring>
 #include <wchar.h>
 

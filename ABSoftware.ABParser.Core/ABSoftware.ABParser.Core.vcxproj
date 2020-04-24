@@ -20,18 +20,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ABParserBase.h" />
-    <ClInclude Include="ABParserFutureToken.h" />
-    <ClInclude Include="ABParserToken.h" />
-    <ClInclude Include="ABParserVerifyToken.h" />
     <ClInclude Include="Debugging.h" />
-    <ClInclude Include="MultiCharToken.h" />
+    <ClInclude Include="HelperClasses.h" />
     <ClInclude Include="PlatformImplementation.h" />
-    <ClInclude Include="SingleCharToken.h" />
     <ClInclude Include="TokenManagement.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ABParserBase.cpp" />
     <ClCompile Include="Debugging.cpp" />
+    <ClCompile Include="HelperClasses.cpp" />
     <ClCompile Include="TokenManagement.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

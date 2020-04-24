@@ -21,25 +21,13 @@
     <ClInclude Include="ABParserBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ABParserFutureToken.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Debugging.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MultiCharToken.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SingleCharToken.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ABParserToken.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TokenManagement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ABParserVerifyToken.h">
+    <ClInclude Include="HelperClasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -51,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TokenManagement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HelperClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,8 +1,5 @@
 #pragma once
-#include "ABParserFutureToken.h"
-#include "SingleCharToken.h"
-#include "MultiCharToken.h"
-#include "ABParserVerifyToken.h"
+#include "HelperClasses.h"
 #include <vector>
 using namespace std;
 
