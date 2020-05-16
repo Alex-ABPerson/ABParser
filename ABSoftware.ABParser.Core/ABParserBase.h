@@ -54,7 +54,6 @@ private:
 	int multiCharCurrentTokensLength;
 	
 	// DISPOSAL
-	vector<wchar_t*> buildUpsToDelete;
 	vector<ABParserVerifyToken*> verifyTokensToDelete;
 
 	// COLLECT

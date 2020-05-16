@@ -27,7 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ABParserBase.cpp" />
-    <ClCompile Include="Debugging.cpp" />
     <ClCompile Include="HelperClasses.cpp" />
     <ClCompile Include="TokenManagement.cpp" />
   </ItemGroup>

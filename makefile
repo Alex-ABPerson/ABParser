@@ -34,13 +34,11 @@ CPPT_MACOSX_FINAL := ${CPPT_MACOSX_OUTDIR}/final.out
 
 # ABSOFTWARE.ABPARSER.CORE:
 CORE_LINUX_OUT_FILES := \
-	${CORE_LINUX_OUTDIR}/Debugging.o \
 	${CORE_LINUX_OUTDIR}/ABParserBase.o \
 	${CORE_LINUX_OUTDIR}/TokenManagement.o \
 	${CORE_LINUX_OUTDIR}/HelperClasses.o 
 
 CORE_MACOSX_OUT_FILES := \
-	${CORE_MACOSX_OUTDIR}/Debugging.o \
 	${CORE_MACOSX_OUTDIR}/ABParserBase.o \
 	${CORE_MACOSX_OUTDIR}/TokenManagement.o \
 	${CORE_MACOSX_OUTDIR}/HelperClasses.o
@@ -62,8 +60,6 @@ CPPT_MACOSX_OUT_FILES := ${CPPT_MACOSX_OUTDIR}/Main.o
 # CPP File always comes first!
 
 # ABSOFTWARE.ABPARSER.CORE:
-# Debugging.o
-${CORE_LINUX_OUTDIR}/Debugging.o ${CORE_MACOSX_OUTDIR}/Debugging.o: ${CORE_DIR}/Debugging.cpp ${CORE_DIR}/Debugging.h 
 
 # ABParserBase.o
 ${CORE_LINUX_OUTDIR}/ABParserBase.o ${CORE_MACOSX_OUTDIR}/ABParserBase.o: \
@@ -96,7 +92,6 @@ ${CPPT_LINUX_OUTDIR}/Main.o ${CPPT_MACOSX_OUTDIR}/Main.o: \
 	${CPPT_DIR}/Main.cpp \
 	${CORE_DIR}/ABParserBase.h
 
-${CORE_DIR}/Debugging.h: ${CORE_DIR}/Debugging.cpp
 # ====================================
 # MODES:
 # ====================================

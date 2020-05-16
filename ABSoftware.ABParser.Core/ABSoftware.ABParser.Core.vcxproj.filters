@@ -35,9 +35,6 @@
     <ClCompile Include="ABParserBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debugging.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TokenManagement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
