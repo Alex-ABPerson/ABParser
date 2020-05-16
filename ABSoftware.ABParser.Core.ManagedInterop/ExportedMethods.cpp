@@ -50,12 +50,12 @@ extern "C" {
 		case 2: // BeforeTokenProcessed
 			{
 				// The wrapper will know whether these events have been triggered, and will ignore these if so.
-				if (parser->BeforeTokenProcessedToken != NULL) {
+				if (parser->BeforeTokenProcessedToken != nullptr) {
 					outData[0] = parser->BeforeTokenProcessedToken->MixedIdx;
 					ConvertIntegerToTwoShorts(parser->BeforeTokenProcessedTokenStart, outData, 1);
 				}
 
-				if (parser->OnTokenProcessedToken != NULL) {
+				if (parser->OnTokenProcessedToken != nullptr) {
 					outData[3] = parser->OnTokenProcessedToken->MixedIdx;
 					ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 4);
 				}
@@ -74,7 +74,7 @@ extern "C" {
 				outData[0] = parser->OnTokenProcessedToken->MixedIdx;
 				ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 1);
 				
-				if (parser->OnTokenProcessedPreviousToken != NULL) {
+				if (parser->OnTokenProcessedPreviousToken != nullptr) {
 					outData[3] = parser->OnTokenProcessedPreviousToken->MixedIdx;
 					ConvertIntegerToTwoShorts(parser->OnTokenProcessedPreviousTokenStart, outData, 4);
 				}

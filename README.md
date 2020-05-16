@@ -23,7 +23,15 @@ When compiling, you must make sure that in the header file `PlatformImplementati
 
 Then, if you're compiling for Windows, it's recommended that you use MSBuild. Because, the `.vcxproj` has been configured to place `__cdecl` on all of the methods. And if you're not using the MSBuild it won't pick up on that, causing the `DllImport` to not work. MSBuild is configured to compile straight into the same directory as the C# testing program.
 
-If you're compiling for Linux, there's a `makefile` on the C++ project, which is already configured (provided you don't add any files). So, just type "make compileAndCopy" which will compile the project and copy it to the C# test project. You can also use "make testWithMono" which will copy the files and actually launch the project!
+If you're compiling for Linux or MacOSX, there's a `makefile` on the C++ project, which is already configured (provided you don't add any files).
+
+The makefile has a couple of modes, you can write `make compileAll` to compile everything, and `make clean` to clean-up. So if you wanted to do a complete re-build, use `clean` followed by `compileAll`. **These will automatically copy the libraries into the correct testing places.**
+
+There are also some other modes like `make testWithMono` which will compile and execute the "ABSoftware.ABParser.Testing" project using Mono (make sure you have mono installed for this to work).
+
+## Unit Tests
+
+There is an MSTest Unit testing system in place, this will mostly only work from Visual Studio on Windows however.
 
 ## License
 

@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\ABSoftware.ABParser.Core\ExportedMethods.cpp">
+    <ClCompile Include="ExportedMethods.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

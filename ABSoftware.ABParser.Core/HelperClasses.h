@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _INCLUDE_HELPER_CLASSES_H
+#define _INCLUDE_HELPER_CLASSES_H
 class ABParserToken {
 public:
 	// When we created an instance of ABParser, the single-char tokens and multi-char tokens were mixed together, this is at what index this token would've been mixed in.
@@ -55,3 +56,4 @@ public:
 	~ABParserVerifyToken();
 
 };
+#endif

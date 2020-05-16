@@ -1,6 +1,5 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
-#include "HelperClasses.h"
 #include "Debugging.h"
 #include <cstring>
 #include <wchar.h>
@@ -29,6 +28,7 @@ int ABParserBase::ContinueExecution() {
 	// Continue going through characters.
 	for (; currentPosition < TextLength; currentPosition++) {
 		debugLog("Current Position: %d", currentPosition);
+
 		int res = ProcessChar(Text[currentPosition]);
 
 		// If we got a result back from the "ProcessChar", return that, otherwise just keep going - make sure to increment the currentPosition, however, so that way when we get back, it will be incremented by one.
@@ -730,6 +730,7 @@ ABParserBase::ABParserBase(SingleCharToken* singleCharTokens, int singleCharToke
 	hasQueuedToken = false;
 	buildUpStart = nullptr;
 	futureTokens = nullptr;
+	currentPosition = 0;
 
 	currentVerifyTriggers.reserve(multiCharTokensLength);
 	currentVerifyTriggerStarts.reserve(multiCharTokensLength);
@@ -746,13 +747,12 @@ ABParserBase::ABParserBase(SingleCharToken* singleCharTokens, int singleCharToke
 ABParserBase::~ABParserBase() {
 	debugLog("Disposing data for complete parser deletion.");
 
-	delete[] buildUpStart;
-	delete[] Text;
 	// Don't delete the Single/MultiCharTokens - that would be deleting the "ABParserTokensArray", which is created once at application start, and can be reused, and so should remain for the lifetime of the application.
-	// However, we do dispose the CURRENT Single/MultiCharTokens. But, by using "free", because using "delete" would destruct the pointers in the "ABParserTokensArray", which, as we just said, shouldn't be destructed ever.
+	// However, we do dispose the CURRENT Single/MultiCharTokens. Using "free", because using "delete" would destruct the pointers in the "ABParserTokensArray", which, shouldn't be destructed ever.
 	free(singleCharCurrentTokens);
 	free(multiCharCurrentTokens);
 
+	DisposeForTextChange(true);
 }
 
 void ABParserBase::PrepareForParse() {
@@ -773,6 +773,7 @@ void ABParserBase::PrepareForParse() {
 	isFinalizingVerifyTokens = false;
 	hasQueuedToken = false;
 	buildUpLength = 0;
+	buildUp = buildUpStart;
 
 	// Configure the current tokens.
 	ResetCurrentTokens();

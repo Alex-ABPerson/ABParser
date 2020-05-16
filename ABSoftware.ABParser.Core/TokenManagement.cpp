@@ -28,10 +28,12 @@ void SortTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens, 
 			int length = tokenLengths[i];
 			wchar_t** tokenContents = &multiCharTokens[multiCharTokensLength].TokenContents;
 			*tokenContents = new wchar_t[length];
-			for (int j = 0; j < length; j++)
+			debugLog("Hmm: %u", tokens[i][0]);
+			for (int j = 0; j < length; j++) {
+				(*tokenContents)[j] = 0;
 				memcpy(&(*tokenContents)[j], &tokens[i][j], sizeof(unsigned short));
+			}
 			multiCharTokens[multiCharTokensLength++].TokenLength = length;
-
 		}
 	}
 

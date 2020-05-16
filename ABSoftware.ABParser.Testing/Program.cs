@@ -42,7 +42,7 @@ namespace ABSoftware.ABParser.Testing
             //Console.ReadLine();
 
             // We're now done with it.
-            //Console.ReadLine();
+            Console.ReadLine();
         }
     }
 }
