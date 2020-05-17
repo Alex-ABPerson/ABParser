@@ -22,7 +22,7 @@ namespace ABSoftware.ABParser.Testing.MemoryTests
             // 1. Choose which tests you want to run - to look at all of the tests available, simply look inside the "Tests" directory in this project.
             var tests = new MemoryTest[]
             {
-                new MultipleReuseMemoryTest()
+                new MultipleStringSetsTest()
             };
 
             // 2. Start debugging, and the program will break on the line below, then, go into the diagnostic tools, and the "Memory Usage" tab, and choose "Take Snapshot" - ensure "Heap Profiling" is turned on.

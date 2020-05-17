@@ -90,12 +90,8 @@ void ABParserBase::UpdateCurrentFutureTokens(wchar_t ch) {
 	{
 		for (int j = 0; j < NumberOfMultiCharTokens; j++)
 		{
-			// The futureToken array ends on a null pointer.
-			if (futureTokens[i][j] == nullptr)
-				break;
-
-			if (futureTokens[i][j]->Disabled)
-				continue;
+			if (futureTokens[i][j] == nullptr) break;
+			if (futureTokens[i][j]->Disabled) continue;
 
 			hasUnfinalizedFutureToken = true;
 
@@ -129,7 +125,7 @@ void ABParserBase::AddNewFutureTokens(wchar_t ch) {
 	futureTokens[currentPosition][0] = nullptr;
 
 	for (int i = 0; i < multiCharCurrentTokensLength; i++)
-		if ((unsigned short)multiCharCurrentTokens[i]->TokenContents[0] == (unsigned short)ch)
+		if (multiCharCurrentTokens[i]->TokenContents[0] == ch)
 			AddFutureToken(multiCharCurrentTokens[i]);
 }
 
@@ -144,12 +140,8 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 		// We'll ignore if there are two tokens both finished, as the only way that can occur is if two tokens are identical.
 		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
 
-			// The futureToken array ends on a null pointer.
-			if (futureTokens[i][j] == nullptr)
-				break;
-
-			if (futureTokens[i][j]->Disabled)
-				continue;
+			if (futureTokens[i][j] == nullptr) break;
+			if (futureTokens[i][j]->Disabled) continue;
 
 			if (futureTokens[i][j]->Finished) {
 
@@ -176,7 +168,7 @@ int ABParserBase::ProcessFinishedTokens(wchar_t ch) {
 
 	for (int i = 0; i < singleCharCurrentTokensLength; i++) {
 		debugLog("Testing single-char: %c vs %c", singleCharCurrentTokens[i]->TokenChar, ch);
-		if ((unsigned short)singleCharCurrentTokens[i]->TokenChar == (unsigned short)ch) {
+		if (singleCharCurrentTokens[i]->TokenChar == ch) {
 
 			debugLog("Finished single-char token!");
 
@@ -206,11 +198,8 @@ bool ABParserBase::PrepareSingleCharForVerification(wchar_t ch, SingleCharToken*
 		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
 
 			// The futureToken array ends on a null pointer.
-			if (futureTokens[i][j] == nullptr)
-				break;
-
-			if (futureTokens[i][j]->Finished || futureTokens[i][j]->Disabled)
-				continue;
+			if (futureTokens[i][j] == nullptr) break;
+			if (futureTokens[i][j]->Finished || futureTokens[i][j]->Disabled) continue;
 
 			ABParserFutureToken* multiCharToken = futureTokens[i][j];
 			if (multiCharToken->Token->TokenContents[currentPosition - i] == ch) {
@@ -249,11 +238,8 @@ bool ABParserBase::PrepareMultiCharForVerification(ABParserFutureToken* token, i
 		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
 
 			// The futureToken array ends on a null pointer.
-			if (futureTokens[i][j] == nullptr)
-				break;
-
-			if (futureTokens[i][j]->Finished || futureTokens[i][j]->Disabled)
-				continue;
+			if (futureTokens[i][j] == nullptr) break;
+			if (futureTokens[i][j]->Finished || futureTokens[i][j]->Disabled) continue;
 
 			ABParserFutureToken* futureToken = futureTokens[i][j];
 			MultiCharToken* multiCharToken = futureToken->Token;
@@ -302,7 +288,8 @@ void ABParserBase::StopVerify(int tokenIndex, bool wasFinalized) {
 	// If this token was finalized, then we'll stop ALL other verifications going on.
 	if (wasFinalized) {
 		if (verifyTokens.size()) {
-			verifyTokensToDelete.insert(verifyTokensToDelete.begin(), verifyTokens.begin(), verifyTokens.end());
+			for (size_t i = 0; i < verifyTokens.size(); i++)
+				verifyTokensToDelete.push_back(verifyTokens[i]);
 			verifyTokens.clear();
 		}
 
@@ -612,7 +599,7 @@ void ABParserBase::AddVerifyToken(ABParserVerifyToken* token) {
 
 void ABParserBase::RemoveVerifyToken(int index) {
 	auto tokenToRemoveIterator = verifyTokens.begin() + index;
-	verifyTokensToDelete.insert(verifyTokensToDelete.begin(), tokenToRemoveIterator, tokenToRemoveIterator);
+	verifyTokensToDelete.push_back(verifyTokens[index]);
 	verifyTokens.erase(tokenToRemoveIterator);
 
 	// If that was the last of them, stop verifying.
@@ -680,6 +667,8 @@ ABParserBase::ABParserBase(SingleCharToken* singleCharTokens, int singleCharToke
 	hasQueuedToken = false;
 	buildUpStart = nullptr;
 	futureTokens = nullptr;
+	OnTokenProcessedLeading = nullptr;
+	OnTokenProcessedTrailing = nullptr;
 	currentPosition = 0;
 
 	currentVerifyTriggers.reserve(multiCharTokensLength);
@@ -727,25 +716,43 @@ void ABParserBase::DisposeForTextChange(bool disposeBuildUpAndFutureTokens) {
 	if (disposeBuildUpAndFutureTokens) {
 
 		if (futureTokens) {
-			for (int i = 0; i < TextLength; i++) {
-				int j = 0;
-				while (futureTokens[i][j])
-					delete futureTokens[i][j++];
+			// Don't delete the individual items as those were deleted when we disposed after a parse.
+			for (int i = 0; i < TextLength; i++)
 				delete[] futureTokens[i];
-			}
 			delete[] futureTokens;
+			futureTokens = nullptr;
 		}
 
-		if (buildUpStart)
+		if (buildUpStart) {
 			delete[] buildUpStart;
+			buildUpStart = nullptr;
+		}
+
+		if (OnTokenProcessedLeading) {
+			delete[] OnTokenProcessedLeading;
+			OnTokenProcessedLeading = nullptr;
+		}
+		if (OnTokenProcessedTrailing) {
+			delete[] OnTokenProcessedTrailing;
+			OnTokenProcessedTrailing = nullptr;
+		}
 	}
 
-	if (Text)
+	if (Text) {
 		delete[] Text;
+		Text = nullptr;
+	}
 }
 
 void ABParserBase::DisposeDataForNextParse() {
 	debugLog("Disposing data ready for the next parse.");
+
+	// Erase any futureTokens we created during this parse, but don't erase the futureToken array, that only needs to be replaced when we change the text (affecting the size of the array).
+	for (int i = 0; i < TextLength; i++)
+		for (int j = 0; j < NumberOfMultiCharTokens; j++) {
+			if (futureTokens[i][j] == nullptr) break;
+			delete futureTokens[i][j];
+		}
 
 	for (size_t i = 0; i < verifyTokensToDelete.size(); i++)
 		delete verifyTokensToDelete[i];

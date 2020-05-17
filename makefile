@@ -101,7 +101,7 @@ compileMILinux: compileCoreLinux ${MI_LINUX_OUTDIR} ${MI_LINUX_FINAL} copyMILinu
 compileCPPT: compileCoreLinux compileMILinux ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
 
 testWithMono: compileAll
-	mono --debug ABSoftware.ABParser.Testing/bin/Debug/ABSoftware.ABParser.Testing.exe
+	mono ABSoftware.ABParser.Testing/bin/Debug/ABSoftware.ABParser.Testing.exe
 
 clean: 
 	rm -r ${CORE_OUTDIR} ${MI_OUTDIR}

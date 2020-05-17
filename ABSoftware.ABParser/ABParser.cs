@@ -312,8 +312,10 @@ namespace ABSoftware.ABParser
 
         public Task SetTextAsync(ABParserText text)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
+                while (_currentlyDisposing)
+                    await Task.Delay(1);
                 InitString(text);
             });
         }

@@ -14,6 +14,8 @@ ABParser is designed to be as fast as possible. As a result, the core of ABParse
 
 ## Compiling
 
+**NOTE: If you are compiling to use in your projects, ensure "#include DEBUG" in commented out in the "Debugging.h" to remove logging**
+
 ABParser is designed to work on Windows and Linux (via Mono) - Mac OS X is not currently supported, but there are plans to add support for it. This means that the native component must be compiled for all of them. These are the extensions for each platform:
 
 - DLL - Windows
@@ -25,7 +27,7 @@ Then, if you're compiling for Windows, it's recommended that you use MSBuild. Be
 
 If you're compiling for Linux or MacOSX, there's a `makefile` on the C++ project, which is already configured (provided you don't add any files).
 
-The makefile has a couple of modes, you can write `make compileAll` to compile everything, and `make clean` to clean-up. So if you wanted to do a complete re-build, use `clean` followed by `compileAll`. **These will automatically copy the libraries into the correct testing places.**
+The makefile has a couple of modes. You can write `make compileAll` to compile everything, and `make clean` to clean-up. So if you wanted to do a complete re-build, use `clean` followed by `compileAll`. **These will automatically copy the libraries into the correct testing places.**
 
 There are also some other modes like `make testWithMono` which will compile and execute the "ABSoftware.ABParser.Testing" project using Mono (make sure you have mono installed for this to work).
 

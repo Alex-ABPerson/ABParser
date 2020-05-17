@@ -16,6 +16,7 @@ void SortTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens, 
 		debugLog("Processing token %d", i);
 		if (tokenLengths[i] == 1) {
 			singleCharTokens[singleCharTokensLength].MixedIdx = i;
+			singleCharTokens[singleCharTokensLength].TokenChar = 0;
 			singleCharTokens[singleCharTokensLength++].TokenChar = *tokens[i];
 		}
 		else {
