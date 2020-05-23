@@ -8,7 +8,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
     public class ABParserNoTokensParser : TrackingParser
     {
-        static readonly ABParserTokensArray ParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[] { });
+        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[] { });
 
         public ABParserNoTokensParser() : base(ParserTokens) { }
     }

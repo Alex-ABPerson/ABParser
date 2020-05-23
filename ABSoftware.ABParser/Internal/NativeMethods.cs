@@ -14,10 +14,10 @@ namespace ABSoftware.ABParser.Internal
         internal const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern IntPtr CreateBaseParser(IntPtr singleCharTokens, IntPtr multiCharTokens, int singleCharTokensLength, int multiCharTokensLength);
+        internal static extern IntPtr CreateBaseParser(IntPtr tokenData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void InitializeTokens(string[] tokenData, int[] tokenLengths, int tokenDataLength, ref IntPtr outSingleCharTokens, ref IntPtr outMultiCharTokens, ref int outSingleCharTokensLength, ref int outMultiCharTokensLength);
+        internal static extern IntPtr InitializeTokens(string[] tokensData, int[] tokenLengths, int numberOfTokens);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort[] outData);

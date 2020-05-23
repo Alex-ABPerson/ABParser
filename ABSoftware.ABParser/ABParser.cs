@@ -55,7 +55,7 @@ namespace ABSoftware.ABParser
 
         #region Internal Management
 
-        internal void InitializeABParser(ABParserTokensArray tokens)
+        internal void InitializeABParser(ABParserTokensContainer tokens)
         {
             // Set the tokens.
             Tokens = tokens.Tokens;
@@ -65,7 +65,7 @@ namespace ABSoftware.ABParser
 
         }
 
-        internal void InitializeBaseParser(ABParserTokensArray tokens) => _baseParser = NativeMethods.CreateBaseParser(tokens.SingleCharTokensPointer, tokens.MultiCharTokensPointer, tokens.SingleCharTokensLength, tokens.MultiCharTokensLength);
+        internal void InitializeBaseParser(ABParserTokensContainer tokens) => _baseParser = NativeMethods.CreateBaseParser(tokens.TokensStorage);
 
         internal void InitString(ABParserText text)
         {
@@ -340,7 +340,7 @@ namespace ABSoftware.ABParser
 
         #region Constructor / Dispose
 
-        protected ABParser(ABParserTokensArray tokens) => InitializeABParser(tokens);
+        protected ABParser(ABParserTokensContainer tokens) => InitializeABParser(tokens);
         public async void Dispose()
         {
             while (_currentlyDisposing)

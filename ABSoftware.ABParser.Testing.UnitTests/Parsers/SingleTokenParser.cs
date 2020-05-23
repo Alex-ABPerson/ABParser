@@ -10,7 +10,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
     public class ABParserSingleTokenParser : TrackingParser
     {
-        static readonly ABParserTokensArray ParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[] {
+        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[] {
             new ABParserToken(new ABParserText("A")),
             new ABParserToken(new ABParserText("BCD"))
         });

@@ -11,7 +11,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     /// </summary>
     public class ABParserTheyParser : TrackingParser
     {
-        static readonly ABParserTokensArray ParserTokens = ABParserTokensArray.GenerateTokensArray(new ABParserToken[]
+        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("the")),
             new ABParserToken(new ABParserText("they")),

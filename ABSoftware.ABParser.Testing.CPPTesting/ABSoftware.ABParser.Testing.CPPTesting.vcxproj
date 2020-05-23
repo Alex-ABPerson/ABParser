@@ -150,11 +150,6 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ABSoftware.ABParser.Core\ABSoftware.ABParser.Core.vcxproj">
-      <Project>{9705eb22-0b01-4c90-9643-8fcd16aa4597}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,12 +146,10 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ABSoftware.ABParser.Core\ABSoftware.ABParser.Core.vcxproj">
-      <Project>{9705eb22-0b01-4c90-9643-8fcd16aa4597}</Project>
-    </ProjectReference>
+    <ClCompile Include="ExportedMethods.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ExportedMethods.cpp" />
+    <ClInclude Include="PlatformImplementation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

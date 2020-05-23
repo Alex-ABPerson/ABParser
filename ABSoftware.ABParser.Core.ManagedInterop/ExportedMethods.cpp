@@ -1,23 +1,20 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
-#include "Debugging.h"
 #include "TokenManagement.h"
-#include <wchar.h>
 
 using namespace std;
 
-void ConvertIntegerToTwoShorts(int integer, unsigned short* data, int index) {
+void ConvertIntegerToTwoShorts(int integer, uint16_t* data, int index) {
 	data[index] = integer << 16;
 	data[index + 1] = integer & 0xffff;
 }
 
-int ConvertStringToShorts(wchar_t* str, int strLen, unsigned short* data, int index) {
+int MoveStringToArray(uint16_t* str, int strLen, uint16_t* data, int index) {
 
 	// Write out the length.
 	ConvertIntegerToTwoShorts(strLen, data, index);
 	index += 2;
 
-	// Then, write out the text, converting each "wchar_t" to an unsigned short.
 	for (int i = 0; i < strLen; i++)
 		data[index++] = str[i];
 
@@ -26,21 +23,19 @@ int ConvertStringToShorts(wchar_t* str, int strLen, unsigned short* data, int in
 }
 
 extern "C" {
-	EXPORT void InitializeTokens(unsigned short** tokens, int* tokenLengths, int numberOfTokens, SingleCharToken** singleCharTokens, MultiCharToken** multiCharTokens, int* numberOfSingleCharTokens, int* numberOfMultiCharTokens) {
-		SortTokens(tokens, tokenLengths, numberOfTokens, singleCharTokens, multiCharTokens, numberOfSingleCharTokens, numberOfMultiCharTokens);
+	EXPORT TokensInformation<uint16_t>* InitializeTokens(uint16_t** tokens, int* tokenLengths, int numberOfTokens) {
+		return CreateTokens(tokens, tokenLengths, numberOfTokens);
 	}
 
-	EXPORT ABParserBase* CreateBaseParser(SingleCharToken* singleCharTokens, MultiCharToken* multiCharTokens, int singleCharTokensLength, int multiCharTokensLength) {
-		return new ABParserBase(singleCharTokens, singleCharTokensLength, multiCharTokens, multiCharTokensLength);
+	EXPORT ABParserBase<uint16_t>* CreateBaseParser(TokensInformation<uint16_t>* information) {
+		return new ABParserBase<uint16_t>(information);
 	}
 
-	EXPORT void DeleteBaseParser(ABParserBase* baseParser) {
+	EXPORT void DeleteBaseParser(ABParserBase<uint16_t>* baseParser) {
 		delete baseParser;
 	}
 
-	EXPORT int ContinueExecution(ABParserBase* parser, unsigned short* outData) {
-		/*outData[0] = 215;
-		outData[1] = 245;*/
+	EXPORT int ContinueExecution(ABParserBase<uint16_t>* parser, uint16_t* outData) {
 		int result = parser->ContinueExecution();
 
 		// SEE ABSOFTWARE DOCS:
@@ -60,11 +55,11 @@ extern "C" {
 					ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 4);
 				}
 
-				int onTokenProcessedLeadingEnd = ConvertStringToShorts(result == 1 ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing, result == 1 ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
+				int onTokenProcessedLeadingEnd = MoveStringToArray(result == 1 ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing, result == 1 ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
 
 				// If this was a "Stop" result, then this is the last OnTokenProcessed, so we need to include the trailing as well.
 				if (result == 1)
-					ConvertStringToShorts(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, onTokenProcessedLeadingEnd);
+					MoveStringToArray(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, onTokenProcessedLeadingEnd);
 
 			}
 			break;
@@ -80,8 +75,8 @@ extern "C" {
 				}
 				outData[6] = parser->BeforeTokenProcessedToken->MixedIdx;
 				ConvertIntegerToTwoShorts(parser->BeforeTokenProcessedTokenStart, outData, 7);
-				int leadingEnd = ConvertStringToShorts(parser->OnTokenProcessedLeading, parser->OnTokenProcessedLeadingLength, outData, 9);
-				ConvertStringToShorts(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, leadingEnd);
+				int leadingEnd = MoveStringToArray(parser->OnTokenProcessedLeading, parser->OnTokenProcessedLeadingLength, outData, 9);
+				MoveStringToArray(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, leadingEnd);
 			}
 			break;
 
@@ -90,11 +85,11 @@ extern "C" {
 		return result;
 	}
 
-	EXPORT void InitString(ABParserBase* parser, unsigned short* text, int textLength) {
+	EXPORT void InitString(ABParserBase<uint16_t>* parser, uint16_t* text, int textLength) {
 		parser->InitString(text, textLength);
 	}
 
-	EXPORT void DisposeDataForNextParse(ABParserBase* parser) {
+	EXPORT void DisposeDataForNextParse(ABParserBase<uint16_t>* parser) {
 		parser->DisposeDataForNextParse();
 	}
 }

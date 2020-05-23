@@ -38,7 +38,7 @@ namespace ABSoftware.ABParser.Testing.MemoryTests
             // 5. Now, if you look at the second snapshot you can see the size changes - but, we're mainly interesting in looking at the native objects left. So, on the "Native Allocations" columns, click on the number (not the one with the arrow after).
             Debugger.Break();
 
-            // 6. You can now see all of the objects that were left lying around! The ONLY objects that SHOULD be there are the tokens and one wchar_t array for each of those tokens.
+            // 6. You can now see all of the objects that were left lying around! The ONLY objects that SHOULD be there are the tokens and one uint16_t array for each of those tokens.
             // 7. If you do see others objects in there, try firstly increasing the 5 seconds up there to something higher, and if that still doesn't fix it - then there's a memory leak in ABParser!
             // 8. Once you've fixed the memory leak, reset the number up there to 5 seconds, as that's how it should be kept in the master repo.
         }
