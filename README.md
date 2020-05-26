@@ -4,9 +4,9 @@ This is the main implementation of ABParser, which is a parsing utility which ca
 
 ## Usage & Development
 
-All information about ABParser is primilarly documented on the **ABSoftware Docs**, please look at that at: http://absoftware.abworld.ml/docs/abparser
+All information about ABParser is primilarly documented on the **ABSoftware Docs**, please look at that at: https://abworld.ml/docs/abparser
 
-Here is a brief summary of the information there:
+Here is some extra information about compiling the project itself:
 
 ## Implementation
 
