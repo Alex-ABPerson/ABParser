@@ -7,19 +7,15 @@
 
 int main()
 {
-    /*TokensInformation* tokensInformation = CreateTokens(
+    TokensInformation<wchar_t>* tokensInformation = CreateTokens<wchar_t>(
         new wchar_t*[3] {
             (wchar_t*)L"the",
             (wchar_t*)L"they",
             (wchar_t*)L"theyare"
-        }, 3);
-    
-    ABParserBase* parser = new ABParserBase(tokensInformation);
-    parser->InitString((unsigned short*)L"AtheBtheyCtheyarDtheyareE", 25);
-    int result = 0;
-    while (result != 1) {
-        result = parser->ContinueExecution();
-    }
-    parser->DisposeDataForNextParse();
-    delete parser;*/
+        }, 
+        new int[3]{ 3, 3, 4 }, 3);
+
+    ABParserBase<wchar_t>* parser = new ABParserBase<wchar_t>(tokensInformation);
+    parser->InitString((wchar_t*)L"Test", 4);
+   
 }

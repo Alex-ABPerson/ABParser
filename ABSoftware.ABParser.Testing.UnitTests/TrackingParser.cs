@@ -37,7 +37,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             EndLeading = null;
         }
 
-        public TrackingParser(ABParserTokensContainer tokensArray) : base(tokensArray) { }
+        public TrackingParser(ABParserConfiguration tokensArray) : base(tokensArray) { }
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {

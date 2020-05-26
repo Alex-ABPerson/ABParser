@@ -10,20 +10,19 @@ namespace ABSoftware.ABParser
     /// <summary>
     /// Represents an array of ABParser Tokens.
     /// </summary>
-    public class ABParserTokensContainer
+    public class ABParserConfiguration
     {
         // The storage space for tokens on the C++ side, this is passed onto any instance of the parser.
         internal IntPtr TokensStorage;
 
         public ABParserToken[] Tokens;
-
         public int Length => Tokens.Length;
 
-        internal ABParserTokensContainer() { }
+        internal ABParserConfiguration() { }
 
-        public static ABParserTokensContainer GenerateTokensArray(ABParserToken[] tokens)
+        public static ABParserConfiguration Create(ABParserToken[] tokens)
         {
-            var tokensArray = new ABParserTokensContainer()
+            var tokensArray = new ABParserConfiguration()
             {
                 Tokens = tokens
             };

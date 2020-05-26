@@ -8,14 +8,14 @@ namespace ABSoftware.ABParser.Testing
 
     public class TestParser : ABParser
     {
-        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("the"), new ABParserText("the")),
             new ABParserToken(new ABParserText("they"), new ABParserText("they")),
             new ABParserToken(new ABParserText("theyare"), new ABParserText("theyare"))
         });
 
-        public TestParser() : base(ParserTokens) { }
+        public TestParser() : base(ParserConfig) { }
     }
 
     public class Program
@@ -24,9 +24,9 @@ namespace ABSoftware.ABParser.Testing
         public static void Main()
         {
             //for (int i = 0; i < 1000; i++)
-            using (var parser = new ABParserTheyParser())
+            using (var parser = new TheyMiddleParser())
             {
-                parser.SetText(new ABParserText("AtheBtheyCtheyarDtheyareE"));
+                parser.SetText(new ABParserText("AtheyaBtheyCthataDthatE"));
                 //var stopwatch = Stopwatch.StartNew();
                 //parser.Start(new ABParserText("AtheBtheyCtheyarDtheyareE"));
                 parser.Start();

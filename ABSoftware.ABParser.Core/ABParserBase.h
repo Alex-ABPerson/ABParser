@@ -134,12 +134,11 @@ public:
 		bool recreateTextSpecific = TextLength < textLength;
 		DisposeForTextChange(recreateTextSpecific);
 
-		Text = new T[textLength + 1];
+		Text = new T[textLength];
 		TextLength = textLength;
 
 		for (int i = 0; i < textLength; i++)
 			Text[i] = text[i];
-		Text[TextLength] = 0;
 
 		if (recreateTextSpecific) {
 			buildUpStart = buildUp = new T[textLength];
@@ -459,10 +458,7 @@ private:
 		bool needsToBeVerified = false;
 
 		// Check to see if any other futureTokens contain this token.
-		for (int i = futureTokensHead; i < futureTokensTail; i++) {
-
-			// Calculate how far away from the current position we are in for these futureTokens.
-			int currentPos = currentPosition - i;
+		for (int i = futureTokensHead; i <= index; i++) {
 
 			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++) {
 
@@ -472,16 +468,17 @@ private:
 
 				ABParserFutureToken<T>* futureToken = futureTokens[i][j];
 				MultiCharToken<T>* multiCharToken = futureToken->Token;
-				int length = multiCharToken->TokenLength;
+
+				int distanceAway = index - i;
 
 				// If the token isn't even long enough to contain our token, then we can ignore it.
-				if (token->Token->TokenLength > length)
+				if (token->Token->TokenLength > multiCharToken->TokenLength)
 					continue;
 
 				bool contains = true;
 				for (int k = 0; k < token->Token->TokenLength; k++) {
 
-					if (token->Token->TokenContents[k] != multiCharToken->TokenContents[k])
+					if (token->Token->TokenContents[k] != multiCharToken->TokenContents[k + distanceAway])
 						contains = false;
 				}
 

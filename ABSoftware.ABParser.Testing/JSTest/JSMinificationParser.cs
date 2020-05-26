@@ -9,9 +9,9 @@ namespace ABSoftware.ABParser.Testing.JSTest
 {
     public class JSMinificationParser : ABParser
     {
-        static readonly ABParserTokensContainer JSParserTokens = ABParserTokensContainer.GenerateTokensArray(JSMinificationTokenProvider.ABParserTokens);
+        static readonly ABParserConfiguration JSParserConfig = ABParserConfiguration.Create(JSMinificationTokenProvider.ABParserConfig);
 
-        public JSMinificationParser() : base(JSParserTokens) { }
+        public JSMinificationParser() : base(JSParserConfig) { }
 
         protected override void OnStart()
         {

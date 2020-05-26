@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
-    public class ABParserSingleTokenParser : TrackingParser
+    public class SingleTokenParser : TrackingParser
     {
-        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[] {
+        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[] {
             new ABParserToken(new ABParserText("A")),
             new ABParserToken(new ABParserText("BCD"))
         });
         
-        public ABParserSingleTokenParser() : base(ParserTokens) { }
+        public SingleTokenParser() : base(ParserConfig) { }
 
     }
 }

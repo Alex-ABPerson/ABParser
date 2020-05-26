@@ -9,15 +9,15 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     /// <summary>
     /// Has "the", "they" and "theyare" tokens - a good test for verification.
     /// </summary>
-    public class ABParserTheyParser : TrackingParser
+    public class TheyParser : TrackingParser
     {
-        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("the")),
             new ABParserToken(new ABParserText("they")),
             new ABParserToken(new ABParserText("theyare")),
         });
 
-        public ABParserTheyParser() : base(ParserTokens) { }
+        public TheyParser() : base(ParserConfig) { }
     }
 }

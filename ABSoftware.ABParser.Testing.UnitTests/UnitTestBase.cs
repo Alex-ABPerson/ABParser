@@ -19,13 +19,15 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         }
 
         // PARSERS:
-        static ABParserNoTokensParser RunNoTokensParser = new ABParserNoTokensParser();
-        static ABParserSingleTokenParser RunSingleTokenParser = new ABParserSingleTokenParser();
-        static ABParserTheyParser RunTheyParser = new ABParserTheyParser();
+        static NoTokensParser RunNoTokensParser = new NoTokensParser();
+        static SingleTokenParser RunSingleTokenParser = new SingleTokenParser();
+        static TheyParser RunTheyParser = new TheyParser();
+        static TheyMiddleParser RunTheyMiddleParser = new TheyMiddleParser();
 
-        public ABParserNoTokensParser RunNoTokens(string text) => RunParser(ref RunNoTokensParser, text);
-        public ABParserSingleTokenParser RunSingleToken(string text) => RunParser(ref RunSingleTokenParser, text);
-        public ABParserTheyParser RunThey(string text) => RunParser(ref RunTheyParser, text);
+        public NoTokensParser RunNoTokens(string text) => RunParser(ref RunNoTokensParser, text);
+        public SingleTokenParser RunSingleToken(string text) => RunParser(ref RunSingleTokenParser, text);
+        public TheyParser RunThey(string text) => RunParser(ref RunTheyParser, text);
+        public TheyMiddleParser RunTheyMiddle(string text) => RunParser(ref RunTheyMiddleParser, text);
 
     }
 }

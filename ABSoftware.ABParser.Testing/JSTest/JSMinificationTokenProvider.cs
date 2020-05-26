@@ -110,7 +110,7 @@ namespace ABSoftware.ABParser.Testing.JSTest
             new JSMinificationToken("CommentEnd", "*/".ToCharArray())
         };
 
-        public static ABParserToken[] ABParserTokens
+        public static ABParserToken[] ABParserConfig
         {
             get
             {

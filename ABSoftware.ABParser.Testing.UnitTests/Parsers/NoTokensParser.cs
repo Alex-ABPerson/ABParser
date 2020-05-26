@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
-    public class ABParserNoTokensParser : TrackingParser
+    public class NoTokensParser : TrackingParser
     {
-        static readonly ABParserTokensContainer ParserTokens = ABParserTokensContainer.GenerateTokensArray(new ABParserToken[] { });
+        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[] { });
 
-        public ABParserNoTokensParser() : base(ParserTokens) { }
+        public NoTokensParser() : base(ParserConfig) { }
     }
 }

@@ -47,7 +47,7 @@
     <Compile Include="ABParser.cs" />
     <Compile Include="ABParserText.cs" />
     <Compile Include="ABParserToken.cs" />
-    <Compile Include="ABParserTokensContainer.cs" />
+    <Compile Include="ABParserConfiguration.cs" />
     <Compile Include="Events\BeforeTokenProcessedEventArgs.cs" />
     <Compile Include="Events\TokenProcessedEventArgs.cs" />
     <Compile Include="Internal\ContinueExecutionResult.cs" />
