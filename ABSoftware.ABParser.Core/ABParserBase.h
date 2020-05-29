@@ -32,16 +32,16 @@ public:
 
 	// RESULTS:
 	// 0 - None
-	// 1 - Stop
+	// 1 - Stop+Final OnTokenProcessed
 	// 2 - BeforeTokenProcessed
 	// 3 - BeforeTokenProcessed+OnTokenProcessed
-	int ContinueExecution() {
+	ABParserResult ContinueExecution() {
 
 		if (currentPosition == 0)
 			PrepareForParse();
 
 		if (isFinalizingVerifyTokens)
-			if (int result = FinalizeNextVerifyToken())
+			if (ABParserResult result = FinalizeNextVerifyToken())
 				return result;
 
 		debugLog("Continuing execution... Finished: %c ", (currentPosition < TextLength) ? 'F' : 'T');
@@ -51,10 +51,10 @@ public:
 		for (; currentPosition < TextLength; currentPosition++) {
 			debugLog("Current Position: %d", currentPosition);
 
-			int res = ProcessChar(Text[currentPosition]);
+			ABParserResult res = ProcessChar(Text[currentPosition]);
 
-			// If we got a result back from processing this character, return that, otherwise just keep going.
-			if (res != 0) {
+			// Return any result we got.
+			if (res != ABParserResult::None) {
 				currentPosition++;
 				return res;
 			}
@@ -65,7 +65,7 @@ public:
 			PrepareLeadingAndTrailing(BeforeTokenProcessedToken->GetLength(), (currentPosition - 1) - BeforeTokenProcessedToken->GetLength(), buildUp, buildUpLength, false, true);
 
 		currentPosition = 0;
-		return 1;
+		return ABParserResult::StopAndFinalOnTokenProcessed;
 
 	}
 
@@ -114,6 +114,8 @@ public:
 		BeforeTokenProcessedTokenStart = 0;
 		OnTokenProcessedToken = nullptr;
 		OnTokenProcessedTokenStart = 0;
+		OnTokenProcessedLeadingLength = 0;
+		OnTokenProcessedTrailingLength = 0;
 		currentPosition = 0;
 		futureTokensHead = 0;
 		futureTokensTail = 0;
@@ -262,7 +264,7 @@ private:
 	vector<ABParserVerifyToken<T>*> verifyTokensToDelete;
 
 	// COLLECT
-	int ProcessChar(T ch) {
+	ABParserResult ProcessChar(T ch) {
 
 		debugLog("Processing character: %c", ch);
 
@@ -273,17 +275,15 @@ private:
 		AddNewFutureTokens(ch);
 
 		// Then, process any finished futureTokens, and, if we need to return a result from that, do that.
-		if (int result = ProcessFinishedTokens(ch))
+		if (ABParserResult result = ProcessFinishedTokens(ch))
 			return result;
 
 		// Finalizing all the "verifyTokens" (if necessary) is done from the top of "ContinueExeuction".
-		if (isFinalizingVerifyTokens) {
-			int result = ContinueExecution();
-			return result;
-		}
+		if (isFinalizingVerifyTokens)
+			return ContinueExecution();
 
 		AddCharacterToBuildUp(ch);
-		return 0;
+		return ABParserResult::None;
 	}
 
 	void AddCharacterToBuildUp(T ch) {
@@ -340,7 +340,7 @@ private:
 				AddFutureToken(multiCharCurrentTokens[i]);
 	}
 
-	int ProcessFinishedTokens(T ch) {
+	ABParserResult ProcessFinishedTokens(T ch) {
 		debugLog("Processing finished future tokens.");
 
 		// We deal with the multiple character long tokens first because they might contain single character tokens, so, if we process them first,
@@ -360,8 +360,8 @@ private:
 					// If we are currently verifying, then we need to do some extra checks on it.
 					if (isVerifying)
 						if (int result = CheckFinishedFutureToken(futureTokens[i][j], i))
-							if (result == -1) return 0;
-							else return result;
+							if (result == -1) return ABParserResult::None;
+							else return static_cast<ABParserResult>(result);
 
 					// Finalize it or verify it.
 					if (PrepareMultiCharForVerification(futureTokens[i][j], i))
@@ -386,7 +386,7 @@ private:
 			}
 		}
 
-		return 0;
+		return ABParserResult::None;
 	}
 
 	// VERIFY
@@ -476,11 +476,9 @@ private:
 					continue;
 
 				bool contains = true;
-				for (int k = 0; k < token->Token->TokenLength; k++) {
-
+				for (int k = 0; k < token->Token->TokenLength; k++)
 					if (token->Token->TokenContents[k] != multiCharToken->TokenContents[k + distanceAway])
 						contains = false;
-				}
 
 				if (contains) {
 					currentVerifyTriggers.push_back(futureToken);
@@ -577,7 +575,7 @@ private:
 		return 0;
 	}
 
-	int FinalizeNextVerifyToken() {
+	ABParserResult FinalizeNextVerifyToken() {
 		debugLog("Finalizing verify original token...");
 
 		// Determine the next item to finalize.
@@ -603,12 +601,12 @@ private:
 			StopVerify(0, true);
 			AddCharacterToBuildUp(Text[currentPosition - 1]);
 
-			return 0;
+			return ABParserResult::None;
 		}
 
 		// Finalize the next token, and remove it.
 		bool isFirst = lastVerifyToken == nullptr;
-		int result = FinalizeToken(verifyTokens.front(), isFirst ? buildUp : lastVerifyToken->TrailingBuildUp, isFirst ? buildUpLength : lastVerifyToken->TrailingBuildUpLength, false);
+		ABParserResult result = FinalizeToken(verifyTokens.front(), isFirst ? buildUp : lastVerifyToken->TrailingBuildUp, isFirst ? buildUpLength : lastVerifyToken->TrailingBuildUpLength, false);
 		lastVerifyToken = verifyTokens.front();
 		StopVerify(0, true);
 
@@ -638,14 +636,14 @@ private:
 	}
 
 	// FINALIZE
-	int FinalizeToken(ABParserVerifyToken<T>* verifyToken, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
+	ABParserResult FinalizeToken(ABParserVerifyToken<T>* verifyToken, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
 		if (verifyToken->IsSingleChar)
 			return FinalizeToken(verifyToken->SingleChar, verifyToken->Start, buildUp, buildUpToUseLength, resetBuildUp);
 		else
 			return FinalizeToken(verifyToken->MultiChar, verifyToken->Start, buildUp, buildUpToUseLength, resetBuildUp);
 	}
 
-	int FinalizeToken(SingleCharToken<T>* token, int index, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
+	ABParserResult FinalizeToken(SingleCharToken<T>* token, int index, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
 
 		debugLog("Finalizing single-char token");
 
@@ -653,7 +651,7 @@ private:
 		return QueueTokenAndReturnFinalizeResult(token, index, hasQueuedToken);
 	}
 
-	int FinalizeToken(ABParserFutureToken<T>* token, int index, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
+	ABParserResult FinalizeToken(ABParserFutureToken<T>* token, int index, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
 
 		debugLog("Finalizing multi-char token");
 
@@ -662,7 +660,7 @@ private:
 		return QueueTokenAndReturnFinalizeResult(token->Token, index, hasQueuedToken);
 	}
 
-	int QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hadQueuedToken) {
+	ABParserResult QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hadQueuedToken) {
 		OnTokenProcessedPreviousToken = OnTokenProcessedToken;
 		OnTokenProcessedPreviousTokenStart = OnTokenProcessedTokenStart;
 
@@ -675,9 +673,9 @@ private:
 
 		// Based on whether there was a queued-up token before, we'll either trigger "BeforeTokenProcessed" or both that and "OnTokenProcessed".
 		if (hadQueuedToken)
-			return 3;
+			return ABParserResult::OnAndBeforeTokenProcessed;
 		else
-			return 2;
+			return ABParserResult::BeforeTokenProcessed;
 	}
 
 	void PrepareLeadingAndTrailing(int tokenLength, int tokenStart, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp, bool isEnd) {
