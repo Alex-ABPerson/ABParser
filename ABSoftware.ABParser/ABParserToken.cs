@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ABSoftware.ABParser.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +28,7 @@ namespace ABSoftware.ABParser
 
         public ABParserToken(ABParserText tokenName, ABParserText tokenData, object tag = null)
         {
+            if (tokenName.GetLength() > 255) throw new ABParserNameTooLong();
             TokenName = tokenName;
             TokenData = tokenData;
             TokenTag = tag;
@@ -34,6 +36,7 @@ namespace ABSoftware.ABParser
 
         public ABParserToken(ABParserText nameAndData, object tag = null)
         {
+            if (nameAndData.GetLength() > 255) throw new ABParserNameTooLong();
             TokenName = nameAndData;
             TokenData = nameAndData;
             TokenTag = tag;

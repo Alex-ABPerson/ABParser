@@ -10,35 +10,36 @@ namespace ABSoftware.ABParser.Testing
     {
         static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("the"), new ABParserText("the")),
-            new ABParserToken(new ABParserText("they"), new ABParserText("they")),
-            new ABParserToken(new ABParserText("theyare"), new ABParserText("theyare"))
+            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).AddToLimit("DoubleStringLimit"),
+            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).AddToLimit("SingleStringLimit"),
+            new ABParserToken(new ABParserText("CAPITAL_B"), new ABParserText("B")),
         });
 
         public TestParser() : base(ParserConfig) { }
+
+        protected override void OnTokenProcessed(OnTokenProcessedEventArgs args)
+        {
+            Console.WriteLine("OnTokenProcessed: " + args.Token.TokenName.AsString());
+            Console.WriteLine("OnTokenProcessed Leading: " + args.Leading.AsString());
+            Console.WriteLine("OnTokenProcessed Trailing: " + args.Trailing.AsString());
+        }
+
+        protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
+        {
+            Console.WriteLine("BeforeTokenProcessed: " + args.Token.TokenName.AsString());
+            Console.WriteLine("BeforeTokenProcessed Leading: " + args.Leading.AsString());
+        }
     }
 
     public class Program
     {
         public static void Main()
         {
-            //for (int i = 0; i < 1000; i++)
-            using (var parser = new TheyMiddleParser())
+            using (var parser = new TestParser())
             {
-                parser.SetText(new ABParserText("AtheyaBtheyCthataDthatE"));
-                //var stopwatch = Stopwatch.StartNew();
-                //parser.Start(new ABParserText("AtheBtheyCtheyarDtheyareE"));
+                parser.SetText(new ABParserText("A\"aBdc\"B"));
                 parser.Start();
-                //stopwatch.Stop();
-                //Console.WriteLine(stopwatch.ElapsedMilliseconds / 100);
             }
-
-            //var result = new StringBuilder(6);
-            //SayHello(result);
-
-            //Console.WriteLine(result);
-            //Console.WriteLine("Done!");
-            //Console.ReadLine();
 
             // We're now done with it.
             Console.ReadLine();

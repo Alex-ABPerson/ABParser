@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <wchar.h>
+#include <cstring>
 #include <memory>
 
 template<typename T>
@@ -13,20 +14,20 @@ class UnorganizedTokenLimit {
 public:
 	// If the exact "Name" memory location gets used in the final "ABParserConfiguration" to represent the limit.
 	std::shared_ptr<T[]> Name;
-	size_t NameSize;
+	uint8_t NameSize;
 
 	UnorganizedTokenLimit() {
 		Name = nullptr;
 		NameSize = 0;
 	}
 
-	UnorganizedTokenLimit(T* name, size_t nameSize) {
+	UnorganizedTokenLimit(T* name, uint8_t nameSize) {
 		Init(name, nameSize);
 	}
 
-	void Init(T* name, size_t nameSize) {
+	void Init(T* name, uint8_t nameSize) {
 		Name = std::shared_ptr<T[]>(new T[nameSize], std::default_delete<T[]>());
-		for (size_t i = 0; i < nameSize; i++)
+		for (uint8_t i = 0; i < nameSize; i++)
 			Name[i] = name[i];
 
 		NameSize = nameSize;
@@ -38,10 +39,10 @@ class ABParserToken {
 public:
 
 	UnorganizedTokenLimit<T>* Limits;
-	size_t LimitsSize;
+	uint16_t LimitsSize;
 
 	std::shared_ptr<T[]> Data;
-	size_t DataSize;
+	uint16_t DataSize;
 
 	ABParserToken() {
 		Data = nullptr;
@@ -50,11 +51,19 @@ public:
 		Limits = nullptr;
 	}
 
-	ABParserToken(T* data, size_t dataSize) {
+	ABParserToken(T* data, uint16_t dataSize) {
 		Init(data, dataSize);
 	}
 
-	void Init(T* data, size_t dataSize) {
+	ABParserToken(const T* data, uint16_t dataSize) {
+		Init((T*)data, dataSize);
+	}
+
+	ABParserToken(std::basic_string<T> str) {
+		Init(str.data(), str.size());
+	}
+
+	void Init(T* data, uint16_t dataSize) {
 		Data = std::shared_ptr<T[]>(new T[dataSize], std::default_delete<T[]>());
 		for (size_t i = 0; i < dataSize; i++)
 			Data[i] = data[i];
@@ -64,7 +73,7 @@ public:
 		LimitsSize = 0;
 	}
 
-	ABParserToken<T>* SetLimits(UnorganizedTokenLimit<T>* limits, size_t numberOfLimits) {
+	ABParserToken<T>* SetLimits(UnorganizedTokenLimit<T>* limits, uint16_t numberOfLimits) {
 		Limits = limits;
 		LimitsSize = numberOfLimits;
 		return this;
@@ -79,14 +88,14 @@ template<typename T>
 class TokenLimit {
 public:
 	std::shared_ptr<T[]> LimitName;
-	int LimitNameSize;
+	uint8_t LimitNameSize;
 
 	SingleCharToken<T>** SingleCharTokens;
-	int NumberOfSingleCharTokens;
+	uint16_t NumberOfSingleCharTokens;
 	MultiCharToken<T>** MultiCharTokens;
-	int NumberOfMultiCharTokens;
+	uint16_t NumberOfMultiCharTokens;
 
-	TokenLimit(std::shared_ptr<T[]> limitName, size_t limitNameSize, int maximumAmountOfTokens) {
+	TokenLimit(std::shared_ptr<T[]> limitName, uint8_t limitNameSize, uint16_t maximumAmountOfTokens) {
 		SingleCharTokens = new SingleCharToken<T>*[maximumAmountOfTokens];
 		MultiCharTokens = new MultiCharToken<T>*[maximumAmountOfTokens];
 		NumberOfSingleCharTokens = 0;
@@ -106,14 +115,14 @@ template<typename T>
 class ABParserConfiguration {
 public:
 	SingleCharToken<T>** SingleCharTokens;
-	int NumberOfSingleCharTokens;
+	uint16_t NumberOfSingleCharTokens;
 	MultiCharToken<T>** MultiCharTokens;
-	int NumberOfMultiCharTokens;
+	uint16_t NumberOfMultiCharTokens;
 
 	TokenLimit<T>** TokenLimits;
-	int NumberOfTokenLimits;
+	uint16_t NumberOfTokenLimits;
 
-	ABParserConfiguration(SingleCharToken<T>** singleCharTokens, int numberOfSingleCharTokens, MultiCharToken<T>** multiCharTokens, int numberOfMultiCharTokens, TokenLimit<T>** tokenLimits, int numberOfTokenLimits) {
+	ABParserConfiguration(SingleCharToken<T>** singleCharTokens, uint16_t numberOfSingleCharTokens, MultiCharToken<T>** multiCharTokens, uint16_t numberOfMultiCharTokens, TokenLimit<T>** tokenLimits, uint16_t numberOfTokenLimits) {
 		SingleCharTokens = singleCharTokens;
 		NumberOfSingleCharTokens = numberOfSingleCharTokens;
 		MultiCharTokens = multiCharTokens;
@@ -136,19 +145,14 @@ public:
 };
 
 template<typename T>
-ABParserToken<T>* TokenFromString(std::basic_string<T> tokenData) {
-	return new ABParserToken<T>((T*)tokenData.c_str(), tokenData.size());
-}
+void ProcessTokenLimits(UnorganizedTokenLimit<T>* unorganizedLimits, uint16_t numberOfUnorganizedLimits, std::vector<TokenLimit<T>*>* organizedLimits, ABParserInternalToken<T>* token, bool isSingleChar, uint16_t maximumAmountOfTokens) {
 
-template<typename T>
-void ProcessTokenLimits(UnorganizedTokenLimit<T>* unorganizedLimits, size_t numberOfUnorganizedLimits, std::vector<TokenLimit<T>*>* organizedLimits, ABParserInternalToken<T>* token, bool isSingleChar, int maximumAmountOfTokens) {
+	uint16_t organizedTokenSize = (uint16_t)organizedLimits->size();
 
-	int organizedTokenSize = organizedLimits->size();
-
-	for (size_t i = 0; i < numberOfUnorganizedLimits; i++) {
+	for (uint16_t i = 0; i < numberOfUnorganizedLimits; i++) {
 
 		int matchedIndex = -1;
-		for (int j = 0; j < organizedTokenSize; j++)
+		for (uint16_t j = 0; j < organizedTokenSize; j++)
 			if (Matches(unorganizedLimits[i].Name.get(), (*organizedLimits)[j]->LimitName.get(), unorganizedLimits[i].NameSize, (*organizedLimits)[j]->LimitNameSize)) {
 				matchedIndex = j;
 				break;
@@ -175,22 +179,22 @@ void ProcessTokenLimits(UnorganizedTokenLimit<T>* unorganizedLimits, size_t numb
 //ABParserConfiguration<T>* CreateTokensFromRawData(T** tokens, size_t* tokenLengths, int numberOfTokens, T*** tokenLimitNames, int* tokenLimitSizes) {
 
 template<typename T>
-ABParserConfiguration<T>* CreateTokens(ABParserToken<T>* tokens, int numberOfTokens) {
+ABParserConfiguration<T>* CreateConfiguration(ABParserToken<T>* tokens, uint16_t numberOfTokens) {
 
 	std::vector<TokenLimit<T>*> organizedTokens;
 
 	// Initialize the arrays the results will go into - we try to set them to the maximum potentional size it could be.
 	SingleCharToken<T>** singleCharTokens = new SingleCharToken<T>*[numberOfTokens];
-	int singleCharTokensLength = 0;
+	uint16_t singleCharTokensLength = 0;
 
 	MultiCharToken<T>** multiCharTokens = new MultiCharToken<T>*[numberOfTokens];
-	int multiCharTokensLength = 0;
+	uint16_t multiCharTokensLength = 0;
 
-	int currentTokenLimitPosition = 0;
+	uint16_t currentTokenLimitPosition = 0;
 
 	// One character big tokens are organized as "singleCharTokens" and multiple character-long tokens are "multiCharTokens".
 	for (int i = 0; i < numberOfTokens; i++) {
-		debugLog("Processing token %d", i);
+		_ABP_DEBUG_OUT("Processing token %d", i);
 
 		ABParserToken<T>* currentToken = &(tokens[i]);
 
@@ -211,11 +215,13 @@ ABParserConfiguration<T>* CreateTokens(ABParserToken<T>* tokens, int numberOfTok
 		}
 	}
 
-	size_t organizedTokensSize = organizedTokens.size();
-	size_t organizedTokensByteSize = organizedTokensSize * sizeof(TokenLimit<T>*);
+	uint16_t organizedTokensSize = (uint16_t)organizedTokens.size();
 
 	TokenLimit<T>** organizedTokensArr = new TokenLimit<T>*[organizedTokensSize];
-	memcpy(organizedTokensArr, organizedTokens.data(), organizedTokensByteSize);
+	TokenLimit<T>** vectorData = organizedTokens.data();
+
+	for (uint16_t i = 0; i < organizedTokensSize; i++)
+		organizedTokensArr[i] = vectorData[i];
 
 	return new ABParserConfiguration<T>(singleCharTokens, singleCharTokensLength, multiCharTokens, multiCharTokensLength, organizedTokensArr, organizedTokensSize);
 }

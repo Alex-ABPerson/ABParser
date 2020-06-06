@@ -51,6 +51,8 @@
     <Compile Include="Events\BeforeTokenProcessedEventArgs.cs" />
     <Compile Include="Events\TokenProcessedEventArgs.cs" />
     <Compile Include="Exceptions\ABParserExitNotInLimit.cs" />
+    <Compile Include="Exceptions\ABParserNameTooLong.cs" />
+    <Compile Include="Exceptions\ABParserTooManyTokens.cs" />
     <Compile Include="Internal\ContinueExecutionResult.cs" />
     <Compile Include="Internal\NativeMethods.cs" />
     <Compile Include="Events\OnTokenProcessedEventArgs.cs" />

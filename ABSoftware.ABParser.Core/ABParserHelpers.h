@@ -17,7 +17,7 @@ class ABParserInternalToken {
 public:
 	// When we created an instance of ABParser, the single-char tokens and multi-char tokens were mixed together, this is at what index this token would've been mixed in.
 	uint16_t MixedIdx = 0;
-	virtual size_t GetLength() { return 0; }
+	virtual uint32_t GetLength() { return 0; }
 	virtual bool IsSingleChar() { return false; }
 };
 
@@ -26,7 +26,7 @@ class SingleCharToken : public ABParserInternalToken<T> {
 public:
 	T TokenChar = 0;
 
-	size_t GetLength() { return 1; }
+	uint32_t GetLength() { return 1; }
 	bool IsSingleChar() { return true; }
 };
 
@@ -34,9 +34,9 @@ template<typename T>
 class MultiCharToken : public ABParserInternalToken<T> {
 public:
 	std::shared_ptr<T[]> TokenContents = 0;
-	size_t TokenLength = 0;
+	uint32_t TokenLength = 0;
 
-	size_t GetLength() { return TokenLength; }
+	uint32_t GetLength() { return TokenLength; }
 	bool IsSingleChar() { return false; }
 };
 
@@ -46,11 +46,17 @@ public:
 	MultiCharToken<T>* Token;
 	bool Finished;
 	bool Disabled;
+	bool EndOfArray;
 
-	ABParserFutureToken(MultiCharToken<T>* token) {
+	ABParserFutureToken() {
+		Reset(nullptr);
+	}
+
+	void Reset(MultiCharToken<T>* token) {
 		Token = token;
 		Finished = false;
 		Disabled = false;
+		EndOfArray = false;
 	}
 };
 
@@ -58,45 +64,31 @@ template<typename T>
 class ABParserVerifyToken {
 public:
 	bool IsSingleChar;
-	SingleCharToken<T>* SingleChar;
-	ABParserFutureToken<T>* MultiChar;
+	void* Token;
 
 	ABParserFutureToken<T>** Triggers;
-	int TriggersLength;
+	uint16_t TriggersLength;
+
+	uint32_t* TriggerStarts;
+	uint16_t TriggerStartsLength;
 
 	T* TrailingBuildUp;
-	int TrailingBuildUpLength;
+	uint32_t TrailingBuildUpLength;
 
-	int* TriggerStarts;
-	int TriggerStartsLength;
+	uint32_t Start;
 
-	int Start;
-	bool HasNoTriggers;
+	ABParserVerifyToken(void* token, bool isSingleChar, uint32_t start, T* trailingBuildUp) {
+		Token = token;
+		IsSingleChar = isSingleChar;
 
-	ABParserVerifyToken(SingleCharToken<T>* singleChar, int start, T* trailingBuildUp) {
-		SingleChar = singleChar;
-		IsSingleChar = true;
-		MultiChar = nullptr;
 		Start = start;
+
 		Triggers = nullptr;
 		TriggersLength = 0;
-		TriggerStarts = nullptr;
-		TriggerStartsLength = 0;
-		HasNoTriggers = false;
-		TrailingBuildUp = trailingBuildUp;
-		TrailingBuildUpLength = 0;
-	}
 
-	ABParserVerifyToken(ABParserFutureToken<T>* multiChar, int start, T* trailingBuildUp) {
-		SingleChar = nullptr;
-		IsSingleChar = false;
-		MultiChar = multiChar;
-		Start = start;
-		Triggers = nullptr;
-		TriggersLength = 0;
 		TriggerStarts = nullptr;
 		TriggerStartsLength = 0;
-		HasNoTriggers = false;
+
 		TrailingBuildUp = trailingBuildUp;
 		TrailingBuildUpLength = 0;
 	}

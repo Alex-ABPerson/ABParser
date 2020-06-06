@@ -361,8 +361,9 @@ namespace ABSoftware.ABParser
 
         public void EnterTokenLimit(string limitName)
         {
+            if (limitName.Length > 255) throw new ABParserNameTooLong();
             CurrentTokenLimits.Push(limitName);
-            NativeMethods.EnterTokenLimit(_baseParser, limitName, limitName.Length);
+            NativeMethods.EnterTokenLimit(_baseParser, limitName, (byte)limitName.Length);
         }
 
         public void ExitTokenLimit(int amount = 1)

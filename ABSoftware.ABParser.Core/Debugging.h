@@ -4,18 +4,23 @@
 #include <string>
 
 // Enable to show all of the logging, in order to help identify where problems are occuring.
-#define DEBUG
+//#define _ABP_IS_DEBUG
 
-#ifdef DEBUG
+#ifdef _ABP_IS_DEBUG
+
 #include <stdio.h>
 #include <cstdarg>
-inline void debugLog(std::string str, ...) {
+
+void abpDebugLog(std::string str, ...) {
 	va_list args;
 	va_start(args, str);
 	vprintf((str.append("\n")).c_str(), args);
 	va_end(args);
 }
+
+#define _ABP_DEBUG_OUT(...) abpDebugLog(__VA_ARGS__);
+
 #else
-inline void debugLog(std::string str, ...) {}
+#define _ABP_DEBUG_OUT
 #endif
 #endif

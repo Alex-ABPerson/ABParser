@@ -1,4 +1,5 @@
-﻿using ABSoftware.ABParser.Internal;
+﻿using ABSoftware.ABParser.Exceptions;
+using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,30 +22,32 @@ namespace ABSoftware.ABParser
 
         public static ABParserConfiguration Create(ABParserToken[] tokens)
         {
+            if (tokens.Length > ushort.MaxValue) throw new ABParserTooManyTokens();
+
             var tokensArray = new ABParserConfiguration()
             {
                 Tokens = tokens
             };
 
             var tokenData = new string[tokens.Length];
-            var tokenDataLengths = new int[tokens.Length];
-            var limitsPerToken = new int[tokens.Length];
+            var tokenDataLengths = new ushort[tokens.Length];
+            var limitsPerToken = new ushort[tokens.Length];
             var limitNames = new List<string>();
 
             for (int i = 0; i < tokens.Length; i++)
             {
                 tokenData[i] = tokens[i].TokenData.AsString();
-                tokenDataLengths[i] = tokens[i].TokenData.GetLength();
+                tokenDataLengths[i] = (ushort)tokens[i].TokenData.GetLength();
 
                 limitNames.AddRange(tokens[i].TokenLimitsToAddTo);
-                limitsPerToken[i] = tokens[i].TokenLimitsToAddTo.Count;
+                limitsPerToken[i] = (ushort)tokens[i].TokenLimitsToAddTo.Count;
             }
 
-            var limitNameSizes = new int[limitNames.Count];
+            var limitNameSizes = new byte[limitNames.Count];
             for (int i = 0; i < limitNames.Count; i++)
-                limitNameSizes[i] = limitNames[i].Length;
+                limitNameSizes[i] = (byte)limitNames[i].Length;
 
-            tokensArray.TokensStorage = NativeMethods.InitializeTokens(tokenData, tokenDataLengths, tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
+            tokensArray.TokensStorage = NativeMethods.InitializeTokens(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
             return tokensArray;
         }
 
