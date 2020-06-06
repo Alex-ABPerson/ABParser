@@ -50,6 +50,7 @@
     <Compile Include="ABParserConfiguration.cs" />
     <Compile Include="Events\BeforeTokenProcessedEventArgs.cs" />
     <Compile Include="Events\TokenProcessedEventArgs.cs" />
+    <Compile Include="Exceptions\ABParserExitNotInLimit.cs" />
     <Compile Include="Internal\ContinueExecutionResult.cs" />
     <Compile Include="Internal\NativeMethods.cs" />
     <Compile Include="Events\OnTokenProcessedEventArgs.cs" />

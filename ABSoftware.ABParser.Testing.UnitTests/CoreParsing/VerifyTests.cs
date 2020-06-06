@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ABSoftware.ABParser.Testing.UnitTests.BasicFunctionality
+namespace ABSoftware.ABParser.Testing.UnitTests.CoreParsing
 {
     [TestClass]
     public class VerifyTests : UnitTestBase

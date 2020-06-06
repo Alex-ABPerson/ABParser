@@ -1,25 +1,27 @@
 #ifndef _ABPARSER_INCLUDE_ABPARSER_MAIN_H
 #define _ABPARSER_INCLUDE_ABPARSER_MAIN_H
-#include "HelperClasses.h"
+#include "ABParserHelpers.h"
 #include "TokenManagement.h"
 #include "Debugging.h"
+#include <string>
 #include <vector>
-
-using namespace std;
+#include <stack>
+#include <wchar.h>
 
 template<typename T>
 class ABParserBase {
 public:
-	TokensInformation<T>* Tokens;
+
+	ABParserConfiguration<T>* Configuration;
 
 	int BeforeTokenProcessedTokenStart;
-	ABParserToken* BeforeTokenProcessedToken;
+	ABParserInternalToken<T>* BeforeTokenProcessedToken;
 
 	int OnTokenProcessedTokenStart;
-	ABParserToken* OnTokenProcessedToken;
+	ABParserInternalToken<T>* OnTokenProcessedToken;
 
 	int OnTokenProcessedPreviousTokenStart;
-	ABParserToken* OnTokenProcessedPreviousToken;
+	ABParserInternalToken<T>* OnTokenProcessedPreviousToken;
 
 	T* Text;
 	int TextLength;
@@ -30,6 +32,8 @@ public:
 	T* OnTokenProcessedTrailing;
 	int OnTokenProcessedTrailingLength;
 
+	std::stack<TokenLimit<T>*> CurrentTokenLimits;
+
 	// RESULTS:
 	// 0 - None
 	// 1 - Stop+Final OnTokenProcessed
@@ -37,12 +41,16 @@ public:
 	// 3 - BeforeTokenProcessed+OnTokenProcessed
 	ABParserResult ContinueExecution() {
 
-		if (currentPosition == 0)
+		if (currentPosition == -1) {
 			PrepareForParse();
+			currentPosition = 0;
+		}
 
-		if (isFinalizingVerifyTokens)
-			if (ABParserResult result = FinalizeNextVerifyToken())
+		if (isFinalizingVerifyTokens) {
+			ABParserResult result = FinalizeNextVerifyToken();
+			if (result != ABParserResult::None)
 				return result;
+		}
 
 		debugLog("Continuing execution... Finished: %c ", (currentPosition < TextLength) ? 'F' : 'T');
 		debugLog("Text Length: %d", TextLength);
@@ -64,12 +72,16 @@ public:
 		if (BeforeTokenProcessedToken)
 			PrepareLeadingAndTrailing(BeforeTokenProcessedToken->GetLength(), (currentPosition - 1) - BeforeTokenProcessedToken->GetLength(), buildUp, buildUpLength, false, true);
 
-		currentPosition = 0;
-		return ABParserResult::StopAndFinalOnTokenProcessed;
+		// Reset anything for next time.
+		while (!CurrentTokenLimits.empty())
+			CurrentTokenLimits.pop();
+		ResetCurrentTokens();
 
+		currentPosition = -1;
+		return ABParserResult::StopAndFinalOnTokenProcessed;
 	}
 
-	ABParserBase(TokensInformation<T>* tokensInformation) {
+	ABParserBase(ABParserConfiguration<T>* configuration) {
 
 		const size_t ESTIMATED_VECTOR_SIZE = 20;
 
@@ -83,26 +95,20 @@ public:
 		futureTokens = nullptr;
 		OnTokenProcessedLeading = nullptr;
 		OnTokenProcessedTrailing = nullptr;
-		currentPosition = 0;
-		Tokens = tokensInformation;
+		currentPosition = -1;
+		Configuration = configuration;
 
-		currentVerifyTriggers.reserve(Tokens->NumberOfMultiCharTokens);
-		currentVerifyTriggerStarts.reserve(Tokens->NumberOfMultiCharTokens);
+		currentVerifyTriggers.reserve(Configuration->NumberOfMultiCharTokens);
+		currentVerifyTriggerStarts.reserve(Configuration->NumberOfMultiCharTokens);
 
 		verifyTokens.reserve(ESTIMATED_VECTOR_SIZE);
 		verifyTokensToDelete.reserve(ESTIMATED_VECTOR_SIZE);
 
-		InitTokens();
+		ResetCurrentTokens();
 	}
 
 	~ABParserBase() {
 		debugLog("Disposing data for complete parser deletion.");
-
-		// We never delete the tokens, because those are created once (usually at application start) and kept. However, we don't want the "currentTokens" arrays.
-		// So, we'll free them up, NOT delete them because deleting them would delete the tokens too.
-		free(singleCharCurrentTokens);
-		free(multiCharCurrentTokens);
-
 		DisposeForTextChange(true);
 	}
 
@@ -116,7 +122,6 @@ public:
 		OnTokenProcessedTokenStart = 0;
 		OnTokenProcessedLeadingLength = 0;
 		OnTokenProcessedTrailingLength = 0;
-		currentPosition = 0;
 		futureTokensHead = 0;
 		futureTokensTail = 0;
 		isVerifying = false;
@@ -124,15 +129,12 @@ public:
 		hasQueuedToken = false;
 		buildUpLength = 0;
 		buildUp = buildUpStart;
-
-		// Configure the current tokens.
-		ResetCurrentTokens();
 	}
 
 	void InitString(T* text, int textLength) {
 		debugLog("Initializing String. Text Length: %d", textLength);
 
-		// Re-allocate anything that wouldn't work on the new text
+		// Re-allocate anything that wouldn't work on the new text.
 		bool recreateTextSpecific = TextLength < textLength;
 		DisposeForTextChange(recreateTextSpecific);
 
@@ -149,10 +151,31 @@ public:
 
 			futureTokens = new ABParserFutureToken<T>**[TextLength];
 			for (int i = 0; i < TextLength; i++) {
-				futureTokens[i] = new ABParserFutureToken<T>*[Tokens->NumberOfMultiCharTokens + 1];
-				futureTokens[i][Tokens->NumberOfMultiCharTokens] = nullptr;
+				futureTokens[i] = new ABParserFutureToken<T>*[Configuration->NumberOfMultiCharTokens + 1];
+				futureTokens[i][Configuration->NumberOfMultiCharTokens] = nullptr;
 			}
 		}
+	}
+
+	void EnterTokenLimit(T* limitName, size_t limitNameSize) {
+		for (int i = 0; i < Configuration->NumberOfTokenLimits; i++) {
+			TokenLimit<T>* currentLimit = Configuration->TokenLimits[i];
+
+			if (Matches(limitName, currentLimit->LimitName.get(), limitNameSize, currentLimit->LimitNameSize)) {
+				CurrentTokenLimits.push(currentLimit);
+				SetCurrentTokens(currentLimit);
+				break;
+			}
+		}
+	}
+
+	void ExitTokenLimit() {
+		CurrentTokenLimits.pop();
+
+		if (CurrentTokenLimits.empty())
+			ResetCurrentTokens();
+		else
+			SetCurrentTokens(CurrentTokenLimits.top());
 	}
 
 	// Disposes data after a parse has been completed.
@@ -161,7 +184,7 @@ public:
 
 		// Erase any futureTokens we created during this parse, but don't erase the futureToken array, that only needs to be replaced when we change the text (affecting the size of the array).
 		for (int i = 0; i < TextLength; i++)
-			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++) {
+			for (int j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
 				if (futureTokens[i][j] == nullptr) break;
 				delete futureTokens[i][j];
 			}
@@ -206,13 +229,6 @@ public:
 
 private:
 
-	// NOTE: When the parser loads text from a "wchar_t" it uses "codecvt" to convert the wide characters into 16-bit (UTF-16) integers.
-	// When this conversion occurs, it places the result into a string, and if that string is deleted, the text goes with it.
-	// Therefore, IF (and only if) we copied the text from "codecvt", we need to keep the string alive by holding onto it in the parser.
-	// And, if we replace the text, we need to delete "_text" as opposed to the "T" array.
-	bool _textFromCodecvt;
-	std::string _text;
-
 	// NOTE: futureTokens can only be multiple characters.
 	ABParserFutureToken<T>*** futureTokens;
 
@@ -230,14 +246,14 @@ private:
 	ABParserVerifyToken<T>* lastVerifyToken;
 	size_t finalizingVerifyTokensCurrentToken;
 
-	vector<ABParserVerifyToken<T>*> verifyTokens;
+	std::vector<ABParserVerifyToken<T>*> verifyTokens;
 
 	// The verify token right at the end of the verifyTokens.
 	ABParserVerifyToken<T>* currentVerifyToken;
-	
+
 	// As we're preparing a token for verification, we'll use this temporaily.
-	vector<ABParserFutureToken<T>*> currentVerifyTriggers;
-	vector<int> currentVerifyTriggerStarts;
+	std::vector<ABParserFutureToken<T>*> currentVerifyTriggers;
+	std::vector<int> currentVerifyTriggerStarts;
 
 	bool hasQueuedToken;
 
@@ -259,9 +275,9 @@ private:
 
 	MultiCharToken<T>** multiCharCurrentTokens;
 	int multiCharCurrentTokensLength;
-	
+
 	// DISPOSAL
-	vector<ABParserVerifyToken<T>*> verifyTokensToDelete;
+	std::vector<ABParserVerifyToken<T>*> verifyTokensToDelete;
 
 	// COLLECT
 	ABParserResult ProcessChar(T ch) {
@@ -275,7 +291,8 @@ private:
 		AddNewFutureTokens(ch);
 
 		// Then, process any finished futureTokens, and, if we need to return a result from that, do that.
-		if (ABParserResult result = ProcessFinishedTokens(ch))
+		ABParserResult result = ProcessFinishedTokens(ch);
+		if (result != ABParserResult::None)
 			return result;
 
 		// Finalizing all the "verifyTokens" (if necessary) is done from the top of "ContinueExeuction".
@@ -300,7 +317,7 @@ private:
 
 		for (int i = futureTokensHead; i < futureTokensTail; i++)
 		{
-			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++)
+			for (int j = 0; j < Configuration->NumberOfMultiCharTokens; j++)
 			{
 				if (futureTokens[i][j] == nullptr) break;
 				if (futureTokens[i][j]->Disabled) continue;
@@ -348,7 +365,7 @@ private:
 		for (int i = futureTokensHead; i < futureTokensTail; i++) {
 
 			// We'll ignore if there are two tokens both finished, as the only way that can occur is if two tokens are identical.
-			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++) {
+			for (int j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
 
 				if (futureTokens[i][j] == nullptr) break;
 				if (futureTokens[i][j]->Disabled) continue;
@@ -423,7 +440,7 @@ private:
 
 		// Check to see if any futureTokens contain this character.
 		for (int i = futureTokensHead; i < futureTokensTail; i++)
-			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++) {
+			for (int j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
 
 				// The futureToken array ends on a null pointer.
 				if (futureTokens[i][j] == nullptr) break;
@@ -460,7 +477,7 @@ private:
 		// Check to see if any other futureTokens contain this token.
 		for (int i = futureTokensHead; i <= index; i++) {
 
-			for (int j = 0; j < Tokens->NumberOfMultiCharTokens; j++) {
+			for (int j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
 
 				// The futureToken array ends on a null pointer.
 				if (futureTokens[i][j] == nullptr) break;
@@ -476,7 +493,7 @@ private:
 					continue;
 
 				bool contains = true;
-				for (int k = 0; k < token->Token->TokenLength; k++)
+				for (size_t k = 0; k < token->Token->TokenLength; k++)
 					if (token->Token->TokenContents[k] != multiCharToken->TokenContents[k + distanceAway])
 						contains = false;
 
@@ -540,7 +557,7 @@ private:
 					// However, before we finalize this trigger - we need to check if we need verify it against one of the other triggers!
 					if (verifyTokens[i]->TriggersLength > 1) {
 
-						int thisLength = trigger->Token->TokenLength;
+						size_t thisLength = trigger->Token->TokenLength;
 						bool areAnyLonger = false;
 
 						for (int k = 0; k < verifyTokens[i]->TriggersLength; k++) {
@@ -568,7 +585,7 @@ private:
 					}
 
 					StopVerify(i, true);
-					return FinalizeToken(trigger, index, buildUp, buildUpLength, true);
+					return static_cast<int>(FinalizeToken(trigger, index, buildUp, buildUpLength, true));
 				}
 			}
 
@@ -617,7 +634,7 @@ private:
 		token->TriggersLength = currentVerifyTriggers.size();
 		token->TriggerStartsLength = currentVerifyTriggerStarts.size();
 
-		ABParserFutureToken<T>** triggers = token->Triggers = new ABParserFutureToken<T>*[token->TriggersLength];
+		ABParserFutureToken<T>** triggers = token->Triggers = new ABParserFutureToken<T> * [token->TriggersLength];
 		int* triggerStarts = token->TriggerStarts = new int[token->TriggerStartsLength];
 
 		// Copy across the values.
@@ -648,7 +665,7 @@ private:
 		debugLog("Finalizing single-char token");
 
 		PrepareLeadingAndTrailing(1, index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
-		return QueueTokenAndReturnFinalizeResult(token, index, hasQueuedToken);
+		return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token, index, hasQueuedToken);
 	}
 
 	ABParserResult FinalizeToken(ABParserFutureToken<T>* token, int index, T* buildUpToUse, int buildUpToUseLength, bool resetBuildUp) {
@@ -657,10 +674,15 @@ private:
 
 		PrepareLeadingAndTrailing(token->Token->TokenLength, index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
 		token->Disabled = true;
-		return QueueTokenAndReturnFinalizeResult(token->Token, index, hasQueuedToken);
+		return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token->Token, index, hasQueuedToken);
 	}
 
-	ABParserResult QueueTokenAndReturnFinalizeResult(ABParserToken* token, int index, bool hadQueuedToken) {
+	ABParserResult QueueTokenAndReturnFinalizeResult(ABParserInternalToken<T>* token, int index, bool hadQueuedToken) {
+		//if (AutoExitTokenLimit) {
+		//	ExitTokenLimit();
+		//	AutoExitTokenLimit = false;
+		//}
+
 		OnTokenProcessedPreviousToken = OnTokenProcessedToken;
 		OnTokenProcessedPreviousTokenStart = OnTokenProcessedTokenStart;
 
@@ -727,57 +749,19 @@ private:
 	}
 
 	void ResetCurrentTokens() {
-		if (!singleCharCurrentTokensIsTokens) {
+		singleCharCurrentTokens = Configuration->SingleCharTokens;
+		singleCharCurrentTokensLength = Configuration->NumberOfSingleCharTokens;
 
-			debugLog("Resetting single character current tokens... NumberOfSingleCharTokens: %d", Tokens->NumberOfSingleCharTokens);
-			singleCharCurrentTokensIsTokens = true;
-			for (int i = 0; i < Tokens->NumberOfSingleCharTokens; i++)
-				singleCharCurrentTokens[i] = Tokens->SingleCharTokens[i];
-			singleCharCurrentTokensLength = Tokens->NumberOfSingleCharTokens;
-		}
-
-		if (!multiCharCurrentTokensIsTokens) {
-
-			debugLog("Resetting multi-character current tokens... NumberOfMultiCharTokens: %d", Tokens->NumberOfMultiCharTokens);
-			multiCharCurrentTokensIsTokens = true;
-			for (int i = 0; i < Tokens->NumberOfMultiCharTokens; i++)
-				multiCharCurrentTokens[i] = Tokens->MultiCharTokens[i];
-			multiCharCurrentTokensLength = Tokens->NumberOfMultiCharTokens;
-
-		}
+		multiCharCurrentTokens = Configuration->MultiCharTokens;
+		multiCharCurrentTokensLength = Configuration->NumberOfMultiCharTokens;
 	}
 
-	void ConfigureCurrentTokens(int* validSingleCharTokens, int singleCharLength, int* validMultiCharTokens, int multiCharLength) {
+	void SetCurrentTokens(TokenLimit<T>* limit) {
+		singleCharCurrentTokens = limit->SingleCharTokens;
+		singleCharCurrentTokensLength = limit->NumberOfSingleCharTokens;
 
-		debugLog("Configuring CurrentTokens");
-
-		singleCharCurrentTokensIsTokens = false;
-		multiCharCurrentTokensIsTokens = false;
-
-		// Limit all of the tokens down to only the ones that are in the validTokens array.
-		for (int i = 0; i < Tokens->NumberOfSingleCharTokens; i++)
-			for (int j = 0; j < singleCharLength; j++)
-				if (i == validSingleCharTokens[j]) {
-					singleCharCurrentTokens[singleCharCurrentTokensLength++] = Tokens->SingleCharTokens[i];
-					break;
-				}
-
-		for (int i = 0; i < Tokens->NumberOfMultiCharTokens; i++)
-			for (int j = 0; j < multiCharLength; j++)
-				if (i == validMultiCharTokens[j]) {
-					multiCharCurrentTokens[multiCharCurrentTokensLength++] = Tokens->MultiCharTokens[i];
-					break;
-				}
-	}
-
-	void InitTokens() {
-		debugLog("Initializing Tokens");
-
-		singleCharCurrentTokens = new SingleCharToken<T>*[Tokens->NumberOfSingleCharTokens];
-		singleCharCurrentTokensLength = 0;
-
-		multiCharCurrentTokens = new MultiCharToken<T>*[Tokens->NumberOfMultiCharTokens];
-		multiCharCurrentTokensLength = 0;
+		multiCharCurrentTokens = limit->MultiCharTokens;
+		multiCharCurrentTokensLength = limit->NumberOfMultiCharTokens;
 	}
 
 	void AddVerifyToken(ABParserVerifyToken<T>* token) {

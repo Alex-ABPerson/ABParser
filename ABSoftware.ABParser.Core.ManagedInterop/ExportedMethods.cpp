@@ -1,6 +1,5 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
-#include "TokenManagement.h"
 
 using namespace std;
 
@@ -23,11 +22,34 @@ int MoveStringToArray(uint16_t* str, int strLen, uint16_t* data, int index) {
 }
 
 extern "C" {
-	EXPORT TokensInformation<uint16_t>* InitializeTokens(uint16_t** tokens, int* tokenLengths, int numberOfTokens) {
-		return CreateTokens(tokens, tokenLengths, numberOfTokens);
+	// Because we can't marshall three pointers for the "tokenLimitNames" (array of an array of limits) in, we need to push token limit names down into an array of strings.
+	// Then, we have "numberOfTokenLimitsForToken", which represents how many limit names each token has. So, we can then convert that to "ABParserToken"s.
+	EXPORT ABParserConfiguration<uint16_t>* InitializeTokens(uint16_t** tokens, size_t* tokenLengths, int numberOfTokens, uint16_t** tokenLimitNames, size_t* tokenLimitNameSizes, int* numberOfTokenLimitsForToken) {
+
+		ABParserToken<uint16_t>* newTokens = new ABParserToken<uint16_t>[numberOfTokens];
+		size_t currentLimitNamesPos = 0;
+		for (int i = 0; i < numberOfTokens; i++) {
+			newTokens[i].Init(tokens[i], tokenLengths[i]);
+			
+			int numberOfLimits = numberOfTokenLimitsForToken[i];
+			if (numberOfTokenLimitsForToken[i]) {
+				UnorganizedTokenLimit<uint16_t>* newLimits = new UnorganizedTokenLimit<uint16_t>[numberOfLimits];
+
+				for (int j = 0; j < numberOfLimits; j++) {
+					newLimits[j].Init(tokenLimitNames[currentLimitNamesPos], tokenLimitNameSizes[currentLimitNamesPos]);
+					currentLimitNamesPos++;
+				}
+
+				newTokens[i].SetLimits(newLimits, numberOfLimits);
+			}
+		}
+
+		ABParserConfiguration<uint16_t>* result = CreateTokens(newTokens, numberOfTokens);
+		delete[] newTokens;
+		return result;
 	}
 
-	EXPORT ABParserBase<uint16_t>* CreateBaseParser(TokensInformation<uint16_t>* information) {
+	EXPORT ABParserBase<uint16_t>* CreateBaseParser(ABParserConfiguration<uint16_t>* information) {
 		return new ABParserBase<uint16_t>(information);
 	}
 
@@ -35,14 +57,23 @@ extern "C" {
 		delete baseParser;
 	}
 
+	EXPORT void EnterTokenLimit(ABParserBase<uint16_t>* parser, uint16_t* limitName, size_t limitNameSize) {
+		parser->EnterTokenLimit(limitName, limitNameSize);
+	}
+
+	EXPORT void ExitTokenLimit(ABParserBase<uint16_t>* parser, int levels) {
+		for (int i = 0; i < levels; i++)
+			parser->ExitTokenLimit();
+	}
+
 	EXPORT int ContinueExecution(ABParserBase<uint16_t>* parser, uint16_t* outData) {
-		int result = parser->ContinueExecution();
+		ABParserResult result = parser->ContinueExecution();
 
 		// SEE ABSOFTWARE DOCS:
 		// Send all of the extra data that's associated with this event.
 		switch (result) {
-		case 1: // Stop
-		case 2: // BeforeTokenProcessed
+		case ABParserResult::StopAndFinalOnTokenProcessed:
+		case ABParserResult::BeforeTokenProcessed:
 			{
 				// The wrapper will know whether these events have been triggered, and will ignore these if so.
 				if (parser->BeforeTokenProcessedToken != nullptr) {
@@ -55,16 +86,17 @@ extern "C" {
 					ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 4);
 				}
 
-				int onTokenProcessedLeadingEnd = MoveStringToArray(result == 1 ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing, result == 1 ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
+				int onTokenProcessedLeadingEnd = MoveStringToArray(result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing, 
+					result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
 
 				// If this was a "Stop" result, then this is the last OnTokenProcessed, so we need to include the trailing as well.
-				if (result == 1)
+				if (result == ABParserResult::StopAndFinalOnTokenProcessed)
 					MoveStringToArray(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, onTokenProcessedLeadingEnd);
 
 			}
 			break;
 
-		case 3: // Before + OnTokenProcessed
+		case ABParserResult::OnAndBeforeTokenProcessed:
 			{
 				outData[0] = parser->OnTokenProcessedToken->MixedIdx;
 				ConvertIntegerToTwoShorts(parser->OnTokenProcessedTokenStart, outData, 1);
@@ -82,7 +114,7 @@ extern "C" {
 
 		}
 
-		return result;
+		return static_cast<int>(result);
 	}
 
 	EXPORT void InitString(ABParserBase<uint16_t>* parser, uint16_t* text, int textLength) {

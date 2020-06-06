@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.XPath;
 
 namespace ABSoftware.ABParser
 {
+
     /// <summary>
     /// Represents an array of ABParser Tokens.
     /// </summary>
@@ -16,9 +18,6 @@ namespace ABSoftware.ABParser
         internal IntPtr TokensStorage;
 
         public ABParserToken[] Tokens;
-        public int Length => Tokens.Length;
-
-        internal ABParserConfiguration() { }
 
         public static ABParserConfiguration Create(ABParserToken[] tokens)
         {
@@ -27,17 +26,46 @@ namespace ABSoftware.ABParser
                 Tokens = tokens
             };
 
-            var arrayOfTokenData = new string[tokens.Length];
-            var arrayOfTokenLengths = new int[tokens.Length];
+            var tokenData = new string[tokens.Length];
+            var tokenDataLengths = new int[tokens.Length];
+            var limitsPerToken = new int[tokens.Length];
+            var limitNames = new List<string>();
 
             for (int i = 0; i < tokens.Length; i++)
             {
-                arrayOfTokenData[i] = tokens[i].TokenData.AsString();
-                arrayOfTokenLengths[i] = tokens[i].TokenData.GetLength();
+                tokenData[i] = tokens[i].TokenData.AsString();
+                tokenDataLengths[i] = tokens[i].TokenData.GetLength();
+
+                limitNames.AddRange(tokens[i].TokenLimitsToAddTo);
+                limitsPerToken[i] = tokens[i].TokenLimitsToAddTo.Count;
             }
 
-            tokensArray.TokensStorage = NativeMethods.InitializeTokens(arrayOfTokenData, arrayOfTokenLengths, tokens.Length);
+            var limitNameSizes = new int[limitNames.Count];
+            for (int i = 0; i < limitNames.Count; i++)
+                limitNameSizes[i] = limitNames[i].Length;
+
+            tokensArray.TokensStorage = NativeMethods.InitializeTokens(tokenData, tokenDataLengths, tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
             return tokensArray;
         }
+
+        //static void ProcessTokenLimit(ABParserInternalToken token, int tokenIndex, ABParserConfiguration config)
+        //{
+        //    var tokenLimitsSize = token.TokenLimitsToAddTo.Count;
+        //    if (tokenLimitsSize == 0) return;
+
+        //    for (int i = 0; i < tokenLimitsSize; i++)
+        //    {
+        //        var thisItem = token.TokenLimitsToAddTo[i];
+        //        var limitIndex = config.TokenLimits.FindIndex(l => l.Name == thisItem);
+
+        //        if (limitIndex == -1)
+        //        {
+        //            config.TokenLimits.Add(new ABParserConfigurationTokenLimit(thisItem));
+        //            limitIndex = config.TokenLimits.Count;
+        //        }
+
+        //        config.TokenLimits[limitIndex].Tokens.Add(tokenIndex);
+        //    }
+        //}
     }
 }

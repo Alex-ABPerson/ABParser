@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ABSoftware.ABParser.Testing.UnitTests.Other
+namespace ABSoftware.ABParser.Testing.UnitTests.CoreParsing
 {
     [TestClass]
     public class UniqueScenarioTests : UnitTestBase

@@ -1,4 +1,5 @@
 ﻿using ABSoftware.ABParser.Events;
+using ABSoftware.ABParser.Exceptions;
 using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,8 @@ namespace ABSoftware.ABParser
         public ABParserText Text;
         public int TextLength;
         public ABParserToken[] Tokens;
+
+        public Stack<string> CurrentTokenLimits = new Stack<string>();
 
         #endregion
 
@@ -84,6 +87,7 @@ namespace ABSoftware.ABParser
             EndHasOnTokenProcessed = false;
             FirstBeforeTokenProcessed = true;
             FirstOnTokenProcessed = true;
+            CurrentTokenLimits.Clear();
         }
 
         internal async void DisposeDataForNextParse()
@@ -269,8 +273,8 @@ namespace ABSoftware.ABParser
                             FirstOnTokenProcessed = false;
 
                         // Trigger the events.
-                        BeforeTokenProcessed(BeforeTokenProcessedArgs);
                         OnTokenProcessed(OnTokenProcessedArgs);
+                        BeforeTokenProcessed(BeforeTokenProcessedArgs);
 
                         break;
                 }
@@ -278,6 +282,7 @@ namespace ABSoftware.ABParser
 
             // Then, run "OnEnd", simply using the trailing from the past "OnTokenProcessed".
             OnEnd(OnTokenProcessedArgs == null ? Text : OnTokenProcessedArgs.Trailing);
+            CurrentTokenLimits.Clear();
 
             // Finally, dispose all of the data - ready for the next parse.
             _disposedForNextParse = false;
@@ -295,7 +300,7 @@ namespace ABSoftware.ABParser
         protected virtual void OnEnd(ABParserText leading) { }
 
         /// <summary>
-        /// Called before a token's trailing has been generated - mainly used to generate TokenLimits!
+        /// Called before a token's trailing has been generated - mainly used to set limits.
         /// </summary>
         protected virtual void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args) { }
 
@@ -348,6 +353,28 @@ namespace ABSoftware.ABParser
             if (_disposeAtDestruction && !_disposedForNextParse)
                 DisposeDataForNextParse();
             NativeMethods.DeleteBaseParser(_baseParser);
+        }
+
+        #endregion
+
+        #region TokenLimits
+
+        public void EnterTokenLimit(string limitName)
+        {
+            CurrentTokenLimits.Push(limitName);
+            NativeMethods.EnterTokenLimit(_baseParser, limitName, limitName.Length);
+        }
+
+        public void ExitTokenLimit(int amount = 1)
+        {
+            if (amount == 0) return;
+            for (int i = 0; i < amount; i++)
+            {
+                if (CurrentTokenLimits.Count == 0) throw new ABParserExitNotInLimit();
+                CurrentTokenLimits.Pop();
+            }
+
+            NativeMethods.ExitTokenLimit(_baseParser, amount);
         }
 
         #endregion

@@ -14,10 +14,10 @@ namespace ABSoftware.ABParser.Internal
         internal const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern IntPtr CreateBaseParser(IntPtr tokenData);
+        internal static extern IntPtr InitializeTokens(string[] tokensData, int[] tokenLengths, int numberOfTokens, string[] limitNames, int[] limitNameSizes, int[] limitsPerToken);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern IntPtr InitializeTokens(string[] tokensData, int[] tokenLengths, int numberOfTokens);
+        internal static extern IntPtr CreateBaseParser(IntPtr tokenData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort[] outData);
@@ -30,5 +30,11 @@ namespace ABSoftware.ABParser.Internal
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DeleteBaseParser(IntPtr baseParser);
+
+        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
+        internal static extern void EnterTokenLimit(IntPtr baseParser, string limitName, int limitNameSize);
+
+        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
+        internal static extern void ExitTokenLimit(IntPtr baseParser, int levels);
     }
 }

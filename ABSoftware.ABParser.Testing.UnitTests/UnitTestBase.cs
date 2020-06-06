@@ -10,24 +10,30 @@ namespace ABSoftware.ABParser.Testing.UnitTests
 {
     public class UnitTestBase
     {
-        public T RunParser<T>(ref T parser, string text)
+        public T InitializeAndRunParser<T>(ref T parser, string text)
             where T : TrackingParser
         {
+            if (parser == null)
+                parser = (T)Activator.CreateInstance(typeof(T));
+
             parser.SetText(new ABParserText(text));
             parser.Start();
             return parser;
         }
 
-        // PARSERS:
-        static NoTokensParser RunNoTokensParser = new NoTokensParser();
-        static SingleTokenParser RunSingleTokenParser = new SingleTokenParser();
-        static TheyParser RunTheyParser = new TheyParser();
-        static TheyMiddleParser RunTheyMiddleParser = new TheyMiddleParser();
+        static NoTokensParser RunNoTokensParser;
+        static SingleTokenParser RunSingleTokenParser;
+        static TheyParser RunTheyParser;
+        static TheyMiddleParser RunTheyMiddleParser;
+        static QuoteLimitParser RunQuoteLimitParser;
+        static AngledLimitParser RunAngledLimitParser;
 
-        public NoTokensParser RunNoTokens(string text) => RunParser(ref RunNoTokensParser, text);
-        public SingleTokenParser RunSingleToken(string text) => RunParser(ref RunSingleTokenParser, text);
-        public TheyParser RunThey(string text) => RunParser(ref RunTheyParser, text);
-        public TheyMiddleParser RunTheyMiddle(string text) => RunParser(ref RunTheyMiddleParser, text);
+        public NoTokensParser RunNoTokens(string text) => InitializeAndRunParser(ref RunNoTokensParser, text);
+        public SingleTokenParser RunSingleToken(string text) => InitializeAndRunParser(ref RunSingleTokenParser, text);
+        public TheyParser RunThey(string text) => InitializeAndRunParser(ref RunTheyParser, text);
+        public TheyMiddleParser RunTheyMiddle(string text) => InitializeAndRunParser(ref RunTheyMiddleParser, text);
+        public QuoteLimitParser RunQuoteLimit(string text) => InitializeAndRunParser(ref RunQuoteLimitParser, text);
+        public AngledLimitParser RunAngledLimit(string text) => InitializeAndRunParser(ref RunAngledLimitParser, text);
 
     }
 }
