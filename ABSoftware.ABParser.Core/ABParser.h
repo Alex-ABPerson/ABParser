@@ -100,7 +100,7 @@ public:
 			switch (result) {
 			case ABParserResult::BeforeTokenProcessed:
 
-				BeforeTokenProcessed(&BeforeTokenProcessedArgs<T, U>(nullptr, 0, &Tokens[Base.BeforeTokenProcessedToken->MixedIdx], Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+				BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(nullptr, 0, &Tokens[Base.BeforeTokenProcessedToken->MixedIdx], Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
 
 				break;
 			case ABParserResult::OnThenBeforeTokenProcessed:
@@ -109,10 +109,8 @@ public:
 				ABParserToken<T, U>* onTokenProcessedToken = &Tokens[Base.OnTokenProcessedToken->MixedIdx];
 				ABParserToken<T, U>* beforeTokenProcessedToken = &Tokens[Base.BeforeTokenProcessedToken->MixedIdx];
 
-				BeforeTokenProcessedArgs<T, U> btpArgs(onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength);
-
-				OnTokenProcessed(&OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
-				BeforeTokenProcessed(&btpArgs);
+				OnTokenProcessed(OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+				BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
 
 				firstOTP = false;
 
@@ -126,7 +124,7 @@ public:
 				ABParserToken<T, U>* onTokenProcessedPreviousToken = firstOTP ? nullptr : &Tokens[Base.OnTokenProcessedPreviousToken->MixedIdx];
 				ABParserToken<T, U>* onTokenProcessedToken = &Tokens[Base.OnTokenProcessedToken->MixedIdx];
 
-				OnTokenProcessed(&OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, nullptr, 0, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+				OnTokenProcessed(OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, nullptr, 0, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
 				break;
 			}
 			}
@@ -141,8 +139,8 @@ public:
 
 	virtual void OnStart() {}
 	virtual void OnEnd(T* leading) {}
-	virtual void BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>* args) {}
-	virtual void OnTokenProcessed(OnTokenProcessedArgs<T, U>* args) {}
+	virtual void BeforeTokenProcessed(const BeforeTokenProcessedArgs<T, U>& args) {}
+	virtual void OnTokenProcessed(const OnTokenProcessedArgs<T, U>& args) {}
 };
 
 #endif

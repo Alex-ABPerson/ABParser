@@ -10,17 +10,12 @@ class TestParser : public ABParser<wchar_t> {
 public:
 	TestParser(ABParserConfiguration<wchar_t>* config, ABParserToken<wchar_t>* tokens) : ABParser(config, tokens) {}
 
-	void BeforeTokenProcessed(BeforeTokenProcessedArgs<wchar_t>* args) {
-		printf("BeforeTokenProcessed Token: %s\n", args->Token->TokenName->c_str());
-		printf("BeforeTokenProcessed LEADING: %ws\n", args->Leading);
+	void BeforeTokenProcessed(const BeforeTokenProcessedArgs<wchar_t>& args) {
+
 	}
 
-	void OnTokenProcessed(OnTokenProcessedArgs<wchar_t>* args) {
-		if (args->PreviousToken != nullptr)
-			printf("OnTokenProcessed Token: %s\n", args->PreviousToken->TokenName->c_str());
-		printf("OnTokenProcessed Token: %s\n", args->Token->TokenName->c_str());
-		printf("OnTokenProcessed LEADING: %ws\n", args->Leading);
-		printf("OnTokenProcessed TRAILING: %ws\n", args->Trailing);
+	void OnTokenProcessed(const OnTokenProcessedArgs<wchar_t>& args) {
+
 	}
 };
 
