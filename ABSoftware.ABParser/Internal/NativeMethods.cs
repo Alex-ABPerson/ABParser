@@ -29,7 +29,7 @@ namespace ABSoftware.ABParser.Internal
         internal static extern void DisposeDataForNextParse(IntPtr parser);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void DeleteBaseParser(IntPtr baseParser);
+        internal static extern void DeleteItem(IntPtr baseParser);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void EnterTokenLimit(IntPtr baseParser, string limitName, byte limitNameSize);

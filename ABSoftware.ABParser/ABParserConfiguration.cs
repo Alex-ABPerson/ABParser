@@ -13,7 +13,7 @@ namespace ABSoftware.ABParser
     /// <summary>
     /// Represents an array of ABParser Tokens.
     /// </summary>
-    public class ABParserConfiguration
+    public class ABParserConfiguration : IDisposable
     {
         // The storage space for tokens on the C++ side, this is passed onto any instance of the parser.
         internal IntPtr TokensStorage;
@@ -49,6 +49,11 @@ namespace ABSoftware.ABParser
 
             tokensArray.TokensStorage = NativeMethods.InitializeTokens(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
             return tokensArray;
+        }
+
+        public void Dispose()
+        {
+            NativeMethods.DeleteItem(TokensStorage);
         }
 
         //static void ProcessTokenLimit(ABParserInternalToken token, int tokenIndex, ABParserConfiguration config)

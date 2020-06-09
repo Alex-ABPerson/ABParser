@@ -24,14 +24,14 @@ uint32_t MoveStringToArray(uint16_t* str, uint32_t strLen, uint16_t* data, uint3
 extern "C" {
 	// Because we can't marshall three pointers for the "tokenLimitNames" (array of an array of limits) in, we need to push token limit names down into an array of strings.
 	// Then, we have "numberOfTokenLimitsForToken", which represents how many limit names each token has. So, we can then convert that to "ABParserToken"s.
-	EXPORT ABParserConfiguration<uint16_t>* InitializeTokens(uint16_t** tokens, uint16_t* tokenLengths, uint16_t numberOfTokens, uint16_t** tokenLimitNames, uint8_t* tokenLimitNameSizes, uint16_t* numberOfTokenLimitsForToken) {
+	EXPORT ABParserConfiguration<uint16_t, uint16_t>* InitializeTokens(uint16_t** tokens, uint16_t* tokenLengths, uint16_t numberOfTokens, uint16_t** tokenLimitNames, uint8_t* tokenLimitNameSizes, uint16_t* numberOfTokenLimitsForToken) {
 
-		ABParserToken<uint16_t>* newTokens = new ABParserToken<uint16_t>[numberOfTokens];
+		ABParserToken<uint16_t, uint16_t>* newTokens = new ABParserToken<uint16_t, uint16_t>[numberOfTokens];
 
 		uint16_t currentLimitNamesPos = 0;
 		for (uint16_t i = 0; i < numberOfTokens; i++) {
 			_ABP_DEBUG_OUT("TOKEN #%d", i);
-			newTokens[i].Init(tokens[i], tokenLengths[i]);
+			newTokens[i].SetData(tokens[i], tokenLengths[i]);
 			
 			int numberOfLimits = numberOfTokenLimitsForToken[i];
 			if (numberOfTokenLimitsForToken[i]) {
@@ -42,11 +42,11 @@ extern "C" {
 					currentLimitNamesPos++;
 				}
 
-				newTokens[i].SetLimits(newLimits, numberOfLimits);
+				newTokens[i].DirectSetLimits(newLimits, numberOfLimits);
 			}
 		}
 
-		ABParserConfiguration<uint16_t>* result = CreateConfiguration(newTokens, numberOfTokens);
+		ABParserConfiguration<uint16_t, uint16_t>* result = new ABParserConfiguration<uint16_t, uint16_t>(newTokens, numberOfTokens);
 		delete[] newTokens;
 		return result;
 	}
@@ -55,11 +55,11 @@ extern "C" {
 		return new ABParserBase<uint16_t>(information);
 	}
 
-	EXPORT void DeleteBaseParser(ABParserBase<uint16_t>* baseParser) {
-		delete baseParser;
+	EXPORT void DeleteItem(void* item) {
+		delete item;
 	}
 
-	EXPORT void EnterTokenLimit(ABParserBase<uint16_t>* parser, uint16_t* limitName, uint8_t limitNameSize) {
+	EXPORT void EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameSize) {
 		parser->EnterTokenLimit(limitName, limitNameSize);
 	}
 
@@ -98,7 +98,7 @@ extern "C" {
 			}
 			break;
 
-		case ABParserResult::OnAndBeforeTokenProcessed:
+		case ABParserResult::OnThenBeforeTokenProcessed:
 			{
 				outData[0] = parser->OnTokenProcessedToken->MixedIdx;
 				Convert32BitTo16Bit(parser->OnTokenProcessedTokenStart, outData, 1);

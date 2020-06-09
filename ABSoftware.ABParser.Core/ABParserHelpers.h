@@ -9,7 +9,7 @@ enum class ABParserResult : int {
 	None,
 	StopAndFinalOnTokenProcessed,
 	BeforeTokenProcessed,
-	OnAndBeforeTokenProcessed
+	OnThenBeforeTokenProcessed
 };
 
 template<typename T>

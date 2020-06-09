@@ -8,11 +8,11 @@
 #include <stack>
 #include <wchar.h>
 
-template<typename T>
+template<typename T, typename U = char>
 class ABParserBase {
 public:
 
-	ABParserConfiguration<T>* Configuration;
+	ABParserConfiguration<T, U>* Configuration;
 
 	uint32_t BeforeTokenProcessedTokenStart;
 	ABParserInternalToken<T>* BeforeTokenProcessedToken;
@@ -32,7 +32,7 @@ public:
 	T* OnTokenProcessedTrailing;
 	uint32_t OnTokenProcessedTrailingLength;
 
-	std::stack<TokenLimit<T>*> CurrentTokenLimits;
+	std::stack<TokenLimit<T, U>*> CurrentTokenLimits;
 
 	// RESULTS:
 	// 0 - None
@@ -81,10 +81,16 @@ public:
 		return ABParserResult::StopAndFinalOnTokenProcessed;
 	}
 
-	ABParserBase(ABParserConfiguration<T>* configuration) {
+	ABParserBase() {
+		InitParser();
+	}
 
-		Configuration = configuration;
+	ABParserBase(ABParserConfiguration<T, U>* configuration) {
+		InitParser();
+		InitConfiguration(configuration);
+	}
 
+	void InitParser() {
 		Text = nullptr;
 		TextLength = 0;
 		OnTokenProcessedLeading = nullptr;
@@ -105,12 +111,16 @@ public:
 		futureTokens = nullptr;
 		justStarted = true;
 
-		currentVerifyTriggers.reserve(Configuration->NumberOfMultiCharTokens);
-		currentVerifyTriggerStarts.reserve(Configuration->NumberOfMultiCharTokens);
-
 		// Estimated to have 2 verifyTokens at a given time.
 		verifyTokens.reserve(2);
 		verifyTokensToDelete.reserve(2);
+	}
+
+	void InitConfiguration(ABParserConfiguration<T, U>* configuration) {
+		Configuration = configuration;
+
+		currentVerifyTriggers.reserve(Configuration->NumberOfMultiCharTokens);
+		currentVerifyTriggerStarts.reserve(Configuration->NumberOfMultiCharTokens);
 
 		ResetCurrentTokens();
 	}
@@ -167,11 +177,11 @@ public:
 		}
 	}
 
-	void EnterTokenLimit(T* limitName, uint16_t limitNameSize) {
+	void EnterTokenLimit(U* limitName, uint16_t limitNameSize) {
 		for (uint16_t i = 0; i < Configuration->NumberOfTokenLimits; i++) {
-			TokenLimit<T>* currentLimit = Configuration->TokenLimits[i];
+			TokenLimit<T, U>* currentLimit = Configuration->TokenLimits[i];
 
-			if (Matches(limitName, currentLimit->LimitName.get(), limitNameSize, currentLimit->LimitNameSize)) {
+			if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitNameSize)) {
 				CurrentTokenLimits.push(currentLimit);
 				SetCurrentTokens(currentLimit);
 				break;
@@ -670,11 +680,6 @@ private:
 	}
 
 	ABParserResult QueueTokenAndReturnFinalizeResult(ABParserInternalToken<T>* token, uint32_t index, bool hadQueuedToken) {
-		//if (AutoExitTokenLimit) {
-		//	ExitTokenLimit();
-		//	AutoExitTokenLimit = false;
-		//}
-
 		OnTokenProcessedPreviousToken = OnTokenProcessedToken;
 		OnTokenProcessedPreviousTokenStart = OnTokenProcessedTokenStart;
 
@@ -687,7 +692,7 @@ private:
 
 		// Based on whether there was a queued-up token before, we'll either trigger "BeforeTokenProcessed" or both that and "OnTokenProcessed".
 		if (hadQueuedToken)
-			return ABParserResult::OnAndBeforeTokenProcessed;
+			return ABParserResult::OnThenBeforeTokenProcessed;
 		else
 			return ABParserResult::BeforeTokenProcessed;
 	}
@@ -736,7 +741,7 @@ private:
 		multiCharCurrentTokensLength = Configuration->NumberOfMultiCharTokens;
 	}
 
-	void SetCurrentTokens(TokenLimit<T>* limit) {
+	void SetCurrentTokens(TokenLimit<T, U>* limit) {
 		singleCharCurrentTokens = limit->SingleCharTokens;
 		singleCharCurrentTokensLength = limit->NumberOfSingleCharTokens;
 

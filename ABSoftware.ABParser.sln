@@ -29,6 +29,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSoftware.ABParser.Core.Ma
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ABSoftware.ABParser.Core", "ABSoftware.ABParser.Core", "{621C8F12-0FDF-481B-A982-DD607BCDD294}"
 	ProjectSection(SolutionItems) = preProject
+		ABSoftware.ABParser.Core\ABParser.h = ABSoftware.ABParser.Core\ABParser.h
 		ABSoftware.ABParser.Core\ABParserBase.h = ABSoftware.ABParser.Core\ABParserBase.h
 		ABSoftware.ABParser.Core\ABParserHelpers.h = ABSoftware.ABParser.Core\ABParserHelpers.h
 		ABSoftware.ABParser.Core\Debugging.h = ABSoftware.ABParser.Core\Debugging.h
