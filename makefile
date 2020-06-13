@@ -47,7 +47,6 @@ CPPT_MACOSX_OUT_FILES := ${CPPT_MACOSX_OUTDIR}/Main.o
 # ExportedMethods.o
 ${MI_LINUX_OUTDIR}/ExportedMethods.o ${MI_MACOSX_OUTDIR}/ExportedMethods.o: \
 	${MI_DIR}/ExportedMethods.cpp \
-	${MI_DIR}/PlatformImplementation.h \
 	${CORE_DIR}/ABParserBase.h \
 	${CORE_DIR}/Debugging.h \
 	${CORE_DIR}/TokenManagement.h

@@ -716,11 +716,15 @@ private:
 	void PrepareLeadingAndTrailing(uint32_t tokenLength, uint32_t tokenStart, T* buildUpToUse, uint32_t buildUpToUseLength, bool resetBuildUp, bool isEnd) {
 		_ABP_DEBUG_OUT("Preparing leading and trailing for token.");
 
-		// We are only deleting the leading, and not the buildUp because the buildUp is only ever allocated once, whereas the leading, which is set to the previous trailing, is allocated everytime, as you can see below.
-		OnTokenProcessedLeadingLength = 0;
-		for (uint32_t i = 0; i < OnTokenProcessedTrailingLength; i++)
-			OnTokenProcessedLeading[OnTokenProcessedLeadingLength++] = OnTokenProcessedTrailing[i];
-		OnTokenProcessedLeading[OnTokenProcessedTrailingLength] = 0;
+		// Swap the leading/trailing around, as the trailing becomes the leading.
+		T* dataSwap = OnTokenProcessedLeading;
+		uint32_t dataSwapLength = OnTokenProcessedLeadingLength;
+
+		OnTokenProcessedLeading = OnTokenProcessedTrailing;
+		OnTokenProcessedLeadingLength = OnTokenProcessedTrailingLength;
+		
+		OnTokenProcessedTrailing = dataSwap;
+		OnTokenProcessedTrailingLength = dataSwapLength;
 
 		// We need to work out how much of the buildUp is what we really want, as the buildUp will contain this token or part of it at the end, and we need to trim that off.
 		uint32_t trailingLength;
