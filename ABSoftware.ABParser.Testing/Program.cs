@@ -10,10 +10,10 @@ namespace ABSoftware.ABParser.Testing
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).SetLimits("DoubleStringLimit"),
-            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).SetLimits("SingleStringLimit"),
-            new ABParserToken(new ABParserText("CAPITAL_B"), new ABParserText("B")),
-        });
+            new ABParserToken(new ABParserText("A")),
+            new ABParserToken(new ABParserText("B")),
+            new ABParserToken(new ABParserText("C")),
+        }, 2).AddTriviaLimit("NoWhiteSpace", ' ', '\r', '\n', '\t').AddTriviaLimit("NoABCs", 'a', 'b', 'c');
 
         public TestParser() : base(ParserConfig) { }
 
@@ -28,6 +28,19 @@ namespace ABSoftware.ABParser.Testing
         {
             Console.WriteLine("BeforeTokenProcessed: " + args.Token.TokenName.AsString());
             Console.WriteLine("BeforeTokenProcessed Leading: " + args.Leading.AsString());
+
+            switch (args.Token.TokenName.AsString())
+            {
+                case "A":
+                    EnterTriviaLimit("NoWhiteSpace");
+                    break;
+                case "B":
+                    EnterTriviaLimit("NoABCs");
+                    break;
+                case "C":
+                    ExitTriviaLimit();
+                    break;
+            }
         }
     }
 
@@ -37,7 +50,7 @@ namespace ABSoftware.ABParser.Testing
         {
             using (var parser = new TestParser())
             {
-                parser.SetText(new ABParserText("A\"aBdc\"B"));
+                parser.SetText(new ABParserText("h Aj \tkBadcCl oCl o"));
                 parser.Start();
             }
 

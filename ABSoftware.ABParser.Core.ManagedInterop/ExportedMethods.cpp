@@ -1,7 +1,6 @@
-#include "PlatformImplementation.h"
 #include "ABParserBase.h"
 
-#define COMPILE_DLL
+//#define COMPILE_DLL
 
 #ifdef COMPILE_DLL
 #define EXPORT __declspec(dllexport)
@@ -72,8 +71,12 @@ extern "C" {
 		return new ABParserBase<uint16_t, uint16_t>(information);
 	}
 
-	EXPORT void DeleteItem(void* item) {
-		delete item;
+	EXPORT void DeleteBaseParser(ABParserBase<uint16_t, uint16_t>* parser) {
+		delete parser;
+	}
+
+	EXPORT void DeleteConfiguration(ABParserConfiguration<uint16_t, uint16_t>* parser) {
+		delete parser;
 	}
 
 	EXPORT void EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {

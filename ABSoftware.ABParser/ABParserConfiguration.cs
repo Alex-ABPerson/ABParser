@@ -67,11 +67,6 @@ namespace ABSoftware.ABParser
             TriviaLimits = new ABParserConfigurationTriviaLimit[numberOfTriviaTokens];
         }
 
-        public void Dispose()
-        {
-            NativeMethods.DeleteItem(TokensStorage);
-        }
-
         public ABParserConfiguration AddTriviaLimit(string name, params char[] toIgnore)
         {
             if (name.Length > 255) throw new ABParserNameTooLong();
@@ -106,6 +101,11 @@ namespace ABSoftware.ABParser
             }
 
             NativeMethods.ConfigSetTriviaLimits(TokensStorage, limitNames, limitLengths, limitContents, limitContentLengths, TriviaLimits.Length);
+        }
+
+        public void Dispose()
+        {
+            NativeMethods.DeleteConfiguration(TokensStorage);
         }
     }
 }

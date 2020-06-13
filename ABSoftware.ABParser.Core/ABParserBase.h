@@ -185,6 +185,7 @@ public:
 			TokenLimit<T, U>* currentLimit = Configuration->TokenLimits[i];
 
 			if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitName->length())) {
+				_ABP_DEBUG_OUT("Entered into token limit");
 				CurrentTokenLimits.push(currentLimit);
 				SetCurrentTokens(currentLimit);
 				break;
@@ -206,6 +207,7 @@ public:
 			TriviaLimit<T, U>* limit = &Configuration->TriviaLimits[i];
 			
 			if (Matches(limitName, (U*)limit->LimitName->data(), limitNameSize, limit->LimitName->length())) {
+				_ABP_DEBUG_OUT("Entered into trivia limit");
 				CurrentTriviaLimits.push(limit);
 				break;
 			}
@@ -746,8 +748,10 @@ private:
 			TriviaLimit<T, U>* limit = CurrentTriviaLimits.top();
 
 			for (uint32_t i = 0; i < trailingLength; i++) {
-				if (ArrContainsChar(limit->ToIgnore, limit->ToIgnoreLength, buildUpToUse[i]))
+				if (ArrContainsChar(limit->ToIgnore, limit->ToIgnoreLength, buildUpToUse[i])) {
+					_ABP_DEBUG_OUT("Character is in trivia limit - ignored!");
 					continue;
+				}
 
 				OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
 			}

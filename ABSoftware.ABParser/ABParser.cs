@@ -354,7 +354,7 @@ namespace ABSoftware.ABParser
                 await Task.Delay(1);
             if (_disposeAtDestruction && !_disposedForNextParse)
                 DisposeDataForNextParse();
-            NativeMethods.DeleteItem(_baseParser);
+            NativeMethods.DeleteBaseParser(_baseParser);
         }
 
         #endregion

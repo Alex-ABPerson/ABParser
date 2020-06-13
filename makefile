@@ -49,7 +49,8 @@ ${MI_LINUX_OUTDIR}/ExportedMethods.o ${MI_MACOSX_OUTDIR}/ExportedMethods.o: \
 	${MI_DIR}/ExportedMethods.cpp \
 	${CORE_DIR}/ABParserBase.h \
 	${CORE_DIR}/Debugging.h \
-	${CORE_DIR}/TokenManagement.h
+	${CORE_DIR}/ABParserConfig.h \
+	${CORE_DIR}/ABParserHelpers.h
 
 # ABSOFTWARE.ABPARSER.TESTING.CPPTESTING:
 ${CPPT_LINUX_OUTDIR}/Main.o ${CPPT_MACOSX_OUTDIR}/Main.o: \

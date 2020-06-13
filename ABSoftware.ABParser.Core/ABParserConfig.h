@@ -198,6 +198,11 @@ public:
 		for (uint16_t i = 0; i < charsLength; i++)
 			ToIgnore[i] = chars[i];
 	}
+
+	~TriviaLimit() {
+		delete LimitName;
+		delete[] ToIgnore;
+	}
 };
 
 template<typename T, typename U = char>
@@ -270,6 +275,7 @@ public:
 		delete[] SingleCharTokens;
 		delete[] MultiCharTokens;
 		delete[] TokenLimits;
+		delete[] TriviaLimits;
 	}
 
 	ABParserConfiguration<T, U>* SetTriviaLimits(uint16_t numberOfTriviaLimits, TriviaLimit<T, U>* limits) {

@@ -44,6 +44,9 @@ namespace ABSoftware.ABParser.Internal
         internal static extern void ExitTriviaLimit(IntPtr baseParser, int levels);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void DeleteItem(IntPtr baseParser);
+        internal static extern void DeleteBaseParser(IntPtr baseParser);
+
+        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
+        internal static extern void DeleteConfiguration(IntPtr configuration);
     }
 }
