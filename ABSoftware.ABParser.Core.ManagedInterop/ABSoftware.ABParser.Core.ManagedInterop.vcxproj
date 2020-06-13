@@ -148,9 +148,6 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
   <ItemGroup>
     <ClCompile Include="ExportedMethods.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="PlatformImplementation.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

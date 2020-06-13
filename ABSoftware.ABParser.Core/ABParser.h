@@ -32,7 +32,7 @@ public:
 		LeadingLength = leadingLength;
 	}
 
-	std::basic_string<T>* GetLeadingAsString() const { return new std::basic_string<T>(Leading); }
+	const std::basic_string<T>& GetLeadingAsString() const { return new const std::basic_string<T>(Leading); }
 };
 
 template<typename T, typename U = char>
@@ -64,7 +64,7 @@ public:
 		TrailingLength = trailingLength;
 	}
 
-	std::basic_string<T>* GetTrailingAsString() const { return new std::basic_string<T>(Trailing); }
+	const std::basic_string<T>& GetTrailingAsString() const { return new const std::basic_string<T>(Trailing); }
 };
 
 template<typename T, typename U = char>
@@ -131,11 +131,15 @@ public:
 		}
 	}
 
-	void EnterTokenLimit(T* limitName, uint8_t limitNameSize) { Base.EnterTokenLimit(limitName, limitNameSize); }
-	void EnterTokenLimit(const T* limitName, uint8_t limitNameSize) { EnterTokenLimit((T*)limitName, limitNameSize); }
-	void EnterTokenLimit(std::basic_string<T>& limitName) { EnterTokenLimit((T*)limitName.data(), limitName.size()); }
+	void EnterTokenLimit(const T* limitName, uint8_t limitNameSize) { Base.EnterTokenLimit(limitName, limitNameSize); }
+	void EnterTokenLimit(std::basic_string<T>& limitName) { EnterTokenLimit(limitName.data(), limitName.size()); }
 
 	void ExitTokenLimit() { Base.ExitTokenLimit(); }
+
+	void EnterTriviaLimit(const T* limitName, uint8_t limitNameSize) { Base.EnterTriviaLimit(limitName, limitNameSize); }
+	void EnterTriviaLimit(std::basic_string<T>& limitName) { EnterTriviaLimit(limitName.data(), limitName.size()); }
+
+	void ExitTriviaLimit() { Base.ExitTriviaLimit(); }
 
 	virtual void OnStart() {}
 	virtual void OnEnd(T* leading) {}

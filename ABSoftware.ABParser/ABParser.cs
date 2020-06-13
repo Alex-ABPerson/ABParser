@@ -26,6 +26,7 @@ namespace ABSoftware.ABParser
         public ABParserToken[] Tokens;
 
         public Stack<string> CurrentTokenLimits = new Stack<string>();
+        public Stack<string> CurrentTriviaLimits = new Stack<string>();
 
         #endregion
 
@@ -283,6 +284,7 @@ namespace ABSoftware.ABParser
             // Then, run "OnEnd", simply using the trailing from the past "OnTokenProcessed".
             OnEnd(OnTokenProcessedArgs == null ? Text : OnTokenProcessedArgs.Trailing);
             CurrentTokenLimits.Clear();
+            CurrentTriviaLimits.Clear();
 
             // Finally, dispose all of the data - ready for the next parse.
             _disposedForNextParse = false;
@@ -376,6 +378,25 @@ namespace ABSoftware.ABParser
             }
 
             NativeMethods.ExitTokenLimit(_baseParser, amount);
+        }
+
+        public void EnterTriviaLimit(string limitName)
+        {
+            if (limitName.Length > 255) throw new ABParserNameTooLong();
+            CurrentTriviaLimits.Push(limitName);
+            NativeMethods.EnterTriviaLimit(_baseParser, limitName, (byte)limitName.Length);
+        }
+
+        public void ExitTriviaLimit(int amount = 1)
+        {
+            if (amount == 0) return;
+            for (int i = 0; i < amount; i++)
+            {
+                if (CurrentTriviaLimits.Count == 0) throw new ABParserExitNotInLimit();
+                CurrentTriviaLimits.Pop();
+            }
+
+            NativeMethods.ExitTriviaLimit(_baseParser, amount);
         }
 
         #endregion

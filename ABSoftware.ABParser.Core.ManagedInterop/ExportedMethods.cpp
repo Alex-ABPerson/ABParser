@@ -1,7 +1,13 @@
 #include "PlatformImplementation.h"
 #include "ABParserBase.h"
 
-using namespace std;
+#define COMPILE_DLL
+
+#ifdef COMPILE_DLL
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
 void Convert32BitTo16Bit(uint32_t bit32, uint16_t* out, uint32_t index) {
 	out[index] = bit32 << 16;
@@ -24,7 +30,7 @@ uint32_t MoveStringToArray(uint16_t* str, uint32_t strLen, uint16_t* data, uint3
 extern "C" {
 	// Because we can't marshall three pointers for the "tokenLimitNames" (array of an array of limits) in, we need to push token limit names down into an array of strings.
 	// Then, we have "numberOfTokenLimitsForToken", which represents how many limit names each token has. So, we can then convert that to "ABParserToken"s.
-	EXPORT ABParserConfiguration<uint16_t, uint16_t>* InitializeTokens(uint16_t** tokens, uint16_t* tokenLengths, uint16_t numberOfTokens, uint16_t** tokenLimitNames, uint8_t* tokenLimitNameSizes, uint16_t* numberOfTokenLimitsForToken) {
+	EXPORT ABParserConfiguration<uint16_t, uint16_t>* InitializeConfiguration(uint16_t** tokens, uint16_t* tokenLengths, uint16_t numberOfTokens, uint16_t** tokenLimitNames, uint8_t* tokenLimitNameSizes, uint16_t* numberOfTokenLimitsForToken) {
 
 		ABParserToken<uint16_t, uint16_t>* newTokens = new ABParserToken<uint16_t, uint16_t>[numberOfTokens];
 
@@ -51,24 +57,44 @@ extern "C" {
 		return result;
 	}
 
-	EXPORT ABParserBase<uint16_t>* CreateBaseParser(ABParserConfiguration<uint16_t>* information) {
-		return new ABParserBase<uint16_t>(information);
+	EXPORT void ConfigSetTriviaLimits(ABParserConfiguration<uint16_t, uint16_t>* config, uint16_t** limitNames, uint8_t* limitNameLengths, uint16_t** limitContents, uint16_t* limitContentLengths, uint16_t numberOfLimits) {
+		TriviaLimit<uint16_t, uint16_t>* limits = new TriviaLimit<uint16_t, uint16_t>[numberOfLimits];
+
+		for (uint16_t i = 0; i < numberOfLimits; i++) {
+			limits[i].SetName(limitNames[i]);
+			limits[i].DirectSetIgnoreCharacters(limitContents[i], limitContentLengths[i]);
+		}
+			
+		config->SetTriviaLimits(numberOfLimits, limits);
+	}
+
+	EXPORT ABParserBase<uint16_t, uint16_t>* CreateBaseParser(ABParserConfiguration<uint16_t, uint16_t>* information) {
+		return new ABParserBase<uint16_t, uint16_t>(information);
 	}
 
 	EXPORT void DeleteItem(void* item) {
 		delete item;
 	}
 
-	EXPORT void EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameSize) {
-		parser->EnterTokenLimit(limitName, limitNameSize);
+	EXPORT void EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
+		parser->EnterTokenLimit(limitName, limitNameLength);
 	}
 
-	EXPORT void ExitTokenLimit(ABParserBase<uint16_t>* parser, int levels) {
+	EXPORT void ExitTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {
 		for (int i = 0; i < levels; i++)
 			parser->ExitTokenLimit();
 	}
 
-	EXPORT int ContinueExecution(ABParserBase<uint16_t>* parser, uint16_t* outData) {
+	EXPORT void EnterTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
+		parser->EnterTriviaLimit(limitName, limitNameLength);
+	}
+
+	EXPORT void ExitTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {
+		for (int i = 0; i < levels; i++)
+			parser->ExitTriviaLimit();
+	}
+
+	EXPORT int ContinueExecution(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* outData) {
 		ABParserResult result = parser->ContinueExecution();
 
 		// SEE ABSOFTWARE DOCS:
@@ -119,7 +145,7 @@ extern "C" {
 		return static_cast<int>(result);
 	}
 
-	EXPORT void InitString(ABParserBase<uint16_t>* parser, uint16_t* text, int textLength) {
+	EXPORT void InitString(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* text, int textLength) {
 		parser->InitString(text, textLength);
 	}
 

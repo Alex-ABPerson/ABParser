@@ -8,6 +8,6 @@ namespace ABSoftware.ABParser.Exceptions
 {
     public class ABParserExitNotInLimit : Exception
     {
-        public ABParserExitNotInLimit() : base("Cannot exit token limit when not within token limit.") { }
+        public ABParserExitNotInLimit() : base("Cannot exit limit when not within limit.") { }
     }
 }

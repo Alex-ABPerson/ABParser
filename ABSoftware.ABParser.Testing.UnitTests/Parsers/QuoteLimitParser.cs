@@ -11,9 +11,9 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         bool InString = false;
 
-        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[] {
-            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).AddToLimit("DoubleStringLimit"),
-            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).AddToLimit("SingleStringLimit"),
+        static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[] {
+            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).SetLimits("DoubleStringLimit"),
+            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).SetLimits("SingleStringLimit"),
             new ABParserToken(new ABParserText("CAPITAL_B"), new ABParserText("B")),
         });
 

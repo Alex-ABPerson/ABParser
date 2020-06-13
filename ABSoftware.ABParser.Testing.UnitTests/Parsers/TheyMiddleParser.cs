@@ -8,7 +8,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
     public class TheyMiddleParser : TrackingParser
     {
-        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("theya")),
             new ABParserToken(new ABParserText("heya")),

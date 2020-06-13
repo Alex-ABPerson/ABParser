@@ -17,12 +17,12 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers.DoubleComma
 
     public class DoubleCommaParser : ABParser
     {
-        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
             new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.SingleComma)), new ABParserText(",")),
             new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.DoubleComma)), new ABParserText(",,")),
-            new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.SingleQuote)), new ABParserText("\"")).AddToLimit("DoubleQuoteString"),
-            new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.DoubleQuote)), new ABParserText("'")).AddToLimit("SingleQuoteString")
+            new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.SingleQuote)), new ABParserText("\"")).SetLimits("DoubleQuoteString"),
+            new ABParserToken(new ABParserText(nameof(DoubleCommaTokens.DoubleQuote)), new ABParserText("'")).SetLimits("SingleQuoteString")
         });
 
         public DoubleCommaParser() : base(ParserConfig) { }

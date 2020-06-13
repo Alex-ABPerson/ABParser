@@ -8,10 +8,10 @@ namespace ABSoftware.ABParser.Testing
 
     public class TestParser : ABParser
     {
-        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).AddToLimit("DoubleStringLimit"),
-            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).AddToLimit("SingleStringLimit"),
+            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).SetLimits("DoubleStringLimit"),
+            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).SetLimits("SingleStringLimit"),
             new ABParserToken(new ABParserText("CAPITAL_B"), new ABParserText("B")),
         });
 

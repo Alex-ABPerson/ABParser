@@ -1,7 +1,7 @@
 #ifndef _ABPARSER_INCLUDE_ABPARSER_MAIN_H
 #define _ABPARSER_INCLUDE_ABPARSER_MAIN_H
 #include "ABParserHelpers.h"
-#include "TokenManagement.h"
+#include "ABParserConfig.h"
 #include "Debugging.h"
 #include <string>
 #include <vector>
@@ -33,6 +33,7 @@ public:
 	uint32_t OnTokenProcessedTrailingLength;
 
 	std::stack<TokenLimit<T, U>*> CurrentTokenLimits;
+	std::stack<TriviaLimit<T, U>*> CurrentTriviaLimits;
 
 	// RESULTS:
 	// 0 - None
@@ -75,6 +76,8 @@ public:
 		// Reset anything for next time.
 		while (!CurrentTokenLimits.empty())
 			CurrentTokenLimits.pop();
+		while (!CurrentTriviaLimits.empty())
+			CurrentTriviaLimits.pop();
 		ResetCurrentTokens();
 
 		justStarted = true;
@@ -177,11 +180,11 @@ public:
 		}
 	}
 
-	void EnterTokenLimit(U* limitName, uint16_t limitNameSize) {
+	void EnterTokenLimit(U* limitName, uint8_t limitNameSize) {
 		for (uint16_t i = 0; i < Configuration->NumberOfTokenLimits; i++) {
 			TokenLimit<T, U>* currentLimit = Configuration->TokenLimits[i];
 
-			if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitNameSize)) {
+			if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitName->length())) {
 				CurrentTokenLimits.push(currentLimit);
 				SetCurrentTokens(currentLimit);
 				break;
@@ -196,6 +199,21 @@ public:
 			ResetCurrentTokens();
 		else
 			SetCurrentTokens(CurrentTokenLimits.top());
+	}
+
+	void EnterTriviaLimit(U* limitName, uint8_t limitNameSize) {
+		for (uint16_t i = 0; i < Configuration->NumberOfTriviaLimits; i++) {
+			TriviaLimit<T, U>* limit = &Configuration->TriviaLimits[i];
+			
+			if (Matches(limitName, (U*)limit->LimitName->data(), limitNameSize, limit->LimitName->length())) {
+				CurrentTriviaLimits.push(limit);
+				break;
+			}
+		}
+	}
+
+	void ExitTriviaLimit() {
+		CurrentTriviaLimits.pop();
 	}
 
 	// Disposes data after a parse has been completed.
@@ -288,13 +306,13 @@ private:
 		_ABP_DEBUG_OUT("Processing character: %c", ch);
 
 		// First, we'll update our current futureTokens with this character.
-		UpdateCurrentFutureTokens(ch);
+		UpdateCurrentFutureTokens();
 
 		// Next, we'll add any new futureTokens for this character.
-		AddNewFutureTokens(ch);
+		AddNewFutureTokens();
 
 		// Then, process any finished futureTokens, and, if we need to return a result from that, do that.
-		ABParserResult result = ProcessFinishedTokens(ch);
+		ABParserResult result = ProcessFinishedTokens();
 		if (result != ABParserResult::None)
 			return result;
 
@@ -302,18 +320,18 @@ private:
 		if (isFinalizingVerifyTokens)
 			return ContinueExecution();
 
-		AddCharacterToBuildUp(ch);
+		AddCharToBuildUp(Text[currentPosition]);
 		return ABParserResult::None;
 	}
 
-	void AddCharacterToBuildUp(T ch) {
+	void AddCharToBuildUp(T ch) {
 		if (isVerifying)
 			currentVerifyToken->TrailingBuildUp[currentVerifyToken->TrailingBuildUpLength++] = ch;
 		else
 			buildUp[buildUpLength++] = ch;
 	}
 
-	void UpdateCurrentFutureTokens(T ch) {
+	void UpdateCurrentFutureTokens() {
 
 		_ABP_DEBUG_OUT("Updating future tokens.");
 		bool hasUnfinalizedFutureToken = false;
@@ -331,7 +349,7 @@ private:
 				// to check if we've matched the whole futureToken, and if so mark it as complete, otherwise if a character didn't match, we'll disable it.
 				uint32_t nextTokenCharacterPosition = (i - currentPosition) * -1;
 
-				if (futureTokens[i][j].Token->TokenContents[nextTokenCharacterPosition] == ch) {
+				if (futureTokens[i][j].Token->TokenContents[nextTokenCharacterPosition] == Text[currentPosition]) {
 					if (futureTokens[i][j].Token->TokenLength == nextTokenCharacterPosition + 1)
 						futureTokens[i][j].Finished = true;
 				}
@@ -345,20 +363,20 @@ private:
 		}
 	}
 
-	void AddNewFutureTokens(T ch) {
+	void AddNewFutureTokens() {
 
 		_ABP_DEBUG_OUT("Adding future tokens.");
 		futureTokensTail++;
 
 		uint16_t currentLength = 0;
 		for (uint16_t i = 0; i < multiCharCurrentTokensLength; i++)
-			if (multiCharCurrentTokens[i]->TokenContents[0] == ch)
+			if (multiCharCurrentTokens[i]->TokenContents[0] == Text[currentPosition])
 				AddFutureToken(multiCharCurrentTokens[i], currentLength++);
 
 		futureTokens[currentPosition][currentLength].EndOfArray = true;
 	}
 
-	ABParserResult ProcessFinishedTokens(T ch) {
+	ABParserResult ProcessFinishedTokens() {
 		_ABP_DEBUG_OUT("Processing finished future tokens.");
 
 		// We deal with the multiple character long tokens first because they might contain single character tokens, so, if we process them first,
@@ -391,13 +409,13 @@ private:
 		}
 
 		for (uint16_t i = 0; i < singleCharCurrentTokensLength; i++) {
-			_ABP_DEBUG_OUT("Testing single-char: %c vs %c", singleCharCurrentTokens[i]->TokenChar, ch);
-			if (singleCharCurrentTokens[i]->TokenChar == ch) {
+			_ABP_DEBUG_OUT("Testing single-char: %c vs %c", singleCharCurrentTokens[i]->TokenChar, Text[currentPosition]);
+			if (singleCharCurrentTokens[i]->TokenChar == Text[currentPosition]) {
 
 				_ABP_DEBUG_OUT("Finished single-char token!");
 
 				// Finalize it or verify it.
-				if (PrepareSingleCharForVerification(ch, singleCharCurrentTokens[i]))
+				if (PrepareSingleCharForVerification(Text[currentPosition], singleCharCurrentTokens[i]))
 					StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(singleCharCurrentTokens[i], true, currentPosition, GenerateVerifyTrailing())));
 				else
 					return FinalizeToken(singleCharCurrentTokens[i], currentPosition, buildUp, buildUpLength, true);
@@ -439,7 +457,6 @@ private:
 
 		bool needsToBeVerified = false;
 
-		// Check to see if any futureTokens contain this character.
 		for (uint32_t i = futureTokensHead; i < futureTokensTail; i++)
 			for (uint16_t j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
 
@@ -475,7 +492,6 @@ private:
 		_ABP_DEBUG_OUT("Checking if multi-char token requires verification.");
 		bool needsToBeVerified = false;
 
-		// Check to see if any other futureTokens contain this token.
 		for (uint32_t i = futureTokensHead; i <= index; i++) {
 
 			for (uint16_t j = 0; j < Configuration->NumberOfMultiCharTokens; j++) {
@@ -535,7 +551,7 @@ private:
 
 			// If there are no more triggers left in this token, then it WAS actually the token in the text - not the triggers! So, we'll go ahead and get ready to start finalizing this token.
 			if (!hasRemainingTriggers) {
-				// All the triggers are gone, so we'll just reset the length down to 0, so we can pick up on this.
+				// All the triggers are gone, so we'll just reset the length down to 0, so we can pick up on this later.
 				verifyTokens[i]->TriggersLength = 0;
 				finalizingVerifyTokensCurrentToken = 0;
 				lastVerifyToken = nullptr;
@@ -618,7 +634,7 @@ private:
 
 			// The character we're currently on never got added to the buildUp, so, we'll add it to the buildUp now.
 			StopVerify(0, true);
-			AddCharacterToBuildUp(Text[currentPosition - 1]);
+			AddCharToBuildUp(Text[currentPosition - 1]);
 
 			return ABParserResult::None;
 		}
@@ -706,17 +722,34 @@ private:
 			OnTokenProcessedLeading[OnTokenProcessedLeadingLength++] = OnTokenProcessedTrailing[i];
 		OnTokenProcessedLeading[OnTokenProcessedTrailingLength] = 0;
 
-		// Now, we need to work out how much of the buildUp is what we really want, because the buildUp will contain this token or part of it at the end, and we need to trim that off.
+		// We need to work out how much of the buildUp is what we really want, as the buildUp will contain this token or part of it at the end, and we need to trim that off.
 		uint32_t trailingLength;
 		if (isEnd)
 			trailingLength = buildUpToUseLength;
+		else if (BeforeTokenProcessedToken)
+			trailingLength = tokenStart - (BeforeTokenProcessedTokenStart + BeforeTokenProcessedToken->GetLength());
 		else
-			trailingLength = tokenStart - (BeforeTokenProcessedToken == nullptr ? 0 : BeforeTokenProcessedTokenStart + BeforeTokenProcessedToken->GetLength());
+			trailingLength = tokenStart;
 
 		OnTokenProcessedTrailingLength = 0;
-		for (uint32_t i = 0; i < trailingLength; i++)
-			OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
-		OnTokenProcessedTrailing[trailingLength] = 0;
+
+		// Copy the buildUp into the final trailing, but excluding any of the trivia limit characters.
+		if (CurrentTriviaLimits.empty())
+			for (uint32_t i = 0; i < trailingLength; i++)
+				OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i]; 
+		else {
+
+			TriviaLimit<T, U>* limit = CurrentTriviaLimits.top();
+
+			for (uint32_t i = 0; i < trailingLength; i++) {
+				if (ArrContainsChar(limit->ToIgnore, limit->ToIgnoreLength, buildUpToUse[i]))
+					continue;
+
+				OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
+			}
+		}
+
+		OnTokenProcessedTrailing[OnTokenProcessedTrailingLength] = 0;
 
 		if (resetBuildUp)
 			buildUpLength = 0;
@@ -762,6 +795,15 @@ private:
 		// If that was the last of them, stop verifying.
 		if (!verifyTokens.size())
 			isVerifying = false;
+	}
+
+	// LIMITS:
+	bool ArrContainsChar(T* arr, uint16_t arrSize, T ch) {
+		for (uint16_t i = 0; i < arrSize; i++)
+			if (arr[i] == ch)
+				return true;
+
+		return false;
 	}
 };
 #endif

@@ -17,15 +17,15 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         int CurrentLevel = 0;
 
-        static readonly ABParserConfiguration ParserConfiguration = ABParserConfiguration.Create(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfiguration = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("<")).AddToLimit("Outside"),
-            new ABParserToken(new ABParserText("<<")).AddToLimit("FirstLevel"),
-            new ABParserToken(new ABParserText("<<<")).AddToLimit("SecondLevel"),
-            new ABParserToken(new ABParserText("?")).AddToLimit("SecondLevel", "ThirdLevel"),
-            new ABParserToken(new ABParserText("!")).AddToLimit("FirstLevel", "SecondLevel", "ThirdLevel"),
-            new ABParserToken(new ABParserText(">")).AddToLimit("FirstLevel", "SecondLevel", "ThirdLevel"),
-            new ABParserToken(new ABParserText(">>")).AddToLimit("FirstLevel", "SecondLevel", "ThirdLevel")
+            new ABParserToken(new ABParserText("<")).SetLimits("Outside"),
+            new ABParserToken(new ABParserText("<<")).SetLimits("FirstLevel"),
+            new ABParserToken(new ABParserText("<<<")).SetLimits("SecondLevel"),
+            new ABParserToken(new ABParserText("?")).SetLimits("SecondLevel", "ThirdLevel"),
+            new ABParserToken(new ABParserText("!")).SetLimits("FirstLevel", "SecondLevel", "ThirdLevel"),
+            new ABParserToken(new ABParserText(">")).SetLimits("FirstLevel", "SecondLevel", "ThirdLevel"),
+            new ABParserToken(new ABParserText(">>")).SetLimits("FirstLevel", "SecondLevel", "ThirdLevel")
         });
 
         public AngledLimitParser() : base(ParserConfiguration) { }

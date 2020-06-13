@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Features\TokenLimitTests.cs" />
     <Compile Include="CoreParsing\NoVerifyTests.cs" />
+    <Compile Include="Features\TriviaLimitTests.cs" />
     <Compile Include="Parsers\AngledLimitParser.cs" />
     <Compile Include="Parsers\DoubleComma\DoubleCommaParser.cs" />
     <Compile Include="Parsers\DoubleComma\DoubleCommaResult.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="CoreParsing\VerifyTests.cs" />
     <Compile Include="CoreParsing\UniqueScenarioTests.cs" />
     <Compile Include="Parsers\QuoteLimitParser.cs" />
+    <Compile Include="Parsers\TriviaLimitParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrackingParser.cs" />
     <Compile Include="UnitTestBase.cs" />

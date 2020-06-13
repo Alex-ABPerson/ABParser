@@ -9,7 +9,7 @@ namespace ABSoftware.ABParser.Testing.MemoryTests
 {
     public class TestParser : ABParser
     {
-        static readonly ABParserConfiguration ParserConfig = ABParserConfiguration.Create(new ABParserToken[]
+        static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
             new ABParserToken(new ABParserText("the"), new ABParserText("the")),
             new ABParserToken(new ABParserText("they"), new ABParserText("they")),

@@ -3,31 +3,42 @@ using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
 
 namespace ABSoftware.ABParser
 {
+    public struct ABParserConfigurationTriviaLimit
+    {
+        public string Name;
+        public char[] ToIgnore;
+
+        public void Init(string name, char[] toIgnore)
+        {
+            Name = name;
+            ToIgnore = toIgnore;
+        }
+    }
 
     /// <summary>
     /// Represents an array of ABParser Tokens.
     /// </summary>
     public class ABParserConfiguration : IDisposable
     {
+        public ABParserConfigurationTriviaLimit[] TriviaLimits;
+        int _triviaLimitsProvided;
+
         // The storage space for tokens on the C++ side, this is passed onto any instance of the parser.
         internal IntPtr TokensStorage;
 
         public ABParserToken[] Tokens;
 
-        public static ABParserConfiguration Create(ABParserToken[] tokens)
+        public ABParserConfiguration(ABParserToken[] tokens, int numberOfTriviaTokens = 0)
         {
             if (tokens.Length > ushort.MaxValue) throw new ABParserTooManyTokens();
-
-            var tokensArray = new ABParserConfiguration()
-            {
-                Tokens = tokens
-            };
+            Tokens = tokens;
 
             var tokenData = new string[tokens.Length];
             var tokenDataLengths = new ushort[tokens.Length];
@@ -39,16 +50,21 @@ namespace ABSoftware.ABParser
                 tokenData[i] = tokens[i].TokenData.AsString();
                 tokenDataLengths[i] = (ushort)tokens[i].TokenData.GetLength();
 
-                limitNames.AddRange(tokens[i].TokenLimitsToAddTo);
-                limitsPerToken[i] = (ushort)tokens[i].TokenLimitsToAddTo.Count;
+                if (tokens[i].TokenLimits == null)
+                    limitsPerToken[i] = 0;
+                else
+                {
+                    limitNames.AddRange(tokens[i].TokenLimits);
+                    limitsPerToken[i] = (ushort)tokens[i].TokenLimits.Length;
+                }
             }
 
             var limitNameSizes = new byte[limitNames.Count];
             for (int i = 0; i < limitNames.Count; i++)
                 limitNameSizes[i] = (byte)limitNames[i].Length;
 
-            tokensArray.TokensStorage = NativeMethods.InitializeTokens(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
-            return tokensArray;
+            TokensStorage = NativeMethods.InitializeConfiguration(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
+            TriviaLimits = new ABParserConfigurationTriviaLimit[numberOfTriviaTokens];
         }
 
         public void Dispose()
@@ -56,24 +72,40 @@ namespace ABSoftware.ABParser
             NativeMethods.DeleteItem(TokensStorage);
         }
 
-        //static void ProcessTokenLimit(ABParserInternalToken token, int tokenIndex, ABParserConfiguration config)
-        //{
-        //    var tokenLimitsSize = token.TokenLimitsToAddTo.Count;
-        //    if (tokenLimitsSize == 0) return;
+        public ABParserConfiguration AddTriviaLimit(string name, params char[] toIgnore)
+        {
+            if (name.Length > 255) throw new ABParserNameTooLong();
 
-        //    for (int i = 0; i < tokenLimitsSize; i++)
-        //    {
-        //        var thisItem = token.TokenLimitsToAddTo[i];
-        //        var limitIndex = config.TokenLimits.FindIndex(l => l.Name == thisItem);
+            if (TriviaLimits.Length == _triviaLimitsProvided) throw new ABParserTooManyTriviaLimits();
+            else
+            {
+                TriviaLimits[_triviaLimitsProvided++].Init(name, toIgnore);
 
-        //        if (limitIndex == -1)
-        //        {
-        //            config.TokenLimits.Add(new ABParserConfigurationTokenLimit(thisItem));
-        //            limitIndex = config.TokenLimits.Count;
-        //        }
+                if (TriviaLimits.Length == _triviaLimitsProvided)
+                    FlushTriviaLimits();
+            }
 
-        //        config.TokenLimits[limitIndex].Tokens.Add(tokenIndex);
-        //    }
-        //}
+            return this;
+        }
+
+        private unsafe void FlushTriviaLimits()
+        {
+            var limitNames = new string[TriviaLimits.Length];
+            var limitLengths = new byte[TriviaLimits.Length];
+
+            var limitContents = new string[TriviaLimits.Length];
+            var limitContentLengths = new ushort[TriviaLimits.Length];
+            
+            for (int i = 0; i < TriviaLimits.Length; i++)
+            {
+                limitNames[i] = TriviaLimits[i].Name;
+                limitLengths[i] = (byte)TriviaLimits[i].Name.Length;
+
+                limitContents[i] = new string(TriviaLimits[i].ToIgnore);
+                limitContentLengths[i] = (ushort)TriviaLimits[i].ToIgnore.Length;
+            }
+
+            NativeMethods.ConfigSetTriviaLimits(TokensStorage, limitNames, limitLengths, limitContents, limitContentLengths, TriviaLimits.Length);
+        }
     }
 }

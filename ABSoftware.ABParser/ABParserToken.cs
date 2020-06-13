@@ -9,7 +9,7 @@ namespace ABSoftware.ABParser
 {
     public sealed class ABParserToken
     {
-        internal List<string> TokenLimitsToAddTo = new List<string>();
+        internal string[] TokenLimits = null;
 
         /// <summary>
         /// The name this token can be given to identify it.
@@ -42,9 +42,9 @@ namespace ABSoftware.ABParser
             TokenTag = tag;
         }
 
-        public ABParserToken AddToLimit(params string[] limits)
+        public ABParserToken SetLimits(params string[] limits)
         {
-            TokenLimitsToAddTo.AddRange(limits);
+            TokenLimits = limits;
             return this;
         }
     }

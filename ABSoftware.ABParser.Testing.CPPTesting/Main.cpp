@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "ABParser.h"
-#include "TokenManagement.h"
+#include "ABParserConfig.h"
 #include <vector>
 
 class TestParser : public ABParser<wchar_t> {

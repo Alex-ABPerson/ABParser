@@ -10,7 +10,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
 {
     public class UnitTestBase
     {
-        public T InitializeAndRunParser<T>(ref T parser, string text)
+        T InitializeAndRunParser<T>(ref T parser, string text)
             where T : TrackingParser
         {
             if (parser == null)
@@ -27,6 +27,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         static TheyMiddleParser RunTheyMiddleParser;
         static QuoteLimitParser RunQuoteLimitParser;
         static AngledLimitParser RunAngledLimitParser;
+        static TriviaLimitParser RunTriviaLimitParser;
 
         public NoTokensParser RunNoTokens(string text) => InitializeAndRunParser(ref RunNoTokensParser, text);
         public SingleTokenParser RunSingleToken(string text) => InitializeAndRunParser(ref RunSingleTokenParser, text);
@@ -34,6 +35,6 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         public TheyMiddleParser RunTheyMiddle(string text) => InitializeAndRunParser(ref RunTheyMiddleParser, text);
         public QuoteLimitParser RunQuoteLimit(string text) => InitializeAndRunParser(ref RunQuoteLimitParser, text);
         public AngledLimitParser RunAngledLimit(string text) => InitializeAndRunParser(ref RunAngledLimitParser, text);
-
+        public TriviaLimitParser RunTriviaLimit(string text) => InitializeAndRunParser(ref RunTriviaLimitParser, text);
     }
 }
