@@ -1,5 +1,7 @@
 #include "ABParserBase.h"
 
+using namespace abparser;
+
 #define COMPILE_DLL
 
 #ifdef COMPILE_DLL
@@ -117,7 +119,7 @@ extern "C" {
 					Convert32BitTo16Bit(parser->OnTokenProcessedTokenStart, outData, 4);
 				}
 
-				uint32_t onTokenProcessedLeadingEnd = MoveStringToArray(result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing, 
+				uint32_t onTokenProcessedLeadingEnd = MoveStringToArray(result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing,
 					result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
 
 				// If this was a "Stop" result, then this is the last OnTokenProcessed, so we need to include the trailing as well.
