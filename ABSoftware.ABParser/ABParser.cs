@@ -19,7 +19,7 @@ namespace ABSoftware.ABParser
         // NOTE: The core part of ABParser is written in C++, that is most likely where you want to look.
         // Check ABSoftware.ABParser.Core and the ABSoftware Docs for more info.
 
-        #region Public Data
+        #region Public data
 
         public ABParserText Text;
         public int TextLength;
@@ -30,17 +30,12 @@ namespace ABSoftware.ABParser
 
         #endregion
 
-        #region Internal Data
+        #region Internal data
 
         /// <summary>
         /// A pointer to the actual parser in C++, this pointer can be used to get or set information.
         /// </summary>
         IntPtr _baseParser;
-
-        /// <summary>
-        /// Data that is transferred alongside each result.
-        /// </summary>
-        ushort[] Data;
 
         bool FirstBeforeTokenProcessed = true;
         bool FirstOnTokenProcessed = true;
@@ -76,9 +71,6 @@ namespace ABSoftware.ABParser
             Text = text;
             TextLength = text.GetLength();
             NativeMethods.InitString(_baseParser, text.AsString(), TextLength);
-
-            // Now that we know the size of text, we can generate the maximum size of the data we will recieve for events.
-            Data = new ushort[TextLength * 2 + 11];
         }
 
         internal void ResetInfo()
@@ -88,10 +80,9 @@ namespace ABSoftware.ABParser
             EndHasOnTokenProcessed = false;
             FirstBeforeTokenProcessed = true;
             FirstOnTokenProcessed = true;
-            CurrentTokenLimits.Clear();
         }
 
-        internal async void DisposeDataForNextParse()
+        internal async void DisposedataForNextParse()
         {
             if (_disposedForNextParse)
                 return;
@@ -110,25 +101,25 @@ namespace ABSoftware.ABParser
             } else NativeMethods.DisposeDataForNextParse(_baseParser);
         }
 
-        internal int TwoShortsToInteger(ushort[] arr, int index) => (arr[index] >> 16) + arr[index + 1];
+        internal unsafe int TwoShortsToInteger(ushort* data, int index) => (data[index] >> 16) + data[index + 1];
 
-        internal int ShortsToString(ushort[] arr, int index, out ABParserText text)
+        internal unsafe int ShortsToString(ushort* data, int index, out ABParserText text)
         {
             // Get the length of the string.
-            int length = TwoShortsToInteger(arr, index);
+            int length = TwoShortsToInteger(data, index);
             var result = new char[length];
 
             // Go through and convert all of them to characters.
             index += 2;
             for (int i = 0; i < length; i++)
-                result[i] = (char)arr[index++];
+                result[i] = (char)data[index++];
 
             // Turn that into an "ABParserText", and send that out - also sending out the ending point.
             text = new ABParserText(result);
             return index;
         }
 
-        internal void ParseResult(ContinueExecutionResult result)
+        internal unsafe void ParseResult(ContinueExecutionResult result, ushort* data)
         {
             switch (result)
             {
@@ -146,14 +137,14 @@ namespace ABSoftware.ABParser
                     var eventArgs = result == ContinueExecutionResult.Stop ? (TokenProcessedEventArgs)new OnTokenProcessedEventArgs(this) : new BeforeTokenProcessedEventArgs(this);
 
                     // Copy across all of the data from what the Core ABParser gave us.
-                    eventArgs.TokenIndex = Data[0];
-                    eventArgs.TokenStart = TwoShortsToInteger(Data, 1);
+                    eventArgs.TokenIndex = data[0];
+                    eventArgs.TokenStart = TwoShortsToInteger(data, 1);
                     eventArgs.HasPreviousToken = result == ContinueExecutionResult.Stop ? !FirstOnTokenProcessed : !FirstBeforeTokenProcessed;
-                    eventArgs.PreviousTokenIndex = FirstBeforeTokenProcessed ? (ushort)0 : Data[3];
-                    eventArgs.PreviousTokenStart = FirstBeforeTokenProcessed ? TwoShortsToInteger(Data, 4) : 0;
+                    eventArgs.PreviousTokenIndex = FirstBeforeTokenProcessed ? (ushort)0 : data[3];
+                    eventArgs.PreviousTokenStart = FirstBeforeTokenProcessed ? TwoShortsToInteger(data, 4) : 0;
 
                     // Set the leading.
-                    var leadingEnd = ShortsToString(Data, 6, out var leading);
+                    var leadingEnd = ShortsToString(data, 6, out var leading);
                     eventArgs.Leading = leading;
 
                     // Set the trailing - but only if this was a "stop" command.
@@ -163,7 +154,7 @@ namespace ABSoftware.ABParser
                         OnTokenProcessedArgs = (OnTokenProcessedEventArgs)eventArgs;
 
                         // Give it the trailing.
-                        ShortsToString(Data, leadingEnd, out var trailing);
+                        ShortsToString(data, leadingEnd, out var trailing);
                         OnTokenProcessedArgs.Trailing = trailing;
                         EndHasOnTokenProcessed = true;
                     }
@@ -188,23 +179,23 @@ namespace ABSoftware.ABParser
                     };
 
                     // First, we'll set the OnTokenProcessed token - for "BeforeTokenProcessed", this is actually the previous token.
-                    beforeTokenProcessedArgs.PreviousTokenIndex = onTokenProcessedArgs.TokenIndex = Data[0];
-                    beforeTokenProcessedArgs.PreviousTokenStart = onTokenProcessedArgs.TokenStart = TwoShortsToInteger(Data, 1);
+                    beforeTokenProcessedArgs.PreviousTokenIndex = onTokenProcessedArgs.TokenIndex = data[0];
+                    beforeTokenProcessedArgs.PreviousTokenStart = onTokenProcessedArgs.TokenStart = TwoShortsToInteger(data, 1);
 
                     // Next, we'll set the previous token for the "OnTokenProcessed" - this applies to only the "OnTokenProcessed".
-                    onTokenProcessedArgs.PreviousTokenIndex = Data[3];
-                    onTokenProcessedArgs.PreviousTokenStart = TwoShortsToInteger(Data, 4);
+                    onTokenProcessedArgs.PreviousTokenIndex = data[3];
+                    onTokenProcessedArgs.PreviousTokenStart = TwoShortsToInteger(data, 4);
 
                     // Then, we'll set the BeforeTokenProcessed token - which, for the "OnTokenProcessed" is actually the next token.
-                    onTokenProcessedArgs.NextTokenIndex = beforeTokenProcessedArgs.TokenIndex = Data[6];
-                    onTokenProcessedArgs.NextTokenStart = beforeTokenProcessedArgs.TokenStart = TwoShortsToInteger(Data, 7);
+                    onTokenProcessedArgs.NextTokenIndex = beforeTokenProcessedArgs.TokenIndex = data[6];
+                    onTokenProcessedArgs.NextTokenStart = beforeTokenProcessedArgs.TokenStart = TwoShortsToInteger(data, 7);
 
                     // After that, we'll set the leading for the "OnTokenProcessed", which means nothing to the "BeforeTokenProcessed".
-                    var onTokenProcessedLeadingEnd = ShortsToString(Data, 9, out var onTokenProcessedLeading);
+                    var onTokenProcessedLeadingEnd = ShortsToString(data, 9, out var onTokenProcessedLeading);
                     onTokenProcessedArgs.Leading = onTokenProcessedLeading;
 
                     // And, after that, we'll set the trailing for the "OnTokenProcessed", which is the leading for the "BeforeTokenProcessed".
-                    ShortsToString(Data, onTokenProcessedLeadingEnd, out var onTokenProcessedTrailing);
+                    ShortsToString(data, onTokenProcessedLeadingEnd, out var onTokenProcessedTrailing);
                     beforeTokenProcessedArgs.Leading = onTokenProcessedArgs.Trailing = onTokenProcessedTrailing;
 
                     // Finally, put those two into the main fields.
@@ -232,6 +223,13 @@ namespace ABSoftware.ABParser
             while (_currentlyDisposing)
                 await Task.Delay(1);
 
+            DoExecute();
+        }
+
+        unsafe void DoExecute()
+        {
+            ushort* data = stackalloc ushort[TextLength * 2 + 11];
+
             // Trigger the "OnStart".
             OnStart();
 
@@ -244,7 +242,7 @@ namespace ABSoftware.ABParser
             // Just keep on executing until we hit the "Stop" result.
             while (result != ContinueExecutionResult.Stop)
             {
-                ParseResult(result = NativeMethods.ContinueExecution(_baseParser, Data));
+                ParseResult(result = NativeMethods.ContinueExecution(_baseParser, data), data);
 
                 // Do whatever the result said to do.
                 switch (result)
@@ -289,8 +287,7 @@ namespace ABSoftware.ABParser
             // Finally, dispose all of the data - ready for the next parse.
             _disposedForNextParse = false;
             if (!_disposeAtDestruction)
-                DisposeDataForNextParse();
-
+                DisposedataForNextParse();
         }
 
         #endregion
@@ -353,7 +350,7 @@ namespace ABSoftware.ABParser
             while (_currentlyDisposing)
                 await Task.Delay(1);
             if (_disposeAtDestruction && !_disposedForNextParse)
-                DisposeDataForNextParse();
+                DisposedataForNextParse();
             NativeMethods.DeleteBaseParser(_baseParser);
         }
 

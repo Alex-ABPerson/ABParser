@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ABSoftware.ABParser.Events;
 
-namespace ABSoftware.ABParser.Testing.MemoryTests
+namespace ABSoftware.ABParser.Testing.MemPerfTests
 {
     public class TestParser : ABParser
     {

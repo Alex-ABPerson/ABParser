@@ -32,20 +32,20 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -76,12 +76,18 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\CoreBin\</OutDir>
+    <TargetName>ABParserCore</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\CoreBin\</OutDir>
+    <TargetName>ABParserCore</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\CoreBin\</OutDir>
+    <TargetName>ABParserCore</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -97,8 +103,8 @@
     </Link>
     <PostBuildEvent>
       <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemoryTests\bin\Debug" 
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"</Command>
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Debug"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -107,11 +113,17 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Debug"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -121,6 +133,7 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,6 +141,11 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Release"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Release"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -137,6 +155,7 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +163,11 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Release"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Release"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ExportedMethods.cpp" />

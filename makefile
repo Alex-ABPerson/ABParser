@@ -1,4 +1,4 @@
-FLAGS := -g -fPIC -o
+FLAGS := -O2 -g -fPIC -o
 
 GENERAL_OUTDIR := MakeBuild
 GENERAL_LINUX_OUTDIR := Linux
@@ -67,6 +67,9 @@ compileCPPT: compileMILinux ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
 testWithMono: compileAll
 	mono ABSoftware.ABParser.Testing/bin/Debug/ABSoftware.ABParser.Testing.exe
 
+testMemPerf: compileAll
+	mono ABSoftware.ABParser.Testing.MemPerfTests/bin/Debug/ABSoftware.ABParser.Testing.MemPerfTests.exe
+
 clean: 
 	rm -r ${MI_OUTDIR} ${CPPT_LINUX}
 
@@ -102,5 +105,5 @@ ${CPPT_LINUX_FINAL}:
 
 copyMILinux: 
 	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing/bin/Debug/libABParserCore.so
-	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.MemoryTests/bin/Debug/libABParserCore.so
+	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.MemPerfTests/bin/Debug/libABParserCore.so
 	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.UnitTests/bin/Debug/libABParserCore.so

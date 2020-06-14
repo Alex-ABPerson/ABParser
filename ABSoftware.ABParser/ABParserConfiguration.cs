@@ -35,14 +35,14 @@ namespace ABSoftware.ABParser
 
         public ABParserToken[] Tokens;
 
-        public ABParserConfiguration(ABParserToken[] tokens, int numberOfTriviaTokens = 0)
+        public unsafe ABParserConfiguration(ABParserToken[] tokens, int numberOfTriviaTokens = 0)
         {
             if (tokens.Length > ushort.MaxValue) throw new ABParserTooManyTokens();
             Tokens = tokens;
 
             var tokenData = new string[tokens.Length];
-            var tokenDataLengths = new ushort[tokens.Length];
-            var limitsPerToken = new ushort[tokens.Length];
+            var tokenDataLengths = stackalloc ushort[tokens.Length];
+            var limitsPerToken = stackalloc ushort[tokens.Length];
             var limitNames = new List<string>();
 
             for (int i = 0; i < tokens.Length; i++)
@@ -59,7 +59,7 @@ namespace ABSoftware.ABParser
                 }
             }
 
-            var limitNameSizes = new byte[limitNames.Count];
+            var limitNameSizes = stackalloc byte[limitNames.Count];
             for (int i = 0; i < limitNames.Count; i++)
                 limitNameSizes[i] = (byte)limitNames[i].Length;
 
@@ -86,10 +86,10 @@ namespace ABSoftware.ABParser
         private unsafe void FlushTriviaLimits()
         {
             var limitNames = new string[TriviaLimits.Length];
-            var limitLengths = new byte[TriviaLimits.Length];
+            var limitLengths = stackalloc byte[TriviaLimits.Length];
 
             var limitContents = new string[TriviaLimits.Length];
-            var limitContentLengths = new ushort[TriviaLimits.Length];
+            var limitContentLengths = stackalloc ushort[TriviaLimits.Length];
             
             for (int i = 0; i < TriviaLimits.Length; i++)
             {
