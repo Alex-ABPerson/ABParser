@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ABSoftware.ABParser.Testing.UnitTests</RootNamespace>
     <AssemblyName>ABSoftware.ABParser.Testing.UnitTests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
@@ -72,13 +72,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ABSoftware.ABParser\ABSoftware.ABParser.csproj">
-      <Project>{dfd01552-dacc-4deb-bf23-6203932ce7ff}</Project>
-      <Name>ABSoftware.ABParser</Name>
-    </ProjectReference>
+    <Folder Include="Other\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Other\" />
+    <ProjectReference Include="..\ABSoftware.ABParser\ABSoftware.ABParser.csproj">
+      <Project>{79e739df-2c8f-40b3-80f4-228524373f47}</Project>
+      <Name>ABSoftware.ABParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

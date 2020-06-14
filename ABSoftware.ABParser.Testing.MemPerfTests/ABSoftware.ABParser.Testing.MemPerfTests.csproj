@@ -8,9 +8,10 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>ABSoftware.ABParser.Testing.MemPerfTests</RootNamespace>
     <AssemblyName>ABSoftware.ABParser.Testing.MemPerfTests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -59,7 +60,7 @@
       <Name>ABSoftware.ABParser.Testing.UnitTests</Name>
     </ProjectReference>
     <ProjectReference Include="..\ABSoftware.ABParser\ABSoftware.ABParser.csproj">
-      <Project>{dfd01552-dacc-4deb-bf23-6203932ce7ff}</Project>
+      <Project>{79e739df-2c8f-40b3-80f4-228524373f47}</Project>
       <Name>ABSoftware.ABParser</Name>
     </ProjectReference>
   </ItemGroup>
