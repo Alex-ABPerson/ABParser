@@ -15,7 +15,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
         {
             new ABParserToken(new ABParserText("the")),
             new ABParserToken(new ABParserText("they")),
-            new ABParserToken(new ABParserText("theyare")),
+            new ABParserToken(new ABParserText("theyare"))
         });
 
         public TheyParser() : base(ParserConfig) { }

@@ -9,7 +9,8 @@ namespace ABSoftware.ABParser
 {
     public sealed class ABParserToken
     {
-        internal string[] TokenLimits = null;
+        public string[] TokenLimits = null;
+        public char[] DetectionLimits = null;
 
         /// <summary>
         /// The name this token can be given to identify it.
@@ -45,6 +46,12 @@ namespace ABSoftware.ABParser
         public ABParserToken SetLimits(params string[] limits)
         {
             TokenLimits = limits;
+            return this;
+        }
+
+        public ABParserToken SetDetectionLimits(params char[] detectionLimits)
+        {
+            DetectionLimits = detectionLimits;
             return this;
         }
     }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ABSoftware.ABParser": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

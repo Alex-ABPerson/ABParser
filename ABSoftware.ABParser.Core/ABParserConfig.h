@@ -43,12 +43,15 @@ namespace abparser {
 	class ABParserToken {
 	public:
 
+		T* DetectionLimit;
+		uint16_t DetectionLimitSize;
+
 		const std::basic_string<U>* TokenName;
 
 		UnorganizedTokenLimit<U>* Limits;
 		uint16_t LimitsLength;
 
-		std::shared_ptr<T[]> Data;
+		T* Data;
 		uint16_t DataLength;
 
 		ABParserToken() {
@@ -57,6 +60,9 @@ namespace abparser {
 			DataLength = 0;
 			LimitsLength = 0;
 			Limits = nullptr;
+
+			DetectionLimit = nullptr;
+			DetectionLimitSize = 0;
 		}
 
 		ABParserToken<T, U>* SetName(const U* name) {
@@ -73,14 +79,11 @@ namespace abparser {
 		}
 
 		ABParserToken<T, U>* SetData(T* data, uint16_t dataLength) {
-			Data = std::shared_ptr<T[]>(new T[dataLength], std::default_delete<T[]>());
+			Data = new T[dataLength];
 			for (uint16_t i = 0; i < dataLength; i++)
 				Data[i] = data[i];
 
 			DataLength = dataLength;
-			Limits = nullptr;
-			LimitsLength = 0;
-
 			return this;
 		}
 
@@ -109,7 +112,7 @@ namespace abparser {
 			return this;
 		}
 
-		ABParserToken<T, U>* SetLimits(U** limits, uint8_t* limitLengths, uint16_t numberOfLimits) {
+		ABParserToken<T, U>* SetTokenLimits(U** limits, uint8_t* limitLengths, uint16_t numberOfLimits) {
 			LimitsLength = numberOfLimits;
 			Limits = new UnorganizedTokenLimit<U>[numberOfLimits];
 
@@ -119,14 +122,44 @@ namespace abparser {
 			return this;
 		}
 
-		ABParserToken<T, U>* DirectSetLimits(UnorganizedTokenLimit<U>* limits, uint16_t numberOfLimits) {
+		ABParserToken<T, U>* DirectSetTokenLimits(UnorganizedTokenLimit<U>* limits, uint16_t numberOfLimits) {
 			Limits = limits;
 			LimitsLength = numberOfLimits;
 			return this;
 		}
 
+		ABParserToken<T, U>* SetDetectionLimit(uint16_t numberOfLimitChars, ...) {
+			DetectionLimit = new T[numberOfLimitChars];
+			
+			va_list args;
+			va_start(args, numberOfLimitChars);
+
+			for (uint32_t i = 0; i < numberOfLimitChars; i++)
+				DetectionLimit[i] = va_arg(args, T);
+
+			va_end(args);
+			return this;
+		}
+
+		ABParserToken<T, U>* DirectSetDetectionLimit(T* chars, uint16_t numberOfLimitChars) {
+			DetectionLimit = new T[numberOfLimitChars];
+
+			for (uint16_t i = 0; i < numberOfLimitChars; i++)
+				DetectionLimit[i] = chars[i];
+
+			DetectionLimitSize = numberOfLimitChars;
+			return this;
+		}
+
 		~ABParserToken() {
-			delete[] Limits;
+			delete TokenName;
+			delete[] Data;
+
+			if (Limits != nullptr)
+				delete[] Limits;
+
+			if (DetectionLimit != nullptr)
+				delete[] DetectionLimit;
 		}
 	};
 
@@ -220,7 +253,25 @@ namespace abparser {
 		TriviaLimit<T, U>* TriviaLimits;
 		uint16_t NumberOfTriviaLimits;
 
+		ABParserConfiguration() {
+			SingleCharTokens = nullptr;
+			NumberOfSingleCharTokens = 0;
+
+			MultiCharTokens = nullptr;
+			NumberOfMultiCharTokens = 0;
+
+			TokenLimits = nullptr;
+			NumberOfTokenLimits = 0;
+
+			TriviaLimits = nullptr;
+			NumberOfTriviaLimits = 0;
+		}
+
 		ABParserConfiguration(ABParserToken<T, U>* tokens, uint16_t numberOfTokens) {
+			Init(tokens, numberOfTokens);
+		}
+		
+		void Init(ABParserToken<T, U>* tokens, uint16_t numberOfTokens) {
 			std::vector<TokenLimit<T, U>*> organizedTokens;
 
 			// Initialize the arrays the results will go into - we try to set them to the maximum potentional size it could be.
@@ -249,6 +300,8 @@ namespace abparser {
 						ProcessTokenLimits(currentToken->Limits, currentToken->LimitsLength, &organizedTokens, MultiCharTokens[NumberOfMultiCharTokens], false, numberOfTokens);
 					MultiCharTokens[NumberOfMultiCharTokens]->MixedIdx = i;
 					MultiCharTokens[NumberOfMultiCharTokens]->TokenContents = currentToken->Data;
+					MultiCharTokens[NumberOfMultiCharTokens]->DetectionLimit = currentToken->DetectionLimit;
+					MultiCharTokens[NumberOfMultiCharTokens]->DetectionLimitSize = currentToken->DetectionLimitSize;
 					MultiCharTokens[NumberOfMultiCharTokens++]->TokenLength = currentToken->DataLength;
 				}
 			}
@@ -268,15 +321,24 @@ namespace abparser {
 		}
 
 		~ABParserConfiguration() {
-			for (int i = 0; i < NumberOfSingleCharTokens; i++)
-				delete SingleCharTokens[i];
-			for (int i = 0; i < NumberOfMultiCharTokens; i++)
-				delete MultiCharTokens[i];
+			if (SingleCharTokens != nullptr) {
+				for (int i = 0; i < NumberOfSingleCharTokens; i++)
+					delete SingleCharTokens[i];
 
-			delete[] SingleCharTokens;
-			delete[] MultiCharTokens;
-			delete[] TokenLimits;
-			delete[] TriviaLimits;
+				delete[] SingleCharTokens;
+			}
+
+			if (MultiCharTokens != nullptr) {
+				for (int i = 0; i < NumberOfMultiCharTokens; i++)
+					delete MultiCharTokens[i];
+
+				delete[] MultiCharTokens;
+			}
+			
+			if (TokenLimits != nullptr)
+				delete[] TokenLimits;
+			if (TriviaLimits != nullptr)
+				delete[] TriviaLimits;
 		}
 
 		ABParserConfiguration<T, U>* SetTriviaLimits(uint16_t numberOfTriviaLimits, TriviaLimit<T, U>* limits) {

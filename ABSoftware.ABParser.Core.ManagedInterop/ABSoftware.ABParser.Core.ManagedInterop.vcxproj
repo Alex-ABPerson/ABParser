@@ -73,21 +73,25 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ABParserCore</TargetName>
     <OutDir>..\CoreBin\</OutDir>
+    <IntDir>..\CoreBin\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\CoreBin\</OutDir>
     <TargetName>ABParserCore</TargetName>
+    <IntDir>..\CoreBin\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\CoreBin\</OutDir>
     <TargetName>ABParserCore</TargetName>
+    <IntDir>..\CoreBin\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\CoreBin\</OutDir>
     <TargetName>ABParserCore</TargetName>
+    <IntDir>..\CoreBin\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -134,6 +138,7 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +161,7 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)ABSoftware.ABParser.Core</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

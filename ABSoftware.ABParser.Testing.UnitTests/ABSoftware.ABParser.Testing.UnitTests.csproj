@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,10 +51,12 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Features\DetectionLimitTests.cs" />
     <Compile Include="Features\TokenLimitTests.cs" />
     <Compile Include="CoreParsing\NoVerifyTests.cs" />
     <Compile Include="Features\TriviaLimitTests.cs" />
     <Compile Include="Parsers\AngledLimitParser.cs" />
+    <Compile Include="Parsers\DetectionLimitParser.cs" />
     <Compile Include="Parsers\DoubleComma\DoubleCommaParser.cs" />
     <Compile Include="Parsers\DoubleComma\DoubleCommaResult.cs" />
     <Compile Include="Parsers\NoTokensParser.cs" />

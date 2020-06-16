@@ -16,9 +16,10 @@ namespace abparser {
 	template<typename T>
 	class ABParserInternalToken {
 	public:
+
 		// When we created an instance of ABParser, the single-char tokens and multi-char tokens were mixed together, this is at what index this token would've been mixed in.
 		uint16_t MixedIdx = 0;
-		virtual uint32_t GetLength() { return 0; }
+		virtual uint16_t GetLength() { return 0; }
 		virtual bool IsSingleChar() { return false; }
 	};
 
@@ -27,26 +28,34 @@ namespace abparser {
 	public:
 		T TokenChar = 0;
 
-		uint32_t GetLength() { return 1; }
+		uint16_t GetLength() { return 1; }
 		bool IsSingleChar() { return true; }
 	};
 
 	template<typename T>
 	class MultiCharToken : public ABParserInternalToken<T> {
 	public:
-		std::shared_ptr<T[]> TokenContents = 0;
+		T* DetectionLimit = nullptr;
+		uint16_t DetectionLimitSize = 0;
+
+		T* TokenContents = nullptr;
 		uint32_t TokenLength = 0;
 
-		uint32_t GetLength() { return TokenLength; }
+		uint16_t GetLength() { return TokenLength; }
 		bool IsSingleChar() { return false; }
 	};
 
 	template<typename T>
 	class ABParserFutureToken {
 	public:
+		// Due to detection limits, simply looking at the token's data isn't enough to determine how long the token is in the text (which needs to be done in places), so we add it up into this.
+		uint32_t LengthInText;
+		uint32_t NoOfCharactersMatched;
+
 		MultiCharToken<T>* Token;
+		bool CollectionComplete;
 		bool Finished;
-		bool Disabled;
+		bool IsBeingVerified;
 		bool EndOfArray;
 
 		ABParserFutureToken() {
@@ -55,9 +64,12 @@ namespace abparser {
 
 		void Reset(MultiCharToken<T>* token) {
 			Token = token;
+			CollectionComplete = false;
 			Finished = false;
-			Disabled = false;
 			EndOfArray = false;
+			IsBeingVerified = false;
+			LengthInText = 0;
+			NoOfCharactersMatched = 0;
 		}
 	};
 

@@ -38,6 +38,8 @@ namespace ABSoftware.ABParser
             var tokenDataLengths = stackalloc ushort[tokens.Length];
             var limitsPerToken = stackalloc ushort[tokens.Length];
             var limitNames = new List<string>();
+            var tokenDetectionLimits = new string[tokens.Length];
+            var tokenDetectionSizes = stackalloc ushort[tokens.Length];
 
             for (int i = 0; i < tokens.Length; i++)
             {
@@ -51,13 +53,21 @@ namespace ABSoftware.ABParser
                     limitNames.AddRange(tokens[i].TokenLimits);
                     limitsPerToken[i] = (ushort)tokens[i].TokenLimits.Length;
                 }
+
+                if (tokens[i].DetectionLimits == null)
+                    tokenDetectionSizes[i] = 0;
+                else
+                {
+                    tokenDetectionLimits[i] = new string(tokens[i].DetectionLimits);
+                    tokenDetectionSizes[i] = (ushort)tokenDetectionLimits[i].Length;
+                }
             }
 
             var limitNameSizes = stackalloc byte[limitNames.Count];
             for (int i = 0; i < limitNames.Count; i++)
                 limitNameSizes[i] = (byte)limitNames[i].Length;
 
-            TokensStorage = NativeMethods.InitializeConfiguration(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken);
+            TokensStorage = NativeMethods.InitializeConfiguration(tokenData, tokenDataLengths, (ushort)tokens.Length, limitNames.ToArray(), limitNameSizes, limitsPerToken, tokenDetectionLimits, tokenDetectionSizes);
             TriviaLimits = new ABParserConfigurationTriviaLimit[numberOfTriviaTokens];
         }
 

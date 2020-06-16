@@ -14,7 +14,7 @@ namespace ABSoftware.ABParser.Internal
         internal const CallingConvention CALLING_CONVENTION = CallingConvention.Cdecl;
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static unsafe extern IntPtr InitializeConfiguration(string[] tokensData, ushort* tokenLengths, ushort numberOfTokens, string[] limitNames, byte* limitNameSizes, ushort* limitsPerToken);
+        internal static unsafe extern IntPtr InitializeConfiguration(string[] tokensData, ushort* tokenLengths, ushort numberOfTokens, string[] limitNames, byte* limitNameSizes, ushort* limitsPerToken, string[] limitDetectionLimits, ushort* limitDetectionLimitSizes);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern IntPtr CreateBaseParser(IntPtr tokenData);
