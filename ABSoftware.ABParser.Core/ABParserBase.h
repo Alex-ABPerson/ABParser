@@ -167,8 +167,8 @@ namespace abparser {
 
 			if (recreateTextSpecific) {
 				buildUpStart = buildUp = new T[textLength];
-				OnTokenProcessedLeading = new T[textLength + 1];
-				OnTokenProcessedTrailing = new T[textLength + 1];
+				OnTokenProcessedLeading = new T[(size_t)textLength + 1];
+				OnTokenProcessedTrailing = new T[(size_t)textLength + 1];
 
 				futureTokens = new ABParserFutureToken<T> * [TextLength];
 				for (uint32_t i = 0; i < TextLength; i++)

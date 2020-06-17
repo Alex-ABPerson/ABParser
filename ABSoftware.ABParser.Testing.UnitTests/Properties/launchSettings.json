@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ABSoftware.ABParser.Testing.UnitTests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

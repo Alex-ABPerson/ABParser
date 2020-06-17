@@ -106,9 +106,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Debug"</Command>
+      <Command>mkdir "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x86\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x86\Debug\netcoreapp3.1"
+mkdir "..\ABSoftware.ABParser.Testing.UnitTests\bin\x86\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\x86\Debug\netcoreapp3.1"
+mkdir "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x86\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x86\Debug\netcoreapp3.1"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -124,9 +127,12 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Debug"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Debug"</Command>
+      <Command>mkdir "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x64\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x64\Debug\netcoreapp3.1"
+mkdir "..\ABSoftware.ABParser.Testing.UnitTests\bin\x64\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\x64\Debug\netcoreapp3.1"
+mkdir "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x64\Debug\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x64\Debug\netcoreapp3.1"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,9 +153,12 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Release"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Release"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release"</Command>
+      <Command>mkdir ..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x86\Release\netcoreapp3.1
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\Release\netcoreapp3.1"
+mkdir ..\ABSoftware.ABParser.Testing.UnitTests\bin\Release\netcoreapp3.1
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Release\netcoreapp3.1"
+mkdir ..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release\netcoreapp3.1
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release\netcoreapp3.1"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -170,9 +179,12 @@ copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing\bin\Release"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\Release"
-copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\Release"</Command>
+      <Command>mkdir "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x64\Release\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.ConsoleApp\bin\x64\Release\netcoreapp3.1"
+mkdir "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\x64\Release\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.UnitTests\bin\x64\Release\netcoreapp3.1"
+mkdir "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x64\Release\netcoreapp3.1"
+copy "..\CoreBin\ABParserCore.dll" "..\ABSoftware.ABParser.Testing.MemPerfTests\bin\x64\Release\netcoreapp3.1"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

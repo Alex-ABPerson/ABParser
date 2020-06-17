@@ -88,7 +88,7 @@ namespace abparser {
 		}
 
 		void SetText(const std::basic_string<T>& text) {
-			SetText((T*)text.c_str(), text.size());
+			SetText((T*)text.c_str(), (uint32_t)text.size());
 		}
 
 		void Execute() {

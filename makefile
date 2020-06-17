@@ -1,4 +1,11 @@
-FLAGS := -O2 -g -fPIC -o
+IS_64 = true
+ifdef IS_64
+FLAGS := -m64 -O2 -g -fPIC -o
+PLATFORM_DIR = x64
+else
+FLAGS := -m32 -O2 -g -fPIC -o
+PLATFORM_DIR = x86
+endif
 
 GENERAL_OUTDIR := MakeBuild
 GENERAL_LINUX_OUTDIR := Linux
@@ -64,11 +71,12 @@ compileAll: compileMILinux compileCPPT
 compileMILinux: ${MI_LINUX_OUTDIR} ${MI_LINUX_FINAL} copyMILinux
 compileCPPT: compileMILinux ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
 
-testWithMono: compileAll
-	mono ABSoftware.ABParser.Testing/bin/Debug/ABSoftware.ABParser.Testing.exe
-
-testMemPerf: compileAll
-	mono ABSoftware.ABParser.Testing.MemPerfTests/bin/Debug/ABSoftware.ABParser.Testing.MemPerfTests.exe
+runConsoleApp: compileAll
+	dotnet run ABSoftware.ABParser.Testing.ConsoleApp/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.ConsoleApp.exe
+runMePerf: compileAll
+	mono ABSoftware.ABParser.Testing.MemPerfTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.MemPerfTests.exe
+runUnitTests: compileAll
+	dotnet vstest ABSoftware.ABParser.Testing.UnitTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.UnitTests.dll
 
 clean: 
 	rm -r ${MI_OUTDIR} ${CPPT_LINUX}
@@ -104,6 +112,6 @@ ${CPPT_LINUX_FINAL}:
 	g++ $^ -I${CORE_DIR} -L${CORE_LINUX_OUTDIR} -lfinal ${FLAGS} $@
 
 copyMILinux: 
-	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing/bin/Debug/libABParserCore.so
-	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.MemPerfTests/bin/Debug/libABParserCore.so
-	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.UnitTests/bin/Debug/libABParserCore.so
+	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.ConsoleApp/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/libABParserCore.so
+	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.MemPerfTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/libABParserCore.so
+	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.UnitTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/libABParserCore.so

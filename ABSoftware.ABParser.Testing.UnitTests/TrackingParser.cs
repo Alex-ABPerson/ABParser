@@ -62,15 +62,15 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         
         public TrackingParser Test(string toTest, string[] expected, string leadingEndExpected)
         {
-            switch (toTest)
+            return toTest switch
             {
-                case "Leadings": return TestLeadings(expected, leadingEndExpected);
-                case "Trailings": return TestTrailings(expected);
-                case "PreviousTokens": return TestPreviousTokens(expected);
-                case "Tokens": return TestTokens(expected);
-                case "NextTokens": return TestNextTokens(expected);
-                default: throw new Exception("INVALID TEST MODE");
-            }
+                "Leadings" => TestLeadings(expected, leadingEndExpected),
+                "Trailings" => TestTrailings(expected),
+                "PreviousTokens" => TestPreviousTokens(expected),
+                "Tokens" => TestTokens(expected),
+                "NextTokens" => TestNextTokens(expected),
+                _ => throw new Exception("INVALID TEST MODE"),
+            };
         }
 
         public TrackingParser TestLeadings(string[] expected, string endExpected) => TestLeadings(expected, expected, endExpected);
