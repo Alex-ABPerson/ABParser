@@ -7,6 +7,8 @@ FLAGS := -m32 -O2 -g -fPIC -o
 PLATFORM_DIR = x86
 endif
 
+compileAll: compileMILinux compileCPPT
+
 GENERAL_OUTDIR := MakeBuild
 GENERAL_LINUX_OUTDIR := Linux
 GENERAL_MACOSX_OUTDIR:= MacOSX
@@ -67,14 +69,13 @@ ${CPPT_LINUX_OUTDIR}/Main.o ${CPPT_MACOSX_OUTDIR}/Main.o: \
 # ====================================
 # MODES:
 # ====================================
-compileAll: compileMILinux compileCPPT
 compileMILinux: ${MI_LINUX_OUTDIR} ${MI_LINUX_FINAL} copyMILinux
 compileCPPT: compileMILinux ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
 
 runConsoleApp: compileAll
-	dotnet run ABSoftware.ABParser.Testing.ConsoleApp/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.ConsoleApp.exe
-runMePerf: compileAll
-	mono ABSoftware.ABParser.Testing.MemPerfTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.MemPerfTests.exe
+	dotnet run --project ABSoftware.ABParser.Testing.ConsoleApp
+runMemPerf: compileAll
+	dotnet run --project ABSoftware.ABParser.Testing.MemPerfTests
 runUnitTests: compileAll
 	dotnet vstest ABSoftware.ABParser.Testing.UnitTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.UnitTests.dll
 

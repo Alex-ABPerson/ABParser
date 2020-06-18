@@ -50,13 +50,13 @@ namespace ABSoftware.ABParser
 
         #region Internal Management
 
-        internal void InitializeABParser(ABParserConfiguration tokens)
+        internal void InitializeABParser(ABParserConfiguration config)
         {
             // Set the tokens.
-            Tokens = tokens.Tokens;
+            Tokens = config.Tokens;
 
             // Then, initialize the base parser.
-            InitializeBaseParser(tokens);
+            InitializeBaseParser(config);
 
         }
 
@@ -340,7 +340,7 @@ namespace ABSoftware.ABParser
 
         #region Constructor / Dispose
 
-        protected ABParser(ABParserConfiguration tokens) => InitializeABParser(tokens);
+        protected ABParser(ABParserConfiguration config) => InitializeABParser(config);
         public async void Dispose()
         {
             while (_currentlyDisposing)

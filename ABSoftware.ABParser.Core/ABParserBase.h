@@ -307,11 +307,8 @@ namespace abparser {
 			AddNewFutureTokens();
 			ABParserResult result = ProcessFinishedTokens();
 
-			if (result != ABParserResult::None)
-				return result;
-
-			if (isFinalizingVerifyTokens)
-				return FinalizeNextVerifyToken();
+			if (result != ABParserResult::None) return result;
+			if (isFinalizingVerifyTokens) return FinalizeNextVerifyToken();
 
 			AddCharToBuildUp(Text[currentPosition]);
 			return ABParserResult::None;
@@ -327,10 +324,11 @@ namespace abparser {
 		void UpdateCurrentFutureTokens() {
 
 			_ABP_DEBUG_OUT("Updating future tokens.");
-			bool hasUnfinalizedFutureToken = false;
 
 			for (uint32_t i = futureTokensHead; i < futureTokensTail; i++)
 			{
+				bool hasUnfinalizedFutureToken = false;
+
 				for (uint16_t j = 0; j < Configuration->NumberOfMultiCharTokens; j++)
 				{
 					if (futureTokens[i][j].EndOfArray) break;
@@ -358,8 +356,9 @@ namespace abparser {
 				}
 
 				// Trim off any parts of the futureTokens that no longer contain anything.
-				if (i == futureTokensHead && !hasUnfinalizedFutureToken)
-					futureTokensHead++;
+				if (!hasUnfinalizedFutureToken)
+					if (i == futureTokensHead) futureTokensHead++;
+					else futureTokens[i][0].EndOfArray = true;
 			}
 		}
 
@@ -553,10 +552,8 @@ namespace abparser {
 
 				// If there are no more triggers left in this token, then it WAS actually the token in the text - not the triggers! So, we'll go ahead and get ready to start finalizing this token.
 				if (!hasRemainingTriggers) {
-					// We'll reset the length down to 0, to specifically tell us that this is one of the verify tokens that got completed.
+					// We'll reset the trigger length down to 0, to specifically tell us that this is one of the verify tokens that got completed.
 					verifyTokens[i]->TriggersLength = 0;
-					finalizingVerifyTokensCurrentToken = 0;
-					lastVerifyToken = nullptr;
 					isFinalizingVerifyTokens = true;
 				}
 			}
@@ -569,27 +566,28 @@ namespace abparser {
 			for (uint32_t i = 0; i < verifyTokens.size(); i++)
 				for (uint16_t j = 0; j < verifyTokens[i]->TriggersLength; j++) {
 
-					ABParserFutureToken<T>* trigger = verifyTokens[i]->Triggers[j];
+					ABParserVerifyToken<T>* currentVerifyToken = verifyTokens[i];
+					ABParserFutureToken<T>* trigger = currentVerifyToken->Triggers[j];
 
 					if (trigger == token) {
 
 						// Since this trigger was finished, it must have been this trigger all along, so stop verifying and finalize this trigger!
 						// However, before we finalize this trigger - we need to check if we need verify it against one of the other triggers!
-						if (verifyTokens[i]->TriggersLength > 1) {
+						if (currentVerifyToken->TriggersLength > 1) {
 
 							uint32_t thisLength = trigger->Token->TokenLength;
 							bool areAnyLonger = false;
 
-							for (uint16_t k = 0; k < verifyTokens[i]->TriggersLength; k++) {
+							for (uint16_t k = 0; k < currentVerifyToken->TriggersLength; k++) {
 
-								if (j == k)
-									continue;
+								if (j == k) continue;
 
-								ABParserFutureToken<T>* currentTrigger = verifyTokens[i]->Triggers[k];
+								ABParserFutureToken<T>* currentTrigger = currentVerifyToken->Triggers[k];
+								if (currentTrigger == nullptr) continue;
 
 								if (currentTrigger->Token->TokenLength > thisLength) {
 									currentVerifyTriggers.push_back(currentTrigger);
-									currentVerifyTriggerStarts.push_back(verifyTokens[i]->TriggerStarts[k]);
+									currentVerifyTriggerStarts.push_back(currentVerifyToken->TriggerStarts[k]);
 									areAnyLonger = true;
 								}
 							}
@@ -598,7 +596,7 @@ namespace abparser {
 
 								// Now, we need to verify THIS trigger, so, to do that we need to stop verifying the existing token, and start verifying this trigger.
 								StopVerify(i);
-								StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(trigger, false, currentVerifyTriggerStarts[i], GenerateVerifyTrailing())));
+								StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(trigger, false, currentVerifyToken->TriggerStarts[j], GenerateVerifyTrailing())));
 
 								return -1;
 							}
@@ -613,13 +611,15 @@ namespace abparser {
 		}
 
 		ABParserResult FinalizeNextVerifyToken() {
+
+			// We're adding "1" whenever we use the "TrailingBuildUp" because its first character is the last character of the token.
 			_ABP_DEBUG_OUT("Finalizing verify original token...");
 
 			// Determine the next item to finalize.
 			ABParserVerifyToken<T>* nextItem = nullptr;
 			for (; finalizingVerifyTokensCurrentToken < verifyTokens.size(); finalizingVerifyTokensCurrentToken++)
 				if (verifyTokens[finalizingVerifyTokensCurrentToken]->TriggersLength == 0) {
-					nextItem = verifyTokens[finalizingVerifyTokensCurrentToken++];
+					nextItem = verifyTokens[finalizingVerifyTokensCurrentToken];
 					break;
 				}
 
@@ -628,9 +628,9 @@ namespace abparser {
 				isFinalizingVerifyTokens = false;
 
 				// Set the buildUp to the trailing of the last token so that it can be used as the leading of the next token.
-				// We're starting 1 character in because the first character in the "trailingBuildUp" is the last character of the token.
 				buildUp = lastVerifyToken->TrailingBuildUp + 1;
 				buildUpLength = lastVerifyToken->TrailingBuildUpLength - 1;
+				finalizingVerifyTokensCurrentToken = 0;
 				lastVerifyToken = nullptr;
 
 				// The character we were on when we started never got added to the buildUp, so, we'll add it to the buildUp now.
@@ -642,24 +642,23 @@ namespace abparser {
 
 			// Finalize the next token, and remove it.
 			bool isFirst = lastVerifyToken == nullptr;
-			ABParserResult result = FinalizeToken(verifyTokens.front(), isFirst ? buildUp : lastVerifyToken->TrailingBuildUp, isFirst ? buildUpLength : lastVerifyToken->TrailingBuildUpLength, false);
-			lastVerifyToken = verifyTokens.front();
-			StopVerify(0);
+			ABParserResult result = FinalizeToken(verifyTokens.front(), isFirst ? buildUp : lastVerifyToken->TrailingBuildUp + 1, isFirst ? buildUpLength : lastVerifyToken->TrailingBuildUpLength - 1, false);
+			lastVerifyToken = nextItem;
+			StopVerify(finalizingVerifyTokensCurrentToken);
 
 			return result;
 		}
 
 		ABParserVerifyToken<T>* LoadCurrentTriggersInto(ABParserVerifyToken<T>* token) {
 			token->TriggersLength = (uint16_t)currentVerifyTriggers.size();
-			token->TriggerStartsLength = (uint16_t)currentVerifyTriggerStarts.size();
 
 			ABParserFutureToken<T>** triggers = token->Triggers = new ABParserFutureToken<T> * [token->TriggersLength];
-			uint32_t* triggerStarts = token->TriggerStarts = new uint32_t[token->TriggerStartsLength];
+			uint32_t* triggerStarts = token->TriggerStarts = new uint32_t[token->TriggersLength];
 
 			// Copy across the values.
 			for (uint16_t i = 0; i < token->TriggersLength; i++)
 				triggers[i] = currentVerifyTriggers[i];
-			for (uint16_t i = 0; i < token->TriggerStartsLength; i++)
+			for (uint16_t i = 0; i < token->TriggersLength; i++)
 				triggerStarts[i] = currentVerifyTriggerStarts[i];
 
 			// Finally, return our new modified verify token!
@@ -668,15 +667,15 @@ namespace abparser {
 		}
 
 		T* GenerateVerifyTrailing() {
-			return &buildUpStart[currentPosition];
+			return &buildUpStart[currentPosition + 1];
 		}
 
 		// FINALIZE
 		ABParserResult FinalizeToken(ABParserVerifyToken<T>* verifyToken, T* buildUpToUse, uint32_t buildUpToUseLength, bool resetBuildUp) {
 			if (verifyToken->IsSingleChar)
-				return FinalizeToken((SingleCharToken<T>*)verifyToken->Token, verifyToken->Start, buildUp, buildUpToUseLength, resetBuildUp);
+				return FinalizeToken((SingleCharToken<T>*)verifyToken->Token, verifyToken->Start, buildUpToUse, buildUpToUseLength, resetBuildUp);
 			else
-				return FinalizeToken((ABParserFutureToken<T>*)verifyToken->Token, verifyToken->Start, buildUp, buildUpToUseLength, resetBuildUp);
+				return FinalizeToken((ABParserFutureToken<T>*)verifyToken->Token, verifyToken->Start, buildUpToUse, buildUpToUseLength, resetBuildUp);
 		}
 
 		ABParserResult FinalizeToken(SingleCharToken<T>* token, uint32_t index, T* buildUpToUse, uint32_t buildUpToUseLength, bool resetBuildUp) {

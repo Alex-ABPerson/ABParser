@@ -80,10 +80,10 @@ namespace abparser {
 		void* Token;
 
 		ABParserFutureToken<T>** Triggers;
-		uint16_t TriggersLength;
-
 		uint32_t* TriggerStarts;
-		uint16_t TriggerStartsLength;
+
+		// 0 if this token has been confirmed.
+		uint16_t TriggersLength;
 
 		T* TrailingBuildUp;
 		uint32_t TrailingBuildUpLength;
@@ -97,10 +97,8 @@ namespace abparser {
 			Start = start;
 
 			Triggers = nullptr;
-			TriggersLength = 0;
-
 			TriggerStarts = nullptr;
-			TriggerStartsLength = 0;
+			TriggersLength = 0;
 
 			TrailingBuildUp = trailingBuildUp;
 			TrailingBuildUpLength = 0;

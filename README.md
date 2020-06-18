@@ -14,28 +14,48 @@ ABParser is designed to be as fast as possible. As a result, the core of ABParse
 
 ## Compiling
 
-**NOTE: When using the library, ensure "#include DEBUG" in commented out in the "Debugging.h" to remove logging if you don't need it**
+**NOTE: When using the library, ensure "#include DEBUG" in commented out in the "Debugging.h" to remove logging if you don't need it, and when developing for the library, always ensure this is commented out before commiting!**
 
-ABParser is a header library, meaning it is all entirely contained within header files, this is necessary because it uses templates to allow usage across multiple characters. However, if you wish to compile the C# parts of ABParser, you'll need to keep this information in mind as that's done through a dynamic library called `ABSoftware.ABParser.Core.ManagedInterop`.
+ABParser is a header library, meaning it is all entirely contained within header files, this is necessary because it uses templates to allow usage across multiple characters.
+
+This means that all you have to do is download the header files and include them in your projects and it will work!
+
+However, if you wish to compile the C# parts of ABParser, you'll need to keep this information in mind as that's done through a dynamic library called `ABSoftware.ABParser.Core.ManagedInterop`.
 
 ABParser is designed to work on Windows and Linux (via Mono) - Mac OS X is not currently supported, but there are plans to add support for it. This means that the native component must be compiled for all of them. These are the extensions for each platform:
 
 - DLL - Windows
 - SO - Linux
+- DYLIB - Mac OS X **Work in progress**
 
-When compiling, you must make sure that in the header file `PlatformImplementation.h` you have `#define COMPILE_DLL` either on or off (depending on whether you are compiling to a DLL file on Windows or not).
+When compiling, you must make sure that in `ExportedMethods.cpp` in the `ManagedInterop`, `#define COMPILE_DLL` either on or off (depending on whether you are compiling to a DLL file on Windows or not).
 
-Then, if you're compiling for Windows, it's recommended that you use MSBuild. Because, the `.vcxproj` has been configured to place `__cdecl` on all of the methods, as well as automatic copying and various other things. And if you're not using the MSBuild it won't pick up on that, causing things to not work. MSBuild is configured to compile straight into the same directory as the C# testing program.
+Then, if you're compiling for Windows, it's recommended that you use MSBuild. Because, the `.vcxproj` has been configured to place `__cdecl` on all of the methods, as well as automatic copying and various other things. And if you're not using the MSBuild it won't pick up on that, causing things to not work. MSBuild is configured to compile straight into the same directory as the C# testing programs.
 
 If you're compiling for Linux or MacOSX, there's a `makefile` on the C++ project, which is already configured (provided you don't add any files).
+Simply run `make compileAll` to compile everything, and `make clean` to clean-up.
 
-The makefile has a couple of modes. You can write `make compileAll` to compile everything, and `make clean` to clean-up. So if you wanted to do a complete re-build, use `clean` followed by `compileAll`. **These will automatically copy the libraries into the correct testing places.**
+Currently the only thing the makefile compiles is the *C++ parts*, you'll have to compile the C# parts manually if you need them.
 
-There are also some other modes like `make testWithMono` which will compile and execute the `ABSoftware.ABParser.Testing` project using Mono (make sure you have mono installed for this to work).
+### 32-bit or 64-bit
 
-## Unit Tests
+**NOTE: Any CPU is not supported.**
 
-There is an MSTest Unit testing system in place, this will mostly only work from Visual Studio on Windows however.
+One thing you need to be aware of is compiling for 32-bit vs 64-bit systems.
+
+On Windows, changing the solution's settings will cause everything to change correctly.
+
+On other platforms, using the makefile, you can switch between 32-bit and 64-bit simply by commenting out the first line in the makefile.
+
+## Testing
+
+On Windows, testing the project is straight-forward and can be done straight from Visual Studio.
+
+On other platforms, to properly test the C# parts of ABParser, you need to ensure you have `dotnet` installed.
+
+Then, within the makefile, you can run `make runUnitTests` to run the unit tests ABParser provides to ensure everything still works after you've made changes.
+
+There are also some other modes like `make runConsoleApp` which will launch the `ABSoftware.ABParser.Testing.ConsoleApp` project.
 
 ## License
 

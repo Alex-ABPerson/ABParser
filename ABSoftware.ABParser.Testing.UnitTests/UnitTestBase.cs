@@ -25,6 +25,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         static SingleTokenParser RunSingleTokenParser;
         static TheyParser RunTheyParser;
         static TheyMiddleParser RunTheyMiddleParser;
+        static TheyWithSingleCharParser RunTheyWithSingleCharParser;
+        static TheyWithLongTokenParser RunTheyWithLongTokenParser;
         static QuoteLimitParser RunQuoteLimitParser;
         static AngledLimitParser RunAngledLimitParser;
         static TriviaLimitParser RunTriviaLimitParser;
@@ -34,6 +36,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         public SingleTokenParser RunSingleToken(string text) => InitializeAndRunParser(ref RunSingleTokenParser, text);
         public TheyParser RunThey(string text) => InitializeAndRunParser(ref RunTheyParser, text);
         public TheyMiddleParser RunTheyMiddle(string text) => InitializeAndRunParser(ref RunTheyMiddleParser, text);
+        public TheyWithSingleCharParser RunTheyWithSingleChar(string text) => InitializeAndRunParser(ref RunTheyWithSingleCharParser, text);
+        public TheyWithLongTokenParser RunTheyWithLongToken(string text) => InitializeAndRunParser(ref RunTheyWithLongTokenParser, text);
         public QuoteLimitParser RunQuoteLimit(string text) => InitializeAndRunParser(ref RunQuoteLimitParser, text);
         public AngledLimitParser RunAngledLimit(string text) => InitializeAndRunParser(ref RunAngledLimitParser, text);
         public TriviaLimitParser RunTriviaLimit(string text) => InitializeAndRunParser(ref RunTriviaLimitParser, text);
