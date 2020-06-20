@@ -1,5 +1,5 @@
-#ifndef _ABPARSER_INCLUDE_ABPARSER_MAIN_H
-#define _ABPARSER_INCLUDE_ABPARSER_MAIN_H
+#ifndef _ABPARSER_INCLUDE_ABPARSER_BASE_H
+#define _ABPARSER_INCLUDE_ABPARSER_BASE_H
 #include "ABParserHelpers.h"
 #include "ABParserConfig.h"
 #include "ABParserDebugging.h"
@@ -15,26 +15,17 @@ namespace abparser {
 
 		ABParserConfiguration<T, U>* Configuration;
 
-		uint32_t BeforeTokenProcessedTokenStart;
-		ABParserInternalToken<T>* BeforeTokenProcessedToken;
-		uint32_t BeforeTokenProcessedTokenLengthInText;
-
-		uint32_t OnTokenProcessedTokenStart;
-		ABParserInternalToken<T>* OnTokenProcessedToken;
-
-		uint32_t OnTokenProcessedPreviousTokenStart;
-		ABParserInternalToken<T>* OnTokenProcessedPreviousToken;
+		uint32_t CurrentEventTokenStart;
+		uint32_t CurrentEventTokenLengthInText;
+		ABParserInternalToken<T>* CurrentEventToken;
 
 		T* Text;
 		uint32_t TextLength;
 
-		T* OnTokenProcessedLeading;
-		uint32_t OnTokenProcessedLeadingLength;
+		T* CurrentTrivia;
+		uint32_t CurrentTriviaLength;
 
-		T* OnTokenProcessedTrailing;
-		uint32_t OnTokenProcessedTrailingLength;
-
-		std::stack<TokenLimit<T, U>*> CurrentTokenLimits;
+		std::stack<TokenLimit<T, U>*> CurrentEventTokenLimits;
 		std::stack<TriviaLimit<T, U>*> CurrentTriviaLimits;
 
 		ABParserResult ContinueExecution() {
@@ -63,15 +54,15 @@ namespace abparser {
 			}
 
 			// If there's a token left, we'll prepare the leading and trailing for it so that when we trigger the "stop" result, it can be the final OnTokenProcessed.
-			if (BeforeTokenProcessedToken)
-				PrepareLeadingAndTrailing((currentPosition - 1) - BeforeTokenProcessedTokenLengthInText, buildUp, buildUpLength, false, true);
+			if (CurrentEventToken)
+				PrepareLeadingAndTrailing((currentPosition - 1) - CurrentEventTokenLengthInText, buildUp, buildUpLength, false, true);
 
 			// Reset anything for next time.
-			while (!CurrentTokenLimits.empty())
-				CurrentTokenLimits.pop();
+			while (!CurrentEventTokenLimits.empty())
+				CurrentEventTokenLimits.pop();
 			while (!CurrentTriviaLimits.empty())
 				CurrentTriviaLimits.pop();
-			ResetCurrentTokens();
+			ResetCurrentEventTokens();
 
 			justStarted = true;
 			isFinalizingVerifyTokens = false;
@@ -90,21 +81,15 @@ namespace abparser {
 		void InitParser() {
 			Text = nullptr;
 			TextLength = 0;
-			OnTokenProcessedLeading = nullptr;
-			OnTokenProcessedTrailing = nullptr;
-			OnTokenProcessedLeadingLength = 0;
-			OnTokenProcessedTrailingLength = 0;
+			CurrentTrivia = nullptr;
+			CurrentTriviaLength = 0;
 
-			BeforeTokenProcessedToken = nullptr;
-			BeforeTokenProcessedTokenStart = 0;
-			OnTokenProcessedPreviousToken = nullptr;
-			OnTokenProcessedPreviousTokenStart = 0;
-			OnTokenProcessedToken = nullptr;
-			OnTokenProcessedTokenStart = 0;
+			CurrentEventToken = nullptr;
+			CurrentEventTokenLengthInText = 0;
+			CurrentEventTokenStart = 0;
 
 			isVerifying = false;
 			isFinalizingVerifyTokens = false;
-			hasQueuedToken = false;
 			buildUpStart = nullptr;
 			futureTokens = nullptr;
 			justStarted = true;
@@ -120,7 +105,7 @@ namespace abparser {
 			currentVerifyTriggers.reserve(Configuration->NumberOfMultiCharTokens);
 			currentVerifyTriggerStarts.reserve(Configuration->NumberOfMultiCharTokens);
 
-			ResetCurrentTokens();
+			ResetCurrentEventTokens();
 		}
 
 		~ABParserBase() {
@@ -134,19 +119,13 @@ namespace abparser {
 
 			currentPosition = 0;
 
-			BeforeTokenProcessedToken = nullptr;
-			BeforeTokenProcessedTokenStart = 0;
-			BeforeTokenProcessedTokenLengthInText = 0;
-			OnTokenProcessedToken = nullptr;
-			OnTokenProcessedTokenStart = 0;
-
-			OnTokenProcessedLeadingLength = 0;
-			OnTokenProcessedTrailingLength = 0;
+			CurrentEventToken = nullptr;
+			CurrentEventTokenLengthInText = 0;
+			CurrentEventTokenStart = 0;
 
 			futureTokensHead = 0;
 			futureTokensTail = 0;
 			isVerifying = false;
-			hasQueuedToken = false;
 			buildUpLength = 0;
 			buildUp = buildUpStart;
 			justStarted = false;
@@ -167,10 +146,9 @@ namespace abparser {
 
 			if (recreateTextSpecific) {
 				buildUpStart = buildUp = new T[textLength];
-				OnTokenProcessedLeading = new T[(size_t)textLength + 1];
-				OnTokenProcessedTrailing = new T[(size_t)textLength + 1];
+				CurrentTrivia = new T[(size_t)textLength + 1];
 
-				futureTokens = new ABParserFutureToken<T> * [TextLength];
+				futureTokens = new ABParserFutureToken<T>*[TextLength];
 				for (uint32_t i = 0; i < TextLength; i++)
 					futureTokens[i] = new ABParserFutureToken<T>[Configuration->NumberOfMultiCharTokens + 1];
 			}
@@ -182,20 +160,20 @@ namespace abparser {
 
 				if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitName->length())) {
 					_ABP_DEBUG_OUT("Entered into token limit");
-					CurrentTokenLimits.push(currentLimit);
-					SetCurrentTokens(currentLimit);
+					CurrentEventTokenLimits.push(currentLimit);
+					SetCurrentEventTokens(currentLimit);
 					break;
 				}
 			}
 		}
 
 		void ExitTokenLimit() {
-			CurrentTokenLimits.pop();
+			CurrentEventTokenLimits.pop();
 
-			if (CurrentTokenLimits.empty())
-				ResetCurrentTokens();
+			if (CurrentEventTokenLimits.empty())
+				ResetCurrentEventTokens();
 			else
-				SetCurrentTokens(CurrentTokenLimits.top());
+				SetCurrentEventTokens(CurrentEventTokenLimits.top());
 		}
 
 		void EnterTriviaLimit(U* limitName, uint8_t limitNameSize) {
@@ -239,13 +217,9 @@ namespace abparser {
 					buildUpStart = nullptr;
 				}
 
-				if (OnTokenProcessedLeading) {
-					delete[] OnTokenProcessedLeading;
-					OnTokenProcessedLeading = nullptr;
-				}
-				if (OnTokenProcessedTrailing) {
-					delete[] OnTokenProcessedTrailing;
-					OnTokenProcessedTrailing = nullptr;
+				if (CurrentTrivia) {
+					delete[] CurrentTrivia;
+					CurrentTrivia = nullptr;
 				}
 			}
 
@@ -269,7 +243,7 @@ namespace abparser {
 		// When all of the triggers in a verify token gets removed, then we finalize that token! However, sometimes there may be lots of verify tokens that all had the same triggers, so, we'll finalize them all in one go with this!
 		bool isFinalizingVerifyTokens;
 		ABParserVerifyToken<T>* lastVerifyToken;
-		uint32_t finalizingVerifyTokensCurrentToken;
+		uint32_t finalizingVerifyTokensCurrentEventToken;
 
 		std::vector<ABParserVerifyToken<T>*> verifyTokens;
 
@@ -279,8 +253,6 @@ namespace abparser {
 		// As we're preparing a token for verification, we'll use this temporaily.
 		std::vector<ABParserFutureToken<T>*> currentVerifyTriggers;
 		std::vector<uint32_t> currentVerifyTriggerStarts;
-
-		bool hasQueuedToken;
 
 		// When verify tokens are finalized, the buildUp is pushed forwards to make it point towards the last verify tokens' trailing, since that is the correct leading for the next token. This is the buildUp without any of that "movement".
 		T* buildUpStart;
@@ -617,9 +589,9 @@ namespace abparser {
 
 			// Determine the next item to finalize.
 			ABParserVerifyToken<T>* nextItem = nullptr;
-			for (; finalizingVerifyTokensCurrentToken < verifyTokens.size(); finalizingVerifyTokensCurrentToken++)
-				if (verifyTokens[finalizingVerifyTokensCurrentToken]->TriggersLength == 0) {
-					nextItem = verifyTokens[finalizingVerifyTokensCurrentToken];
+			for (; finalizingVerifyTokensCurrentEventToken < verifyTokens.size(); finalizingVerifyTokensCurrentEventToken++)
+				if (verifyTokens[finalizingVerifyTokensCurrentEventToken]->TriggersLength == 0) {
+					nextItem = verifyTokens[finalizingVerifyTokensCurrentEventToken];
 					break;
 				}
 
@@ -630,7 +602,7 @@ namespace abparser {
 				// Set the buildUp to the trailing of the last token so that it can be used as the leading of the next token.
 				buildUp = lastVerifyToken->TrailingBuildUp + 1;
 				buildUpLength = lastVerifyToken->TrailingBuildUpLength - 1;
-				finalizingVerifyTokensCurrentToken = 0;
+				finalizingVerifyTokensCurrentEventToken = 0;
 				lastVerifyToken = nullptr;
 
 				// The character we were on when we started never got added to the buildUp, so, we'll add it to the buildUp now.
@@ -644,7 +616,7 @@ namespace abparser {
 			bool isFirst = lastVerifyToken == nullptr;
 			ABParserResult result = FinalizeToken(verifyTokens.front(), isFirst ? buildUp : lastVerifyToken->TrailingBuildUp + 1, isFirst ? buildUpLength : lastVerifyToken->TrailingBuildUpLength - 1, false);
 			lastVerifyToken = nextItem;
-			StopVerify(finalizingVerifyTokensCurrentToken);
+			StopVerify(finalizingVerifyTokensCurrentEventToken);
 
 			return result;
 		}
@@ -683,10 +655,7 @@ namespace abparser {
 			_ABP_DEBUG_OUT("Finalizing single-char token");
 
 			PrepareLeadingAndTrailing(index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
-
-			BeforeTokenProcessedTokenLengthInText = 1;
-
-			return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token, index, hasQueuedToken);
+			return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token, index, 1);
 		}
 
 		ABParserResult FinalizeToken(ABParserFutureToken<T>* token, uint32_t index, T* buildUpToUse, uint32_t buildUpToUseLength, bool resetBuildUp) {
@@ -694,58 +663,41 @@ namespace abparser {
 			_ABP_DEBUG_OUT("Finalizing multi-char token");
 
 			PrepareLeadingAndTrailing(index, buildUpToUse, buildUpToUseLength, resetBuildUp, false);
-
-			BeforeTokenProcessedTokenLengthInText = token->LengthInText;
-
-			return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token->Token, index, hasQueuedToken);
+			return QueueTokenAndReturnFinalizeResult((ABParserInternalToken<T>*)token->Token, index, token->LengthInText);
 		}
 
-		ABParserResult QueueTokenAndReturnFinalizeResult(ABParserInternalToken<T>* token, uint32_t index, bool hadQueuedToken) {
-			OnTokenProcessedPreviousToken = OnTokenProcessedToken;
-			OnTokenProcessedPreviousTokenStart = OnTokenProcessedTokenStart;
+		ABParserResult QueueTokenAndReturnFinalizeResult(ABParserInternalToken<T>* token, uint32_t index, uint32_t lengthInText) {
 
-			OnTokenProcessedTokenStart = BeforeTokenProcessedTokenStart;
-			OnTokenProcessedToken = BeforeTokenProcessedToken;
+			bool firstToken = CurrentEventToken == nullptr;
 
-			BeforeTokenProcessedTokenStart = index;
-			BeforeTokenProcessedToken = token;
-			hasQueuedToken = true;
+			CurrentEventToken = token;
+			CurrentEventTokenLengthInText = lengthInText;
+			CurrentEventTokenStart = index;
 
-			// Based on whether there was a queued-up token before, we'll either trigger "BeforeTokenProcessed" or both that and "OnTokenProcessed".
-			if (hadQueuedToken)
-				return ABParserResult::OnThenBeforeTokenProcessed;
+			if (firstToken)
+				return ABParserResult::FirstBeforeTokenProcessed;
 			else
-				return ABParserResult::BeforeTokenProcessed;
+				return ABParserResult::OnThenBeforeTokenProcessed;
 		}
 
 		void PrepareLeadingAndTrailing(uint32_t tokenStart, T* buildUpToUse, uint32_t buildUpToUseLength, bool resetBuildUp, bool isEnd) {
 			_ABP_DEBUG_OUT("Preparing leading and trailing for token.");
 
-			// Swap the leading/trailing around, as the trailing becomes the leading.
-			T* dataSwap = OnTokenProcessedLeading;
-			uint32_t dataSwapLength = OnTokenProcessedLeadingLength;
-
-			OnTokenProcessedLeading = OnTokenProcessedTrailing;
-			OnTokenProcessedLeadingLength = OnTokenProcessedTrailingLength;
-
-			OnTokenProcessedTrailing = dataSwap;
-			OnTokenProcessedTrailingLength = dataSwapLength;
-
 			// We need to work out how much of the buildUp is what we really want, as the buildUp will contain this token or part of it at the end, and we need to trim that off.
 			uint32_t trailingLength;
 			if (isEnd)
 				trailingLength = buildUpToUseLength;
-			else if (BeforeTokenProcessedToken)
-				trailingLength = tokenStart - (BeforeTokenProcessedTokenStart + BeforeTokenProcessedTokenLengthInText);
+			else if (CurrentEventToken)
+				trailingLength = tokenStart - (CurrentEventTokenStart + CurrentEventTokenLengthInText);
 			else
 				trailingLength = tokenStart;
 
-			OnTokenProcessedTrailingLength = 0;
+			CurrentTriviaLength = 0;
 
-			// Copy the buildUp into the final trailing, but excluding any of the trivia limit characters.
+			// Copy the buildUp into the final trivia, but excluding any of the trivia limit characters.
 			if (CurrentTriviaLimits.empty())
 				for (uint32_t i = 0; i < trailingLength; i++)
-					OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
+					CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
 			else {
 
 				TriviaLimit<T, U>* limit = CurrentTriviaLimits.top();
@@ -756,11 +708,11 @@ namespace abparser {
 						continue;
 					}
 
-					OnTokenProcessedTrailing[OnTokenProcessedTrailingLength++] = buildUpToUse[i];
+					CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
 				}
 			}
 
-			OnTokenProcessedTrailing[OnTokenProcessedTrailingLength] = 0;
+			CurrentTrivia[CurrentTriviaLength] = 0;
 
 			if (resetBuildUp)
 				buildUpLength = 0;
@@ -779,7 +731,7 @@ namespace abparser {
 				CheckDisabledFutureToken(futureToken);
 		}
 
-		void ResetCurrentTokens() {
+		void ResetCurrentEventTokens() {
 			singleCharCurrentTokens = Configuration->SingleCharTokens;
 			singleCharCurrentTokensLength = Configuration->NumberOfSingleCharTokens;
 
@@ -787,7 +739,7 @@ namespace abparser {
 			multiCharCurrentTokensLength = Configuration->NumberOfMultiCharTokens;
 		}
 
-		void SetCurrentTokens(TokenLimit<T, U>* limit) {
+		void SetCurrentEventTokens(TokenLimit<T, U>* limit) {
 			singleCharCurrentTokens = limit->SingleCharTokens;
 			singleCharCurrentTokensLength = limit->NumberOfSingleCharTokens;
 

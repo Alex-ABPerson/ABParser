@@ -10,8 +10,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("ABC")).SetDetectionLimits('d', 'j'),
-            new ABParserToken(new ABParserText("DEF")).SetDetectionLimits(' ', '\t', '\r', '\n'),
+            new ABParserToken("ABC").SetDetectionLimits('d', 'j'),
+            new ABParserToken("DEF").SetDetectionLimits(' ', '\t', '\r', '\n'),
         });
 
         public DetectionLimitParser() : base(ParserConfig) { }

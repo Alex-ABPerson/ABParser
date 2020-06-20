@@ -10,10 +10,10 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("theya")),
-            new ABParserToken(new ABParserText("heya")),
-            new ABParserToken(new ABParserText("thata")),
-            new ABParserToken(new ABParserText("hat")),
+            new ABParserToken("theya"),
+            new ABParserToken("heya"),
+            new ABParserToken("thata"),
+            new ABParserToken("hat"),
         });
 
         public TheyMiddleParser() : base(ParserConfig) { }

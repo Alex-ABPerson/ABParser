@@ -12,7 +12,7 @@ namespace ABSoftware.ABParser.Testing.MemPerfTests.Tests
     public class MultipleStringSetsTest : Test
     {
         TestParser _parser;
-        ABParserText[] _texts;
+        string[] _texts;
 
         protected override int NumberOfIterations => 1000;
         protected override string TestName => "MultipleStringSetsTest";
@@ -20,9 +20,9 @@ namespace ABSoftware.ABParser.Testing.MemPerfTests.Tests
         {
             _parser = new TestParser();
 
-            _texts = new ABParserText[NumberOfIterations];
+            _texts = new string[NumberOfIterations];
             for (int i = 0; i < NumberOfIterations; i++)
-                _texts[i] = new ABParserText(new string('*', i));
+                _texts[i] = new string('*', i);
         }
 
         protected override void DoIteration(int i)

@@ -16,7 +16,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             if (parser == null)
                 parser = (T)Activator.CreateInstance(typeof(T));
 
-            parser.SetText(new ABParserText(text));
+            parser.SetText(text);
             parser.Start();
             return parser;
         }

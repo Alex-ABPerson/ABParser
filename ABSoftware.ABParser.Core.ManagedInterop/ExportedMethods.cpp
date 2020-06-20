@@ -2,7 +2,7 @@
 
 using namespace abparser;
 
-#define COMPILE_DLL
+//#define COMPILE_DLL
 
 #ifdef COMPILE_DLL
 #define EXPORT __declspec(dllexport)
@@ -80,7 +80,7 @@ extern "C" {
 			limits[i].DirectSetIgnoreCharacters(limitContents[i], limitContentLengths[i]);
 		}
 			
-		information->Config.SetTriviaLimits(numberOfLimits, limits);
+		information->Config.SetTriviaLimits(limits, numberOfLimits);
 	}
 
 	EXPORT ABParserBase<uint16_t, uint16_t>* CreateBaseParser(ConfigAndTokens* information) {
@@ -116,51 +116,20 @@ extern "C" {
 	EXPORT ABParserResult ContinueExecution(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* outData) {
 		ABParserResult result = parser->ContinueExecution();
 
+		if (result == ABParserResult::None) return result;
+
 		// SEE ABSOFTWARE DOCS:
 		// Send all of the extra data that's associated with this event.
-		switch (result) {
-		case ABParserResult::StopAndFinalOnTokenProcessed:
-		case ABParserResult::BeforeTokenProcessed:
-			{
-				// The wrapper will know whether these events have been triggered, and will ignore these if so.
-				if (parser->BeforeTokenProcessedToken != nullptr) {
-					outData[0] = parser->BeforeTokenProcessedToken->MixedIdx;
-					Convert32BitTo16Bit(parser->BeforeTokenProcessedTokenStart, outData, 1);
-				}
 
-				if (parser->OnTokenProcessedToken != nullptr) {
-					outData[3] = parser->OnTokenProcessedToken->MixedIdx;
-					Convert32BitTo16Bit(parser->OnTokenProcessedTokenStart, outData, 4);
-				}
-
-				uint32_t onTokenProcessedLeadingEnd = MoveStringToArray(result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeading : parser->OnTokenProcessedTrailing,
-					result == ABParserResult::StopAndFinalOnTokenProcessed ? parser->OnTokenProcessedLeadingLength : parser->OnTokenProcessedTrailingLength, outData, 6);
-
-				// If this was a "Stop" result, then this is the last OnTokenProcessed, so we need to include the trailing as well.
-				if (result == ABParserResult::StopAndFinalOnTokenProcessed)
-					MoveStringToArray(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, onTokenProcessedLeadingEnd);
-
-			}
-			break;
-
-		case ABParserResult::OnThenBeforeTokenProcessed:
-			{
-				outData[0] = parser->OnTokenProcessedToken->MixedIdx;
-				Convert32BitTo16Bit(parser->OnTokenProcessedTokenStart, outData, 1);
-				
-				if (parser->OnTokenProcessedPreviousToken != nullptr) {
-					outData[3] = parser->OnTokenProcessedPreviousToken->MixedIdx;
-					Convert32BitTo16Bit(parser->OnTokenProcessedPreviousTokenStart, outData, 4);
-				}
-				outData[6] = parser->BeforeTokenProcessedToken->MixedIdx;
-				Convert32BitTo16Bit(parser->BeforeTokenProcessedTokenStart, outData, 7);
-				uint32_t leadingEnd = MoveStringToArray(parser->OnTokenProcessedLeading, parser->OnTokenProcessedLeadingLength, outData, 9);
-				MoveStringToArray(parser->OnTokenProcessedTrailing, parser->OnTokenProcessedTrailingLength, outData, leadingEnd);
-			}
-			break;
-
+		// Token
+		if (result != ABParserResult::StopAndFinalOnTokenProcessed) {
+			outData[0] = parser->CurrentEventToken->MixedIdx;
+			Convert32BitTo16Bit(parser->CurrentEventTokenStart, outData, 1);
+			Convert32BitTo16Bit((parser->CurrentEventTokenStart + parser->CurrentEventTokenLengthInText) - 1, outData, 3);
 		}
 
+		// Trivia
+		MoveStringToArray(parser->CurrentTrivia, parser->CurrentTriviaLength, outData, 5);
 		return result;
 	}
 

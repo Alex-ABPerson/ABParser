@@ -11,9 +11,9 @@ namespace ABSoftware.ABParser.Testing.MemPerfTests
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("the"), new ABParserText("the")),
-            new ABParserToken(new ABParserText("they"), new ABParserText("they")),
-            new ABParserToken(new ABParserText("theyare"), new ABParserText("theyare"))
+            new ABParserToken("the", "the"),
+            new ABParserToken("they", "they"),
+            new ABParserToken("theyare", "theyare")
         });
 
         public TestParser() : base(ParserConfig) { }

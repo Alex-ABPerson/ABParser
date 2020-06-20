@@ -11,9 +11,9 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("A")),
-            new ABParserToken(new ABParserText("B")),
-            new ABParserToken(new ABParserText("C")),
+            new ABParserToken("A"),
+            new ABParserToken("B"),
+            new ABParserToken("C"),
         }, 2).AddTriviaLimit("NoWhiteSpace", ' ', '\r', '\n', '\t').AddTriviaLimit("NoABCs", 'a', 'b', 'c');
 
         public TriviaLimitParser() : base(ParserConfig) { }
@@ -22,7 +22,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
         {
             base.BeforeTokenProcessed(args);
 
-            switch (args.Token.TokenName.AsString())
+            switch (args.CurrentToken.Token.Name)
             {
                 case "A":
                     EnterTriviaLimit("NoWhiteSpace");

@@ -12,9 +12,9 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
         bool InString = false;
 
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[] {
-            new ABParserToken(new ABParserText("DOUBLE_QUOTE"), new ABParserText("\"")).SetLimits("DoubleStringLimit"),
-            new ABParserToken(new ABParserText("SINGLE_QUOTE"), new ABParserText("'")).SetLimits("SingleStringLimit"),
-            new ABParserToken(new ABParserText("CAPITAL_B"), new ABParserText("B")),
+            new ABParserToken("DOUBLE_QUOTE", "\"").SetLimits("DoubleStringLimit"),
+            new ABParserToken("SINGLE_QUOTE", "'").SetLimits("SingleStringLimit"),
+            new ABParserToken("CAPITAL_B", "B"),
         });
 
         public QuoteLimitParser() : base(ParserConfig) { }
@@ -30,7 +30,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
             base.BeforeTokenProcessed(args);
             if (InString) ExitTokenLimit();
             else
-                switch (args.Token.TokenName.AsString())
+                switch (args.CurrentToken.Token.Name)
                 {
                     case "SINGLE_QUOTE":
                         EnterTokenLimit("SingleStringLimit");
@@ -45,10 +45,9 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
         {
             base.OnTokenProcessed(args);
 
-            var tokenName = args.Token.TokenName.AsString();
-            if (tokenName == "SINGLE_QUOTE" || tokenName == "DOUBLE_QUOTE")
+            var Name = args.CurrentToken.Token.Name;
+            if (Name == "SINGLE_QUOTE" || Name == "DOUBLE_QUOTE")
                     InString = !InString;
-                
         }
     }
 }

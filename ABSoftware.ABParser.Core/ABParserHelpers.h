@@ -9,7 +9,7 @@ namespace abparser {
 	enum class ABParserResult : int {
 		None,
 		StopAndFinalOnTokenProcessed,
-		BeforeTokenProcessed,
+		FirstBeforeTokenProcessed,
 		OnThenBeforeTokenProcessed
 	};
 

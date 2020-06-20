@@ -8,20 +8,14 @@ namespace ABSoftware.ABParser.Events
 {
     public class OnTokenProcessedEventArgs : TokenProcessedEventArgs
     {
-        internal bool HasNextToken;
-        internal ushort NextTokenIndex;
+        public TokenInformation NextToken;
 
-        /// <summary>
-        /// The text that is in-between this token and the next.
-        /// </summary>
-        public ABParserText Trailing { get; internal set; }
+        internal string TrailingAsString;
+        public char[] Trailing { get; internal set; }
 
-        /// <summary>
-        /// The token that comes after this token.
-        /// </summary>
-        public ABParserToken NextToken => HasNextToken ? _parser.Tokens[NextTokenIndex] : null;
-        public int NextTokenStart { get; internal set; }
-        public int NextTokenEnd => HasNextToken ? NextTokenStart + NextToken.TokenName.GetLength() : 0;
+#pragma warning disable IDE0074 // Use compound assignment - Doesn't exist in .NET Standard 1.1!
+        public string GetTrailingAsString() => TrailingAsString ?? (TrailingAsString = new string(Trailing));
+#pragma warning restore IDE0074 // Use compound assignment
 
         internal OnTokenProcessedEventArgs(ABParser parser) : base(parser) { }
     }

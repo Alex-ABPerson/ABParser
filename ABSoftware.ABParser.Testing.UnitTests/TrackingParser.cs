@@ -10,15 +10,25 @@ namespace ABSoftware.ABParser.Testing.UnitTests
 {
     public class TrackingParser : ABParser
     {
-        public List<string> BeforeTokenProcessedLeadings = new List<string>();
-        public List<string> BeforeTokenProcessedPreviousTokens = new List<string>();
-        public List<string> BeforeTokenProcessedTokens = new List<string>();
+        public List<int> BeforeTokenProcessedTokenPreviousTokenStarts;
+        public List<int> BeforeTokenProcessedTokenTokenStarts;
+        public List<int> BeforeTokenProcessedTokenPreviousTokenEnds;
+        public List<int> BeforeTokenProcessedTokenTokenEnds;
+        public List<string> BeforeTokenProcessedLeadings;
+        public List<string> BeforeTokenProcessedPreviousTokens;
+        public List<string> BeforeTokenProcessedTokens;
 
-        public List<string> OnTokenProcessedLeadings = new List<string>();
-        public List<string> OnTokenProcessedTrailings = new List<string>();
-        public List<string> OnTokenProcessedPreviousTokens = new List<string>();
-        public List<string> OnTokenProcessedTokens = new List<string>();
-        public List<string> OnTokenProcessedNextTokens = new List<string>();
+        public List<int> OnTokenProcessedTokenPreviousTokenStarts;
+        public List<int> OnTokenProcessedTokenTokenStarts;
+        public List<int> OnTokenProcessedTokenNextTokenStarts;
+        public List<int> OnTokenProcessedTokenPreviousTokenEnds;
+        public List<int> OnTokenProcessedTokenTokenEnds;
+        public List<int> OnTokenProcessedTokenNextTokenEnds;
+        public List<string> OnTokenProcessedLeadings;
+        public List<string> OnTokenProcessedTrailings;
+        public List<string> OnTokenProcessedPreviousTokens;
+        public List<string> OnTokenProcessedTokens;
+        public List<string> OnTokenProcessedNextTokens;
 
         public string EndLeading;
 
@@ -27,7 +37,17 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             BeforeTokenProcessedLeadings = new List<string>();
             BeforeTokenProcessedPreviousTokens = new List<string>();
             BeforeTokenProcessedTokens = new List<string>();
+            BeforeTokenProcessedTokenPreviousTokenStarts = new List<int>();
+            BeforeTokenProcessedTokenTokenStarts = new List<int>();
+            BeforeTokenProcessedTokenPreviousTokenEnds = new List<int>();
+            BeforeTokenProcessedTokenTokenEnds = new List<int>();
 
+            OnTokenProcessedTokenPreviousTokenStarts = new List<int>();
+            OnTokenProcessedTokenTokenStarts = new List<int>();
+            OnTokenProcessedTokenNextTokenStarts = new List<int>();
+            OnTokenProcessedTokenPreviousTokenEnds = new List<int>();
+            OnTokenProcessedTokenTokenEnds = new List<int>();
+            OnTokenProcessedTokenNextTokenEnds = new List<int>();
             OnTokenProcessedLeadings = new List<string>();
             OnTokenProcessedTrailings = new List<string>();
             OnTokenProcessedPreviousTokens = new List<string>();
@@ -41,73 +61,131 @@ namespace ABSoftware.ABParser.Testing.UnitTests
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {
-            BeforeTokenProcessedLeadings.Add(args.Leading.AsString());
-            BeforeTokenProcessedPreviousTokens.Add(args.PreviousToken?.TokenName.AsString());
-            BeforeTokenProcessedTokens.Add(args.Token.TokenName.AsString());
+            BeforeTokenProcessedPreviousTokens.Add(args.PreviousToken?.Token.Name);
+
+            if (args.PreviousToken == null) {
+                BeforeTokenProcessedTokenPreviousTokenStarts.Add(0);
+                BeforeTokenProcessedTokenPreviousTokenEnds.Add(0);
+            } else {
+                BeforeTokenProcessedTokenPreviousTokenStarts.Add(args.PreviousToken.Start);
+                BeforeTokenProcessedTokenPreviousTokenEnds.Add(args.PreviousToken.End);
+            }
+
+            BeforeTokenProcessedTokenTokenStarts.Add(args.CurrentToken.Start);
+            BeforeTokenProcessedTokenTokenEnds.Add(args.CurrentToken.End);
+
+            BeforeTokenProcessedLeadings.Add(args.GetLeadingAsString());
+            BeforeTokenProcessedTokens.Add(args.CurrentToken.Token.Name);
         }
 
         protected override void OnTokenProcessed(OnTokenProcessedEventArgs args)
         {
-            OnTokenProcessedLeadings.Add(args.Leading.AsString());
-            OnTokenProcessedTrailings.Add(args.Trailing.AsString());
-            OnTokenProcessedPreviousTokens.Add(args.PreviousToken?.TokenName.AsString());
-            OnTokenProcessedTokens.Add(args.Token.TokenName.AsString());
-            OnTokenProcessedNextTokens.Add(args.NextToken?.TokenName.AsString());
+            OnTokenProcessedPreviousTokens.Add(args.PreviousToken?.Token.Name);
+            if (args.PreviousToken == null) {
+                OnTokenProcessedTokenPreviousTokenStarts.Add(0);
+                OnTokenProcessedTokenPreviousTokenEnds.Add(0);
+            } else {
+                OnTokenProcessedTokenPreviousTokenStarts.Add(args.PreviousToken.Start);
+                OnTokenProcessedTokenPreviousTokenEnds.Add(args.PreviousToken.End);
+            }
+
+            OnTokenProcessedTokens.Add(args.CurrentToken.Token.Name);
+            OnTokenProcessedTokenTokenStarts.Add(args.CurrentToken.Start);
+            OnTokenProcessedTokenTokenEnds.Add(args.CurrentToken.End);
+
+            OnTokenProcessedNextTokens.Add(args.NextToken?.Token.Name);
+            if (args.NextToken == null) {
+                OnTokenProcessedTokenNextTokenStarts.Add(0);
+                OnTokenProcessedTokenNextTokenEnds.Add(0);
+            } else {
+                OnTokenProcessedTokenNextTokenStarts.Add(args.NextToken.Start);
+                OnTokenProcessedTokenNextTokenEnds.Add(args.NextToken.End);
+            }
+
+            OnTokenProcessedLeadings.Add(args.GetLeadingAsString());
+            OnTokenProcessedTrailings.Add(args.GetTrailingAsString());
         }
 
-        protected override void OnEnd(ABParserText leading)
+        protected override void OnEnd(OnEndEventArgs args)
         {
-            EndLeading = leading.AsString();
+            EndLeading = args.GetLeadingAsString();
         }
         
-        public TrackingParser Test(string toTest, string[] expected, string leadingEndExpected)
+        public TrackingParser Test(string toTest, object expected)
         {
             return toTest switch
             {
-                "Leadings" => TestLeadings(expected, leadingEndExpected),
-                "Trailings" => TestTrailings(expected),
-                "PreviousTokens" => TestPreviousTokens(expected),
-                "Tokens" => TestTokens(expected),
-                "NextTokens" => TestNextTokens(expected),
+                "Trivia" => TestTrivia((string[])expected),
+                "Tokens" => TestTokens((string[])expected),
+                "TokenStarts" => TestStarts((int[])expected),
+                "TokenEnds" => TestEnds((int[])expected),
                 _ => throw new Exception("INVALID TEST MODE"),
             };
         }
 
-        public TrackingParser TestLeadings(string[] expected, string endExpected) => TestLeadings(expected, expected, endExpected);
-
-        public TrackingParser TestLeadings(string[] beforeExpected, string[] onExpected, string endExpected)
+        public TrackingParser TestTrivia(string[] expected)
         {
-            CollectionAssert.AreEqual(BeforeTokenProcessedLeadings, beforeExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedLeadings, onExpected);
-            Assert.AreEqual(EndLeading, endExpected);
+            var leadingEndExpected = expected[^1];
+
+            var leadingExpected = new string[expected.Length - 1];
+            var trailingExpected = new string[expected.Length - 1];
+
+            Array.Copy(expected, leadingExpected, expected.Length - 1);
+            Array.Copy(expected, 1, trailingExpected, 0, expected.Length - 1);
+
+            CollectionAssert.AreEqual(BeforeTokenProcessedLeadings, leadingExpected);
+            CollectionAssert.AreEqual(OnTokenProcessedLeadings, leadingExpected);
+            CollectionAssert.AreEqual(OnTokenProcessedTrailings, trailingExpected);
+
+            Assert.AreEqual(EndLeading, leadingEndExpected);
             return this;
         }
 
-        public TrackingParser TestTrailings(string[] expected)
+        public TrackingParser TestTokens(string[] expected)
         {
-            CollectionAssert.AreEqual(OnTokenProcessedTrailings, expected);
+            var previousTokensExpected = new string[expected.Length];
+            var tokensExpected = expected;
+            var nextTokensExpected = new string[expected.Length];
+
+            Array.Copy(expected, 0, previousTokensExpected, 1, expected.Length - 1);
+            Array.Copy(expected, 1, nextTokensExpected, 0, expected.Length - 1);
+
+            CollectionAssert.AreEqual(BeforeTokenProcessedPreviousTokens, previousTokensExpected);
+            CollectionAssert.AreEqual(BeforeTokenProcessedTokens, tokensExpected);
+
+            CollectionAssert.AreEqual(OnTokenProcessedPreviousTokens, previousTokensExpected);
+            CollectionAssert.AreEqual(OnTokenProcessedTokens, tokensExpected);
+            CollectionAssert.AreEqual(OnTokenProcessedNextTokens, nextTokensExpected);
             return this;
         }
 
-        public TrackingParser TestPreviousTokens(string[] expected) => TestPreviousTokens(expected, expected);
-        public TrackingParser TestPreviousTokens(string[] beforeExpected, string[] onExpected)
+        public TrackingParser TestStarts(int[] expected)
         {
-            CollectionAssert.AreEqual(BeforeTokenProcessedPreviousTokens, beforeExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedPreviousTokens, onExpected);
+            var previousTokensStarts = new int[expected.Length];
+            var tokenStarts = expected;
+            var nextTokensStarts = new int[expected.Length];
+
+            Array.Copy(expected, 0, previousTokensStarts, 1, expected.Length - 1);
+            Array.Copy(expected, 1, nextTokensStarts, 0, expected.Length - 1);
+
+            CollectionAssert.AreEqual(OnTokenProcessedTokenPreviousTokenStarts, previousTokensStarts);
+            CollectionAssert.AreEqual(OnTokenProcessedTokenTokenStarts, tokenStarts);
+            CollectionAssert.AreEqual(OnTokenProcessedTokenNextTokenStarts, nextTokensStarts);
             return this;
         }
 
-        public TrackingParser TestTokens(string[] expected) => TestTokens(expected, expected);
-        public TrackingParser TestTokens(string[] beforeExpected, string[] onExpected)
+        public TrackingParser TestEnds(int[] expected)
         {
-            CollectionAssert.AreEqual(BeforeTokenProcessedTokens, beforeExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedTokens, onExpected);
-            return this;
-        }
+            var previousTokensEnds = new int[expected.Length];
+            var tokenEnds = expected;
+            var nextTokensEnds = new int[expected.Length];
 
-        public TrackingParser TestNextTokens(string[] expected)
-        {
-            CollectionAssert.AreEqual(OnTokenProcessedNextTokens, expected);
+            Array.Copy(expected, 0, previousTokensEnds, 1, expected.Length - 1);
+            Array.Copy(expected, 1, nextTokensEnds, 0, expected.Length - 1);
+
+            CollectionAssert.AreEqual(OnTokenProcessedTokenPreviousTokenEnds, previousTokensEnds);
+            CollectionAssert.AreEqual(OnTokenProcessedTokenTokenEnds, tokenEnds);
+            CollectionAssert.AreEqual(OnTokenProcessedTokenNextTokenEnds, nextTokensEnds);
             return this;
         }
 

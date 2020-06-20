@@ -3,6 +3,7 @@ using ABSoftware.ABParser.Exceptions;
 using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ABSoftware.ABParser
@@ -15,31 +16,35 @@ namespace ABSoftware.ABParser
         // NOTE: The core part of ABParser is written in C++, that is most likely where you want to look.
         // Check ABSoftware.ABParser.Core and the ABSoftware Docs for more info.
 
-        #region Public data
+        #region Main Data
 
-        public ABParserText Text;
+        string _textAsString;
+        public char[] Text;
         public int TextLength;
         public ABParserToken[] Tokens;
 
-        public Stack<string> CurrentTokenLimits = new Stack<string>();
+        public Stack<string> CurrentEventTokenLimits = new Stack<string>();
         public Stack<string> CurrentTriviaLimits = new Stack<string>();
 
         #endregion
 
-        #region Internal data
+        #region Internal Data
 
         /// <summary>
         /// A pointer to the actual parser in C++, this pointer can be used to get or set information.
         /// </summary>
         IntPtr _baseParser;
 
-        bool FirstBeforeTokenProcessed = true;
-        bool FirstOnTokenProcessed = true;
+        bool EncounteredToken = true;
+        bool EncounteredSecondToken = true;
 
         BeforeTokenProcessedEventArgs BeforeTokenProcessedArgs;
-
-        bool EndHasOnTokenProcessed;
         OnTokenProcessedEventArgs OnTokenProcessedArgs;
+        OnEndEventArgs OnEndArgs;
+
+        TokenInformation OnTokenProcessedPreviousTokenInfo;
+        TokenInformation OnTokenProcessedTokenInfo;
+        TokenInformation CurrentEventTokenInfo;
 
         bool _disposedForNextParse = false;
         bool _disposeAtDestruction = false;
@@ -58,27 +63,32 @@ namespace ABSoftware.ABParser
             // Then, initialize the base parser.
             InitializeBaseParser(config);
 
+            BeforeTokenProcessedArgs = new BeforeTokenProcessedEventArgs(this);
+            OnTokenProcessedArgs = new OnTokenProcessedEventArgs(this);
+            OnEndArgs = new OnEndEventArgs();
+
+            OnTokenProcessedPreviousTokenInfo = new TokenInformation();
+            OnTokenProcessedTokenInfo = new TokenInformation();
+            CurrentEventTokenInfo = new TokenInformation();
         }
 
         internal void InitializeBaseParser(ABParserConfiguration tokens) => _baseParser = NativeMethods.CreateBaseParser(tokens.TokensStorage);
 
-        internal void InitString(ABParserText text)
+        internal void InitString(string text)
         {
-            Text = text;
-            TextLength = text.GetLength();
-            NativeMethods.InitString(_baseParser, text.AsString(), TextLength);
+            _textAsString = text;
+            Text = text.ToCharArray();
+            TextLength = text.Length;
+            NativeMethods.InitString(_baseParser, text, TextLength);
         }
 
         internal void ResetInfo()
         {
-            BeforeTokenProcessedArgs = null;
-            OnTokenProcessedArgs = null;
-            EndHasOnTokenProcessed = false;
-            FirstBeforeTokenProcessed = true;
-            FirstOnTokenProcessed = true;
+            EncounteredToken = false;
+            EncounteredSecondToken = false;
         }
 
-        internal async void DisposedataForNextParse()
+        internal async void DisposeDataForNextParse()
         {
             if (_disposedForNextParse)
                 return;
@@ -99,107 +109,96 @@ namespace ABSoftware.ABParser
 
         internal unsafe int TwoShortsToInteger(ushort* data, int index) => (data[index] >> 16) + data[index + 1];
 
-        internal unsafe int ShortsToString(ushort* data, int index, out ABParserText text)
+        internal unsafe void ShortsToString(ushort* data, int index, out char[] text)
         {
             // Get the length of the string.
             int length = TwoShortsToInteger(data, index);
-            var result = new char[length];
+            text = new char[length];
 
             // Go through and convert all of them to characters.
             index += 2;
             for (int i = 0; i < length; i++)
-                result[i] = (char)data[index++];
-
-            // Turn that into an "ABParserText", and send that out - also sending out the ending point.
-            text = new ABParserText(result);
-            return index;
+                text[i] = (char)data[index++];
         }
 
-        internal unsafe void ParseResult(ContinueExecutionResult result, ushort* data)
+        unsafe void HandleResult(ContinueExecutionResult result, ushort* data)
         {
+            if (result == ContinueExecutionResult.None) return;
+
+            ResetTriviaStringCaches();
+            MoveTokenInfos();
+
+            // Get the trivia, which is always transmitted for everything.
+            ShortsToString(data, 5, out var trivia);
+
+            // Handle BeforeTokenProcessedArgs
             switch (result)
             {
-                case ContinueExecutionResult.Stop:
-                case ContinueExecutionResult.BeforeTokenProcessed:
+                case ContinueExecutionResult.FirstBeforeTokenProcessed:
 
-                    // If this is a stop and we haven't had a single "BeforeTokenProcessed" yet, then we encountered no tokens and we shouldn't do anything.
-                    if (result == ContinueExecutionResult.Stop && FirstBeforeTokenProcessed)
-                    {
-                        EndHasOnTokenProcessed = false;
-                        return;
-                    }
+                    BeforeTokenProcessedArgs.PreviousToken = null;
+                    goto case ContinueExecutionResult.OnThenBeforeTokenProcessed;
 
-                    // If this is a "Stop" command, we'll generate some "OnTokenProcessedEventArgs", otherwise, we'll generate a "BeforeTokenProcessedEventArgs".
-                    var eventArgs = result == ContinueExecutionResult.Stop ? (TokenProcessedEventArgs)new OnTokenProcessedEventArgs(this) : new BeforeTokenProcessedEventArgs(this);
+                case ContinueExecutionResult.OnThenBeforeTokenProcessed:
 
-                    // Copy across all of the data from what the Core ABParser gave us.
-                    eventArgs.TokenIndex = data[0];
-                    eventArgs.TokenStart = TwoShortsToInteger(data, 1);
-                    eventArgs.HasPreviousToken = result == ContinueExecutionResult.Stop ? !FirstOnTokenProcessed : !FirstBeforeTokenProcessed;
-                    eventArgs.PreviousTokenIndex = FirstBeforeTokenProcessed ? (ushort)0 : data[3];
-                    eventArgs.PreviousTokenStart = FirstBeforeTokenProcessed ? TwoShortsToInteger(data, 4) : 0;
-
-                    // Set the leading.
-                    var leadingEnd = ShortsToString(data, 6, out var leading);
-                    eventArgs.Leading = leading;
-
-                    // Set the trailing - but only if this was a "stop" command.
-                    if (result == ContinueExecutionResult.Stop)
-                    {
-                        // Turn it into an "OnTokenProcessedEventArgs", since that's what a "stop" command needs.
-                        OnTokenProcessedArgs = (OnTokenProcessedEventArgs)eventArgs;
-
-                        // Give it the trailing.
-                        ShortsToString(data, leadingEnd, out var trailing);
-                        OnTokenProcessedArgs.Trailing = trailing;
-                        EndHasOnTokenProcessed = true;
-                    }
-
-                    // Otherwise, if we're creating a "BeforeTokenProcessed" event, then set the "BeforeTokenProcessedArgs".
-                    else BeforeTokenProcessedArgs = (BeforeTokenProcessedEventArgs)eventArgs;
-
-                    break;
-                case ContinueExecutionResult.OnAndBeforeTokenProcessed:
-
-                    // When reading this code, just remember that the BeforeTokenProcessed is for the token AFTER the OnTokenProcessed.
-
-                    // Create the two new eventArgs - the "OnTokenProcessed" will, of course, have a next token in this case.
-                    var beforeTokenProcessedArgs = new BeforeTokenProcessedEventArgs(this)
-                    {
-                        HasPreviousToken = true
-                    };
-                    var onTokenProcessedArgs = new OnTokenProcessedEventArgs(this)
-                    {
-                        HasPreviousToken = !FirstOnTokenProcessed,
-                        HasNextToken = true
-                    };
-
-                    // First, we'll set the OnTokenProcessed token - for "BeforeTokenProcessed", this is actually the previous token.
-                    beforeTokenProcessedArgs.PreviousTokenIndex = onTokenProcessedArgs.TokenIndex = data[0];
-                    beforeTokenProcessedArgs.PreviousTokenStart = onTokenProcessedArgs.TokenStart = TwoShortsToInteger(data, 1);
-
-                    // Next, we'll set the previous token for the "OnTokenProcessed" - this applies to only the "OnTokenProcessed".
-                    onTokenProcessedArgs.PreviousTokenIndex = data[3];
-                    onTokenProcessedArgs.PreviousTokenStart = TwoShortsToInteger(data, 4);
-
-                    // Then, we'll set the BeforeTokenProcessed token - which, for the "OnTokenProcessed" is actually the next token.
-                    onTokenProcessedArgs.NextTokenIndex = beforeTokenProcessedArgs.TokenIndex = data[6];
-                    onTokenProcessedArgs.NextTokenStart = beforeTokenProcessedArgs.TokenStart = TwoShortsToInteger(data, 7);
-
-                    // After that, we'll set the leading for the "OnTokenProcessed", which means nothing to the "BeforeTokenProcessed".
-                    var onTokenProcessedLeadingEnd = ShortsToString(data, 9, out var onTokenProcessedLeading);
-                    onTokenProcessedArgs.Leading = onTokenProcessedLeading;
-
-                    // And, after that, we'll set the trailing for the "OnTokenProcessed", which is the leading for the "BeforeTokenProcessed".
-                    ShortsToString(data, onTokenProcessedLeadingEnd, out var onTokenProcessedTrailing);
-                    beforeTokenProcessedArgs.Leading = onTokenProcessedArgs.Trailing = onTokenProcessedTrailing;
-
-                    // Finally, put those two into the main fields.
-                    BeforeTokenProcessedArgs = beforeTokenProcessedArgs;
-                    OnTokenProcessedArgs = onTokenProcessedArgs;
+                    UpdateCurrentEventTokenInfo(data);
+                    BeforeTokenProcessedArgs.CurrentToken = CurrentEventTokenInfo;
+                    BeforeTokenProcessedArgs.Leading = trivia;
 
                     break;
             }
+
+            OnTokenProcessedArgs.Leading = OnTokenProcessedArgs.Trailing;
+            OnTokenProcessedArgs.Trailing = trivia;
+
+            // Handle OnTokenProcessedArgs
+            switch (result)
+            {
+                case ContinueExecutionResult.FirstBeforeTokenProcessed: return;
+                case ContinueExecutionResult.StopAndFinalOnTokenProcessed:
+
+                    // If this is a stop and we haven't had a single "BeforeTokenProcessed" yet, then we encountered no tokens and we shouldn't do anything.
+                    if (!EncounteredToken) return;
+
+                    OnTokenProcessedArgs.NextToken = null;
+                    goto case ContinueExecutionResult.OnThenBeforeTokenProcessed;
+
+                case ContinueExecutionResult.OnThenBeforeTokenProcessed:
+
+                    OnTokenProcessedArgs.PreviousToken = EncounteredSecondToken ? OnTokenProcessedPreviousTokenInfo : null;
+                    OnTokenProcessedArgs.CurrentToken = OnTokenProcessedTokenInfo;
+
+                    break;
+            }
+
+            if (result == ContinueExecutionResult.OnThenBeforeTokenProcessed)
+            {
+                BeforeTokenProcessedArgs.PreviousToken = OnTokenProcessedTokenInfo;
+                OnTokenProcessedArgs.NextToken = CurrentEventTokenInfo;
+            }
+        }
+
+        unsafe void MoveTokenInfos()
+        {
+            TokenInformation swap = OnTokenProcessedPreviousTokenInfo;
+
+            OnTokenProcessedPreviousTokenInfo = OnTokenProcessedTokenInfo;
+            OnTokenProcessedTokenInfo = CurrentEventTokenInfo;
+            CurrentEventTokenInfo = swap;
+        }
+
+        unsafe void ResetTriviaStringCaches()
+        {
+            BeforeTokenProcessedArgs.LeadingAsString = null;
+            OnTokenProcessedArgs.LeadingAsString = null;
+            OnTokenProcessedArgs.TrailingAsString = null;
+        }
+
+        unsafe void UpdateCurrentEventTokenInfo(ushort* data)
+        {
+            CurrentEventTokenInfo.Token = Tokens[data[0]];
+            CurrentEventTokenInfo.Start = TwoShortsToInteger(data, 1);
+            CurrentEventTokenInfo.End = TwoShortsToInteger(data, 3);
         }
 
         #endregion
@@ -212,7 +211,8 @@ namespace ABSoftware.ABParser
             if (TextLength == 0)
             {
                 OnStart();
-                OnEnd(new ABParserText(""));
+                OnEndArgs.Leading = new char[0];
+                OnEnd(OnEndArgs);
             }
 
             // If we're currently disposing, then wait until we're done before moving on.
@@ -224,7 +224,7 @@ namespace ABSoftware.ABParser
 
         unsafe void DoExecute()
         {
-            ushort* data = stackalloc ushort[TextLength * 2 + 11];
+            ushort* data = stackalloc ushort[TextLength + 8];
 
             // Trigger the "OnStart".
             OnStart();
@@ -236,38 +236,31 @@ namespace ABSoftware.ABParser
             var result = ContinueExecutionResult.None;
 
             // Just keep on executing until we hit the "Stop" result.
-            while (result != ContinueExecutionResult.Stop)
+            while (result != ContinueExecutionResult.StopAndFinalOnTokenProcessed)
             {
-                ParseResult(result = NativeMethods.ContinueExecution(_baseParser, data), data);
+                HandleResult(result = NativeMethods.ContinueExecution(_baseParser, data), data);
 
                 // Do whatever the result said to do.
                 switch (result)
                 {
-                    case ContinueExecutionResult.Stop:
+                    case ContinueExecutionResult.StopAndFinalOnTokenProcessed:
 
-                        if (!EndHasOnTokenProcessed)
+                        if (!EncounteredToken)
                             break;
 
                         OnTokenProcessed(OnTokenProcessedArgs);
                         break;
 
-                    case ContinueExecutionResult.BeforeTokenProcessed:
+                    case ContinueExecutionResult.FirstBeforeTokenProcessed:
 
-                        // If this was the first "BeforeTokenProcessed", then it won't be anymore in the future.
-                        if (FirstBeforeTokenProcessed)
-                            FirstBeforeTokenProcessed = false;
-
-                        // Trigger the events.
+                        EncounteredToken = true;
                         BeforeTokenProcessed(BeforeTokenProcessedArgs);
 
                         break;
-                    case ContinueExecutionResult.OnAndBeforeTokenProcessed:
+                    case ContinueExecutionResult.OnThenBeforeTokenProcessed:
 
-                        // If this was the first "OnTokenProcessed", then it won't be anymore in the future.
-                        if (FirstOnTokenProcessed)
-                            FirstOnTokenProcessed = false;
+                        EncounteredSecondToken = true;
 
-                        // Trigger the events.
                         OnTokenProcessed(OnTokenProcessedArgs);
                         BeforeTokenProcessed(BeforeTokenProcessedArgs);
 
@@ -275,15 +268,16 @@ namespace ABSoftware.ABParser
                 }
             }
 
-            // Then, run "OnEnd", simply using the trailing from the past "OnTokenProcessed".
-            OnEnd(OnTokenProcessedArgs == null ? Text : OnTokenProcessedArgs.Trailing);
-            CurrentTokenLimits.Clear();
+            OnEndArgs.Leading = EncounteredToken ? OnTokenProcessedArgs.Trailing : Text;
+
+            OnEnd(OnEndArgs);
+            CurrentEventTokenLimits.Clear();
             CurrentTriviaLimits.Clear();
 
             // Finally, dispose all of the data - ready for the next parse.
             _disposedForNextParse = false;
             if (!_disposeAtDestruction)
-                DisposedataForNextParse();
+                DisposeDataForNextParse();
         }
 
         #endregion
@@ -292,7 +286,7 @@ namespace ABSoftware.ABParser
 
         protected virtual void OnStart() { }
 
-        protected virtual void OnEnd(ABParserText leading) { }
+        protected virtual void OnEnd(OnEndEventArgs args) { }
 
         /// <summary>
         /// Called before a token's trailing has been generated - mainly used to set limits.
@@ -308,9 +302,9 @@ namespace ABSoftware.ABParser
 
         #region Public Methods
 
-        public void SetText(ABParserText text) => SetTextAsync(text).Wait();
+        public void SetText(string text) => SetTextAsync(text).Wait();
 
-        public Task SetTextAsync(ABParserText text)
+        public Task SetTextAsync(string text)
         {
             return Task.Run(async () =>
             {
@@ -336,6 +330,8 @@ namespace ABSoftware.ABParser
             _disposeAsyncronously = disposeAsyncronously;
         }
 
+        public string GetTextAsString() => _textAsString = new string(Text);
+
         #endregion
 
         #region Constructor / Dispose
@@ -346,18 +342,18 @@ namespace ABSoftware.ABParser
             while (_currentlyDisposing)
                 await Task.Delay(1);
             if (_disposeAtDestruction && !_disposedForNextParse)
-                DisposedataForNextParse();
+                DisposeDataForNextParse();
             NativeMethods.DeleteBaseParser(_baseParser);
         }
 
         #endregion
 
-        #region TokenLimits
+        #region Limits
 
         public void EnterTokenLimit(string limitName)
         {
             if (limitName.Length > 255) throw new ABParserNameTooLong();
-            CurrentTokenLimits.Push(limitName);
+            CurrentEventTokenLimits.Push(limitName);
             NativeMethods.EnterTokenLimit(_baseParser, limitName, (byte)limitName.Length);
         }
 
@@ -366,8 +362,8 @@ namespace ABSoftware.ABParser
             if (amount == 0) return;
             for (int i = 0; i < amount; i++)
             {
-                if (CurrentTokenLimits.Count == 0) throw new ABParserExitNotInLimit();
-                CurrentTokenLimits.Pop();
+                if (CurrentEventTokenLimits.Count == 0) throw new ABParserExitNotInLimit();
+                CurrentEventTokenLimits.Pop();
             }
 
             NativeMethods.ExitTokenLimit(_baseParser, amount);

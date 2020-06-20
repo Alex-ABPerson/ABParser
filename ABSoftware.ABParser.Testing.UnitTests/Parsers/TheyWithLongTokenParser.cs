@@ -8,10 +8,10 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
-            new ABParserToken(new ABParserText("the")),
-            new ABParserToken(new ABParserText("they")),
-            new ABParserToken(new ABParserText("theyare")),
-            new ABParserToken(new ABParserText("AtheBtheyCtheyarDtheyareE")),
+            new ABParserToken("the"),
+            new ABParserToken("they"),
+            new ABParserToken("theyare"),
+            new ABParserToken("AtheBtheyCtheyarDtheyareE"),
         });
 
         public TheyWithLongTokenParser() : base(ParserConfig) { }

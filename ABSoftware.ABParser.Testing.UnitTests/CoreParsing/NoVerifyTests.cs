@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ABSoftware.ABParser.Testing.UnitTests.CoreParsing
@@ -8,20 +9,18 @@ namespace ABSoftware.ABParser.Testing.UnitTests.CoreParsing
     {
 
         [TestMethod]
-        [DataRow("Leadings", new string[] { "a" }, "b")]
-        [DataRow("Trailings", new string[] { "b" }, "")]
-        [DataRow("PreviousTokens", new string[] { null }, "")]
-        [DataRow("Tokens", new string[] { "A" }, "")]
-        [DataRow("NextTokens", new string[] { null }, "")]
-        public void SingleCharToken(string toTest, string[] expected, string leadingEndExpected) => RunSingleToken("aAb").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "a", "b" }, "Trivia")]
+        [DataRow(new string[] { "A" }, "Tokens")]
+        [DataRow(new int[] { 1 }, "TokenStarts")]
+        [DataRow(new int[] { 1 }, "TokenEnds")]
+        public void SingleCharToken(object expected, string toTest) => RunSingleToken("aAb").Test(toTest, expected);
 
         [TestMethod]
-        [DataRow("Leadings", new string[] { "a" }, "b")]
-        [DataRow("Trailings", new string[] { "b" }, "")]
-        [DataRow("PreviousTokens", new string[] { null }, "")]
-        [DataRow("Tokens", new string[] { "BCD" }, "")]
-        [DataRow("NextTokens", new string[] { null }, "")]
-        public void MultiCharToken(string toTest, string[] expected, string leadingEndExpected) => RunSingleToken("aBCDb").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "a", "b" }, "Trivia")]
+        [DataRow(new string[] { "BCD" }, "Tokens")]
+        [DataRow(new int[] { 1 }, "TokenStarts")]
+        [DataRow(new int[] { 3 }, "TokenEnds")]
+        public void MultiCharToken(object expected, string toTest) => RunSingleToken("aBCDb").Test(toTest, expected);
        
     }
 }

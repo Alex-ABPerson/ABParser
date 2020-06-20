@@ -37,11 +37,8 @@ CPPT_MACOSX_FINAL := ${CPPT_MACOSX_OUTDIR}/final.out
 # ====================================
 
 # ABSOFTWARE.ABPARSER.CORE.MANAGEDINTEROP:
-MI_LINUX_OUT_FILES := \
-	${MI_LINUX_OUTDIR}/ExportedMethods.o
-
-MI_MACOSX_OUT_FILES := \
-	${MI_MACOSX_OUTDIR}/ExportedMethods.o
+MI_LINUX_OUT_FILES := ${MI_LINUX_OUTDIR}/ExportedMethods.o
+MI_MACOSX_OUT_FILES := ${MI_MACOSX_OUTDIR}/ExportedMethods.o
 
 # ABSOFTWARE.ABPARSER.TESTING.CPPTESTING:
 CPPT_LINUX_OUT_FILES := ${CPPT_LINUX_OUTDIR}/Main.o
@@ -50,27 +47,27 @@ CPPT_MACOSX_OUT_FILES := ${CPPT_MACOSX_OUTDIR}/Main.o
 # ====================================
 # INDIVIDUAL FILES DEPENDENCIES:
 # ====================================
-# CPP File always comes first!
+# CPP File always comes first on compileable files!
+
+${CORE_DIR}/ABParser.h: ${CORE_DIR}/ABParserBase.h
+${CORE_DIR}/ABParserBase.h: ${CORE_DIR}/ABParserHelpers.h ${CORE_DIR}/ABParserConfig.h ${CORE_DIR}/ABParserDebugging.h
 
 # ABSOFTWARE.ABPARSER.CORE.MANAGEDINTEROP:
 # ExportedMethods.o
 ${MI_LINUX_OUTDIR}/ExportedMethods.o ${MI_MACOSX_OUTDIR}/ExportedMethods.o: \
 	${MI_DIR}/ExportedMethods.cpp \
-	${CORE_DIR}/ABParserBase.h \
-	${CORE_DIR}/ABParserDebugging.h \
-	${CORE_DIR}/ABParserConfig.h \
-	${CORE_DIR}/ABParserHelpers.h
+	${CORE_DIR}/ABParserBase.h
 
 # ABSOFTWARE.ABPARSER.TESTING.CPPTESTING:
 ${CPPT_LINUX_OUTDIR}/Main.o ${CPPT_MACOSX_OUTDIR}/Main.o: \
 	${CPPT_DIR}/Main.cpp \
-	${CORE_DIR}/ABParserBase.h
+	${CORE_DIR}/ABParser.h
 
 # ====================================
 # MODES:
 # ====================================
 compileMILinux: ${MI_LINUX_OUTDIR} ${MI_LINUX_FINAL} copyMILinux
-compileCPPT: compileMILinux ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
+compileCPPT: ${CPPT_LINUX_OUTDIR} ${CPPT_LINUX_FINAL}
 
 runConsoleApp: compileAll
 	dotnet run --project ABSoftware.ABParser.Testing.ConsoleApp
@@ -80,7 +77,8 @@ runUnitTests: compileAll
 	dotnet vstest ABSoftware.ABParser.Testing.UnitTests/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/ABSoftware.ABParser.Testing.UnitTests.dll
 
 clean: 
-	rm -r ${MI_OUTDIR} ${CPPT_LINUX}
+	rm -r ${MI_OUTDIR} 
+	rm -r ${CPPT_LINUX}
 
 # ====================================
 # BASE COMMANDS:
@@ -102,15 +100,15 @@ ${MI_LINUX_OUT_FILES}:
 	g++ -I${CORE_DIR} -c $< ${FLAGS} $@
 
 ${CPPT_LINUX_OUT_FILES}:
-	g++ -I${CORE_DIR} -c $< ${FLAGS} $@
+	g++ -I${CORE_DIR} -c $< -o $@
 
 # Dynamic Libraries:
 ${MI_LINUX_FINAL}:
-	g++ $^ -I${CORE_DIR} -L${CORE_LINUX_OUTDIR} -lfinal -Wall -shared ${FLAGS} $@
+	g++  $^ -I${CORE_DIR} -Wall -shared ${FLAGS} $@
 
 # Applications:
 ${CPPT_LINUX_FINAL}:
-	g++ $^ -I${CORE_DIR} -L${CORE_LINUX_OUTDIR} -lfinal ${FLAGS} $@
+	g++ -m64 $^ -o $@
 
 copyMILinux: 
 	cp ${MI_LINUX_OUTDIR}/final.so ABSoftware.ABParser.Testing.ConsoleApp/bin/${PLATFORM_DIR}/Debug/netcoreapp3.1/libABParserCore.so

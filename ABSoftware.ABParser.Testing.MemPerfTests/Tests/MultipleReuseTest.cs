@@ -20,7 +20,7 @@ namespace ABSoftware.ABParser.Testing.MemPerfTests.Tests
         protected override void Prepare()
         {
             _parser = new SingleTokenParser();
-            _parser.SetText(new ABParserText("AbbbbbbbbbbbbbBCDashBCDosh[peaAahlahayBCDkaoph;asA"));
+            _parser.SetText("AbbbbbbbbbbbbbBCDashBCDosh[peaAahlahayBCDkaoph;asA");
         }
 
         protected override void DoIteration(int i)

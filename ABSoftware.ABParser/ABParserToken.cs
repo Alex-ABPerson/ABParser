@@ -15,32 +15,32 @@ namespace ABSoftware.ABParser
         /// <summary>
         /// The name this token can be given to identify it.
         /// </summary>
-        public ABParserText TokenName;
+        public string Name;
 
         /// <summary>
         /// The data this token is made up of.
         /// </summary>
-        public ABParserText TokenData;
+        public string Data;
 
         /// <summary>
         /// If you want to attach extra data alongside the token, you can use this to do that.
         /// </summary>
-        public object TokenTag;
+        public object Tag;
 
-        public ABParserToken(ABParserText tokenName, ABParserText tokenData, object tag = null)
+        public ABParserToken(string name, string tokenData, object tag = null)
         {
-            if (tokenName.GetLength() > 255) throw new ABParserNameTooLong();
-            TokenName = tokenName;
-            TokenData = tokenData;
-            TokenTag = tag;
+            if (name.Length > 255) throw new ABParserNameTooLong();
+            Name = name;
+            Data = tokenData;
+            Tag = tag;
         }
 
-        public ABParserToken(ABParserText nameAndData, object tag = null)
+        public ABParserToken(string nameAndData, object tag = null)
         {
-            if (nameAndData.GetLength() > 255) throw new ABParserNameTooLong();
-            TokenName = nameAndData;
-            TokenData = nameAndData;
-            TokenTag = tag;
+            if (nameAndData.Length > 255) throw new ABParserNameTooLong();
+            Name = nameAndData;
+            Data = nameAndData;
+            Tag = tag;
         }
 
         public ABParserToken SetLimits(params string[] limits)

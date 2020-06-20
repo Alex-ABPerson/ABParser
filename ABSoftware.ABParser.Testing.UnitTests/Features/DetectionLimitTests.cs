@@ -11,13 +11,18 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Features
     public class DetectionLimitTests : UnitTestBase
     {
         [TestMethod]
-        [DataRow("Leadings", new string[] { "abcd", "efg" }, "hij")]
-        [DataRow("Tokens", new string[] { "ABC", "DEF" }, "")]
-        public void NormalUsage(string toTest, string[] expected, string leadingEndExpected) => RunDetectionLimit("abcdABCefgDEFhij").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "abcd", "efg", "hij" }, "Trivia")]
+        [DataRow(new string[] { "ABC", "DEF" }, "Tokens")]
+        [DataRow(new int[] { 4, 10 }, "TokenStarts")]
+        [DataRow(new int[] { 6, 12 }, "TokenEnds")]
+        public void NormalUsage(object expected, string toTest) => RunDetectionLimit("abcdABCefgDEFhij").Test(toTest, expected);
 
         [TestMethod]
-        [DataRow("Leadings", new string[] { "abcd", "efg" }, "hij")]
-        [DataRow("Tokens", new string[] { "ABC", "DEF" }, "")]
-        public void CharactersWithinToken(string toTest, string[] expected, string leadingEndExpected) => RunDetectionLimit("abcdAdBCefgD\tE \r Fhij").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "abcd", "efg", "hij" }, "Trivia")]
+        [DataRow(new string[] { "ABC", "DEF" }, "Tokens")]
+        [DataRow(new int[] { 4, 11 }, "TokenStarts")]
+        [DataRow(new int[] { 7, 17 }, "TokenEnds")]
+        public void CharactersWithinToken(object expected, string toTest) => RunDetectionLimit("abcdAdBCefgD\tE \r Fhij").Test(toTest, expected);
+        
     }
 }

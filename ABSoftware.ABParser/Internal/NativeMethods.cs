@@ -26,7 +26,10 @@ namespace ABSoftware.ABParser.Internal
         internal static unsafe extern void ConfigSetTriviaLimits(IntPtr config, string[] limitNames, byte* limitNameSizes, string[] limitContents, ushort* limitContentLengths, int numberOfLimits);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void InitString(IntPtr parser, string text, int textLength);
+        internal static unsafe extern void InitString(IntPtr parser, char* text, int textLength);
+
+        [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
+        internal static unsafe extern void InitString(IntPtr parser, string text, int textLength);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void DisposeDataForNextParse(IntPtr parser);

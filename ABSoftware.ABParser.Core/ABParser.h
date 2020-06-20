@@ -4,68 +4,52 @@
 
 namespace abparser {
 	template<typename T, typename U = char>
+	class TokenInformation {
+	public:
+		uint32_t Start;
+		uint32_t Length;
+		ABParserToken<T, U>* Token;
+	};
+
+	template<typename T, typename U = char>
 	class BeforeTokenProcessedArgs {
 	public:
-		ABParserToken<T, U>* PreviousToken;
-		uint32_t PreviousTokenStart;
-
-		ABParserToken<T, U>* Token;
-		uint32_t TokenStart;
+		const TokenInformation<T, U>* PreviousToken;
+		const TokenInformation<T, U>* Token;
 
 		T* Leading;
 		uint32_t LeadingLength;
 
-		BeforeTokenProcessedArgs(
-			ABParserToken<T, U>* previousToken,
-			uint32_t  previousTokenStart,
-			ABParserToken<T, U>* token,
-			uint32_t tokenStart,
-			T* leading,
-			uint32_t leadingLength) {
+		BeforeTokenProcessedArgs(const TokenInformation<T, U>* previousToken, const TokenInformation<T, U>* token, T* leading, uint32_t leadingLength) {
 
 			PreviousToken = previousToken;
-			PreviousTokenStart = previousTokenStart;
-
 			Token = token;
-			TokenStart = tokenStart;
 
 			Leading = leading;
 			LeadingLength = leadingLength;
 		}
 
-		const std::basic_string<T>& GetLeadingAsString() const { return new const std::basic_string<T>(Leading); }
+		const std::basic_string<T>* GetLeadingAsString() const { return new const std::basic_string<T>(Leading, (size_t)LeadingLength); }
 	};
 
 	template<typename T, typename U = char>
 	class OnTokenProcessedArgs : public BeforeTokenProcessedArgs<T, U> {
 	public:
-		ABParserToken<T, U>* NextToken;
-		uint32_t NextTokenStart;
+		const TokenInformation<T, U>* NextToken;
 
 		T* Trailing;
 		uint32_t TrailingLength;
 
-		OnTokenProcessedArgs(
-			ABParserToken<T, U>* previousToken,
-			uint32_t previousTokenStart,
-			ABParserToken<T, U>* token,
-			uint32_t tokenStart,
-			ABParserToken<T, U>* nextToken,
-			uint32_t nextTokenStart,
-			T* leading,
-			uint32_t leadingLength,
-			T* trailing,
-			uint32_t trailingLength)
-			: BeforeTokenProcessedArgs<T, U>(previousToken, previousTokenStart, token, tokenStart, leading, leadingLength) {
+		OnTokenProcessedArgs(const TokenInformation<T, U>* previousToken, const TokenInformation<T, U>* token, const TokenInformation<T, U>* nextToken, T* leading, uint32_t leadingLength, T* trailing, uint32_t trailingLength)
+			: BeforeTokenProcessedArgs<T, U>(previousToken, token, leading, leadingLength) {
 
 			NextToken = nextToken;
-			NextTokenStart = nextTokenStart;
 
 			Trailing = trailing;
 			TrailingLength = trailingLength;
 		}
 
-		const std::basic_string<T>& GetTrailingAsString() const { return new const std::basic_string<T>(Trailing); }
+		const std::basic_string<T>* GetTrailingAsString() const { return new const std::basic_string<T>(Trailing, TrailingLength); }
 	};
 
 	template<typename T, typename U = char>
@@ -73,13 +57,27 @@ namespace abparser {
 	public:
 		ABParserBase<T, U> Base;
 		ABParserToken<T, U>* Tokens;
+		T* Leading;
+		uint32_t LeadingLength;
 
-		ABParser(ABParserConfiguration<T>* configuration, ABParserToken<T, U>* tokens) {
+		ABParser(ABParserConfiguration<T, U>* configuration, ABParserToken<T, U>* tokens) {
 			Base.InitConfiguration(configuration);
 			Tokens = tokens;
+
+			Leading = nullptr;
+			LeadingLength = 0;
 		}
 
 		void SetText(T* text, uint32_t textLength) {
+
+			// Reallocate the "Leading", if it isn't big enough to contain our new text.
+			if (Base.TextLength < textLength) {
+				if (Leading != nullptr)
+					delete[] Leading;
+
+				Leading = new T[(size_t)textLength + 1];
+			}
+
 			Base.InitString(text, textLength);
 		}
 
@@ -91,27 +89,49 @@ namespace abparser {
 			SetText((T*)text.c_str(), (uint32_t)text.size());
 		}
 
-		void Execute() {
+		void Start() {
+
+			OnStart();
+
+			TokenInformation<T, U>* swap;
+
+			TokenInformation<T, U> infoStorage[3];
+			TokenInformation<T, U>* otpPreviousToken = &infoStorage[0];
+			TokenInformation<T, U>* otpToken = &infoStorage[1];
+			TokenInformation<T, U>* otpNextToken = &infoStorage[2];
+
 			ABParserResult result = ABParserResult::None;
 			bool firstOTP = true;
 
 			while (result != ABParserResult::StopAndFinalOnTokenProcessed) {
+
+				// Swap the Leading with the CurrentTrivia.
+				T* triviaSwap = Leading;
+				Leading = Base.CurrentTrivia;
+				Base.CurrentTrivia = triviaSwap;
+
 				result = Base.ContinueExecution();
 
-				switch (result) {
-				case ABParserResult::BeforeTokenProcessed:
+				swap = otpPreviousToken;
+				otpPreviousToken = otpToken;
+				otpToken = otpNextToken;
+				otpNextToken = swap;
 
-					BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(nullptr, 0, &Tokens[Base.BeforeTokenProcessedToken->MixedIdx], Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+				otpNextToken->Token = &Tokens[Base.CurrentEventToken->MixedIdx];
+				otpNextToken->Start = Base.CurrentEventTokenStart;
+				otpNextToken->Length = Base.CurrentEventTokenLengthInText;
+
+				switch (result) {
+				case ABParserResult::FirstBeforeTokenProcessed:
+
+					BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(nullptr, otpNextToken, Base.CurrentTrivia, Base.CurrentTriviaLength));
 
 					break;
 				case ABParserResult::OnThenBeforeTokenProcessed:
 				{
-					ABParserToken<T, U>* onTokenProcessedPreviousToken = firstOTP ? nullptr : &Tokens[Base.OnTokenProcessedPreviousToken->MixedIdx];
-					ABParserToken<T, U>* onTokenProcessedToken = &Tokens[Base.OnTokenProcessedToken->MixedIdx];
-					ABParserToken<T, U>* beforeTokenProcessedToken = &Tokens[Base.BeforeTokenProcessedToken->MixedIdx];
 
-					OnTokenProcessed(OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
-					BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(onTokenProcessedToken, Base.OnTokenProcessedTokenStart, beforeTokenProcessedToken, Base.BeforeTokenProcessedTokenStart, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+					OnTokenProcessed(OnTokenProcessedArgs<T, U>(firstOTP ? nullptr : otpPreviousToken, otpToken, otpNextToken, Leading, LeadingLength, Base.CurrentTrivia, Base.CurrentTriviaLength));
+					BeforeTokenProcessed(BeforeTokenProcessedArgs<T, U>(otpToken, otpNextToken, Base.CurrentTrivia, Base.CurrentTriviaLength));
 
 					firstOTP = false;
 
@@ -119,17 +139,16 @@ namespace abparser {
 				}
 				case ABParserResult::StopAndFinalOnTokenProcessed:
 				{
-					if (!Base.OnTokenProcessedToken)
+					if (!Base.CurrentEventToken)
 						return;
 
-					ABParserToken<T, U>* onTokenProcessedPreviousToken = firstOTP ? nullptr : &Tokens[Base.OnTokenProcessedPreviousToken->MixedIdx];
-					ABParserToken<T, U>* onTokenProcessedToken = &Tokens[Base.OnTokenProcessedToken->MixedIdx];
-
-					OnTokenProcessed(OnTokenProcessedArgs<T, U>(onTokenProcessedPreviousToken, Base.OnTokenProcessedPreviousTokenStart, onTokenProcessedToken, Base.OnTokenProcessedTokenStart, nullptr, 0, Base.OnTokenProcessedLeading, Base.OnTokenProcessedLeadingLength, Base.OnTokenProcessedTrailing, Base.OnTokenProcessedTrailingLength));
+					OnTokenProcessed(OnTokenProcessedArgs<T, U>(otpPreviousToken, otpToken, nullptr, Leading, LeadingLength, Base.CurrentTrivia, Base.CurrentTriviaLength));
 					break;
 				}
 				}
 			}
+
+			OnEnd(Base.CurrentEventToken ? Base.CurrentTrivia : Base.Text, Base.CurrentEventToken ? Base.CurrentTriviaLength : Base.TextLength);
 		}
 
 		void EnterTokenLimit(const T* limitName, uint8_t limitNameSize) { Base.EnterTokenLimit(limitName, limitNameSize); }
@@ -143,7 +162,7 @@ namespace abparser {
 		void ExitTriviaLimit() { Base.ExitTriviaLimit(); }
 
 		virtual void OnStart() {}
-		virtual void OnEnd(T* leading) {}
+		virtual void OnEnd(T* leading, uint32_t leadingLength) {}
 		virtual void BeforeTokenProcessed(const BeforeTokenProcessedArgs<T, U>& args) {}
 		virtual void OnTokenProcessed(const OnTokenProcessedArgs<T, U>& args) {}
 	};

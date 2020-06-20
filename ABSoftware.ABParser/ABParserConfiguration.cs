@@ -43,8 +43,8 @@ namespace ABSoftware.ABParser
 
             for (int i = 0; i < tokens.Length; i++)
             {
-                tokenData[i] = tokens[i].TokenData.AsString();
-                tokenDataLengths[i] = (ushort)tokens[i].TokenData.GetLength();
+                tokenData[i] = tokens[i].Data;
+                tokenDataLengths[i] = (ushort)tokens[i].Data.Length;
 
                 if (tokens[i].TokenLimits == null)
                     limitsPerToken[i] = 0;

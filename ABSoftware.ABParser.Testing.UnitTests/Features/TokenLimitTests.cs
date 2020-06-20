@@ -11,15 +11,17 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Features
     public class TokenLimitTests : UnitTestBase
     {
         [TestMethod]
-        [DataRow("Leadings", new string[] { "A", "aBdc", "" }, "")]
-        [DataRow("Trailings", new string[] { "aBdc", "", "" }, "")]
-        [DataRow("Tokens", new string[] { "DOUBLE_QUOTE", "DOUBLE_QUOTE", "CAPITAL_B" }, "")]
-        public void OneLevel_SingleStart_SingleEnd(string toTest, string[] expected, string leadingEndExpected) => RunQuoteLimit("A\"aBdc\"B").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "A", "aBdc", "", "" }, "Trivia")]
+        [DataRow(new string[] { "DOUBLE_QUOTE", "DOUBLE_QUOTE", "CAPITAL_B" }, "Tokens")]
+        [DataRow(new int[] { 1, 6, 7 }, "TokenStarts")]
+        [DataRow(new int[] { 1, 6, 7 }, "TokenEnds")]
+        public void OneLevel_SingleStart_SingleEnd(object expected, string toTest) => RunQuoteLimit("A\"aBdc\"B").Test(toTest, expected);
 
         [TestMethod]
-        [DataRow("Leadings", new string[] { "A!", "abc", "d", "", "deep", "est", "out", "", "g", "", " ", "?" }, "B")]
-        [DataRow("Trailings", new string[] { "abc", "d", "", "deep", "est", "out", "", "g", "", " ", "?", "B" }, "")]
-        [DataRow("Tokens", new string[] { "<", "<<", "?", "<<<", "?", ">", ">>", "<<", "<<<", "!", "<", ">" }, "")]
-        public void MultiLevel_VariedStartAndEnd(string toTest, string[] expected, string leadingEndExpected) => RunAngledLimit("A!<abc<<d?<<<deep?est>out>><<g<<<! <?>B").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "A!", "abc", "d", "", "deep", "est", "out", "", "g", "", " ", "?", "B" }, "Trivia")]
+        [DataRow(new string[] { "<", "<<", "?", "<<<", "?", ">", ">>", "<<", "<<<", "!", "<", ">" }, "Tokens")]
+        [DataRow(new int[] { 2, 6, 9, 10, 17, 21, 25, 27, 30, 33, 35, 37 }, "TokenStarts")]
+        [DataRow(new int[] { 2, 7, 9, 12, 17, 21, 26, 28, 32, 33, 35, 37 }, "TokenEnds")]
+        public void MultiLevel_VariedStartAndEnd(object expected, string toTest) => RunAngledLimit("A!<abc<<d?<<<deep?est>out>><<g<<<! <?>B").Test(toTest, expected);
     }
 }

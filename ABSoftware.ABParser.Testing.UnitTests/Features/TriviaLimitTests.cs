@@ -11,15 +11,17 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Features
     public class TriviaLimitTests : UnitTestBase
     {
         [TestMethod]
-        [DataRow("Leadings", new string[] { "h ", "jk" }, "l o")]
-        [DataRow("Trailings", new string[] { "jk", "l o" }, "")]
-        [DataRow("Tokens", new string[] { "A", "C" }, "")]
-        public void OneLevel(string toTest, string[] expected, string leadingEndExpected) => RunTriviaLimit("h Aj \tkCl o").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "h ", "jk", "l o" }, "Trivia")]
+        [DataRow(new string[] { "A", "C" }, "Tokens")]
+        [DataRow(new int[] { 2, 7 }, "TokenStarts")]
+        [DataRow(new int[] { 2, 7 }, "TokenEnds")]
+        public void OneLevel(object expected, string toTest) => RunTriviaLimit("h Aj \tkCl o").Test(toTest, expected);
 
         [TestMethod]
-        [DataRow("Leadings", new string[] { "h ", "jk", "d", "lo" }, "l o")]
-        [DataRow("Trailings", new string[] { "jk", "d", "lo", "l o" }, "")]
-        [DataRow("Tokens", new string[] { "A", "B", "C", "C" }, "")]
-        public void MultiLevel(string toTest, string[] expected, string leadingEndExpected) => RunTriviaLimit("h Aj \tkBadcCl oCl o").Test(toTest, expected, leadingEndExpected);
+        [DataRow(new string[] { "h ", "jk", "d", "lo", "l o" }, "Trivia")]
+        [DataRow(new string[] { "A", "B", "C", "C" }, "Tokens")]
+        [DataRow(new int[] { 2, 7, 11, 15 }, "TokenStarts")]
+        [DataRow(new int[] { 2, 7, 11, 15 }, "TokenEnds")]
+        public void MultiLevel(object expected, string toTest) => RunTriviaLimit("h Aj \tkBadcCl oCl o").Test(toTest, expected);
     }
 }

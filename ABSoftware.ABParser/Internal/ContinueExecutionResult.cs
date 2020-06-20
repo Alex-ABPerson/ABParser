@@ -9,9 +9,9 @@ namespace ABSoftware.ABParser.Internal
     public enum ContinueExecutionResult
     {
         None = 0,
-        Stop = 1,
-        BeforeTokenProcessed = 2,
-        OnAndBeforeTokenProcessed = 3
+        StopAndFinalOnTokenProcessed = 1,
+        FirstBeforeTokenProcessed = 2,
+        OnThenBeforeTokenProcessed = 3
 
     }
 }
