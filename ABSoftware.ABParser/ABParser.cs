@@ -353,8 +353,10 @@ namespace ABSoftware.ABParser
         public void EnterTokenLimit(string limitName)
         {
             if (limitName.Length > 255) throw new ABParserNameTooLong();
+            if (!NativeMethods.EnterTokenLimit(_baseParser, limitName, (byte)limitName.Length))
+                throw new ABParserInvalidLimitName();
+
             CurrentEventTokenLimits.Push(limitName);
-            NativeMethods.EnterTokenLimit(_baseParser, limitName, (byte)limitName.Length);
         }
 
         public void ExitTokenLimit(int amount = 1)
@@ -372,8 +374,10 @@ namespace ABSoftware.ABParser
         public void EnterTriviaLimit(string limitName)
         {
             if (limitName.Length > 255) throw new ABParserNameTooLong();
+            if (!NativeMethods.EnterTriviaLimit(_baseParser, limitName, (byte)limitName.Length))
+                throw new ABParserInvalidLimitName();
+
             CurrentTriviaLimits.Push(limitName);
-            NativeMethods.EnterTriviaLimit(_baseParser, limitName, (byte)limitName.Length);
         }
 
         public void ExitTriviaLimit(int amount = 1)

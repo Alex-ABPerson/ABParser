@@ -193,8 +193,17 @@ namespace abparser {
 	public:
 		const std::basic_string<U>* LimitName;
 
-		T* ToIgnore;
-		uint16_t ToIgnoreLength;
+		T* Data;
+		uint16_t DataLength;
+
+		bool IsWhitelist;
+
+		TriviaLimit() {
+			LimitName = nullptr;
+			Data = nullptr;
+			DataLength = 0;
+			IsWhitelist = false;
+		}
 
 		void SetName(U* name) {
 			LimitName = new const std::basic_string<U>(name);
@@ -212,30 +221,34 @@ namespace abparser {
 			LimitName = new const std::basic_string<U>(name);
 		}
 
-		void SetIgnoreCharacters(uint16_t ignoreLength, ...) {
-			ToIgnore = new T[ignoreLength];
-			ToIgnoreLength = ignoreLength;
+		void SetIsWhitelist(bool bl) {
+			IsWhitelist = bl;
+		}
+
+		void SetData(uint16_t ignoreLength, ...) {
+			Data = new T[ignoreLength];
+			DataLength = ignoreLength;
 
 			va_list args;
 			va_start(args, ignoreLength);
 
 			for (uint16_t i = 0; i < ignoreLength; i++)
-				ToIgnore[i] = va_arg(args, T);
+				Data[i] = va_arg(args, T);
 
 			va_end(args);
 		}
 
-		void DirectSetIgnoreCharacters(T* chars, uint16_t charsLength) {
-			ToIgnore = new T[charsLength];
-			ToIgnoreLength = charsLength;
+		void DirectSetData(T* chars, uint16_t charsLength) {
+			Data = new T[charsLength];
+			DataLength = charsLength;
 
 			for (uint16_t i = 0; i < charsLength; i++)
-				ToIgnore[i] = chars[i];
+				Data[i] = chars[i];
 		}
 
 		~TriviaLimit() {
 			delete LimitName;
-			delete[] ToIgnore;
+			delete[] Data;
 		}
 	};
 

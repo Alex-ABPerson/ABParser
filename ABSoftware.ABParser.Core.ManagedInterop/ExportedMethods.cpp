@@ -2,7 +2,7 @@
 
 using namespace abparser;
 
-//#define COMPILE_DLL
+#define COMPILE_DLL
 
 #ifdef COMPILE_DLL
 #define EXPORT __declspec(dllexport)
@@ -72,12 +72,13 @@ extern "C" {
 		return result;
 	}
 
-	EXPORT void ConfigSetTriviaLimits(ConfigAndTokens* information, uint16_t** limitNames, uint8_t* limitNameLengths, uint16_t** limitContents, uint16_t* limitContentLengths, uint16_t numberOfLimits) {
+	EXPORT void ConfigSetTriviaLimits(ConfigAndTokens* information, uint32_t* limitIsWhiteList, uint16_t** limitNames, uint8_t* limitNameLengths, uint16_t** limitContents, uint16_t* limitContentLengths, uint16_t numberOfLimits) {
 		TriviaLimit<uint16_t, uint16_t>* limits = new TriviaLimit<uint16_t, uint16_t>[numberOfLimits];
 
 		for (uint16_t i = 0; i < numberOfLimits; i++) {
 			limits[i].SetName(limitNames[i]);
-			limits[i].DirectSetIgnoreCharacters(limitContents[i], limitContentLengths[i]);
+			limits[i].DirectSetData(limitContents[i], limitContentLengths[i]);
+			limits[i].SetIsWhitelist(limitIsWhiteList[i]);
 		}
 			
 		information->Config.SetTriviaLimits(limits, numberOfLimits);
@@ -95,8 +96,8 @@ extern "C" {
 		delete parser;
 	}
 
-	EXPORT void EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
-		parser->EnterTokenLimit(limitName, limitNameLength);
+	EXPORT uint32_t EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
+		return parser->EnterTokenLimit(limitName, limitNameLength);
 	}
 
 	EXPORT void ExitTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {
@@ -104,8 +105,8 @@ extern "C" {
 			parser->ExitTokenLimit();
 	}
 
-	EXPORT void EnterTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
-		parser->EnterTriviaLimit(limitName, limitNameLength);
+	EXPORT uint32_t EnterTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
+		return parser->EnterTriviaLimit(limitName, limitNameLength);
 	}
 
 	EXPORT void ExitTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {

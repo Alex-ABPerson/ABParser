@@ -23,7 +23,7 @@ namespace ABSoftware.ABParser.Internal
         internal static unsafe extern ContinueExecutionResult ContinueExecution(IntPtr parser, ushort* outData);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static unsafe extern void ConfigSetTriviaLimits(IntPtr config, string[] limitNames, byte* limitNameSizes, string[] limitContents, ushort* limitContentLengths, int numberOfLimits);
+        internal static unsafe extern void ConfigSetTriviaLimits(IntPtr config, bool* limitsAreWhitelist, string[] limitNames, byte* limitNameSizes, string[] limitContents, ushort* limitContentLengths, int numberOfLimits);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static unsafe extern void InitString(IntPtr parser, char* text, int textLength);
@@ -35,13 +35,13 @@ namespace ABSoftware.ABParser.Internal
         internal static extern void DisposeDataForNextParse(IntPtr parser);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void EnterTokenLimit(IntPtr baseParser, string limitName, byte limitNameSize);
+        internal static extern bool EnterTokenLimit(IntPtr baseParser, string limitName, byte limitNameSize);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void ExitTokenLimit(IntPtr baseParser, int levels);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
-        internal static extern void EnterTriviaLimit(IntPtr baseParser, string limitName, byte limitNameSize);
+        internal static extern bool EnterTriviaLimit(IntPtr baseParser, string limitName, byte limitNameSize);
 
         [DllImport(COREDLL, CharSet = CHARSET, CallingConvention = CALLING_CONVENTION)]
         internal static extern void ExitTriviaLimit(IntPtr baseParser, int levels);

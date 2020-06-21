@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 {
-    public class TriviaLimitParser : TrackingParser
+    public class BlacklistTriviaLimitParser : TrackingParser
     {
         static readonly ABParserConfiguration ParserConfig = new ABParserConfiguration(new ABParserToken[]
         {
             new ABParserToken("A"),
             new ABParserToken("B"),
             new ABParserToken("C"),
-        }, 2).AddTriviaLimit("NoWhiteSpace", ' ', '\r', '\n', '\t').AddTriviaLimit("NoABCs", 'a', 'b', 'c');
+        }, 2).AddTriviaLimit(false, "NoWhiteSpace", ' ', '\r', '\n', '\t').AddTriviaLimit(false, "NoABCs", 'a', 'b', 'c');
 
-        public TriviaLimitParser() : base(ParserConfig) { }
+        public BlacklistTriviaLimitParser() : base(ParserConfig) { }
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {

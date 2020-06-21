@@ -154,7 +154,7 @@ namespace abparser {
 			}
 		}
 
-		void EnterTokenLimit(U* limitName, uint8_t limitNameSize) {
+		bool EnterTokenLimit(U* limitName, uint8_t limitNameSize) {
 			for (uint16_t i = 0; i < Configuration->NumberOfTokenLimits; i++) {
 				TokenLimit<T, U>* currentLimit = Configuration->TokenLimits[i];
 
@@ -162,9 +162,11 @@ namespace abparser {
 					_ABP_DEBUG_OUT("Entered into token limit");
 					CurrentEventTokenLimits.push(currentLimit);
 					SetCurrentEventTokens(currentLimit);
-					break;
+					return true;
 				}
 			}
+
+			return false;
 		}
 
 		void ExitTokenLimit() {
@@ -176,16 +178,18 @@ namespace abparser {
 				SetCurrentEventTokens(CurrentEventTokenLimits.top());
 		}
 
-		void EnterTriviaLimit(U* limitName, uint8_t limitNameSize) {
+		bool EnterTriviaLimit(U* limitName, uint8_t limitNameSize) {
 			for (uint16_t i = 0; i < Configuration->NumberOfTriviaLimits; i++) {
 				TriviaLimit<T, U>* limit = &Configuration->TriviaLimits[i];
 
 				if (Matches(limitName, (U*)limit->LimitName->data(), limitNameSize, limit->LimitName->length())) {
 					_ABP_DEBUG_OUT("Entered into trivia limit");
 					CurrentTriviaLimits.push(limit);
-					break;
+					return true;
 				}
 			}
+
+			return false;
 		}
 
 		void ExitTriviaLimit() {
@@ -703,12 +707,12 @@ namespace abparser {
 				TriviaLimit<T, U>* limit = CurrentTriviaLimits.top();
 
 				for (uint32_t i = 0; i < trailingLength; i++) {
-					if (ArrContainsChar(limit->ToIgnore, limit->ToIgnoreLength, buildUpToUse[i])) {
-						_ABP_DEBUG_OUT("Character is in trivia limit - ignored!");
+					if (ArrContainsChar(limit->Data, limit->DataLength, buildUpToUse[i])) {
+						if (limit->IsWhitelist) CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
 						continue;
 					}
 
-					CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
+					if (!limit->IsWhitelist) CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
 				}
 			}
 

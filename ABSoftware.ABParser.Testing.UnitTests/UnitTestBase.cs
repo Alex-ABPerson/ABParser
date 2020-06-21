@@ -29,7 +29,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         static TheyWithLongTokenParser RunTheyWithLongTokenParser;
         static QuoteLimitParser RunQuoteLimitParser;
         static AngledLimitParser RunAngledLimitParser;
-        static TriviaLimitParser RunTriviaLimitParser;
+        static WhitelistTriviaLimitParser RunWhitelistTriviaLimitParser;
+        static BlacklistTriviaLimitParser RunBlacklistTriviaLimitParser;
         static DetectionLimitParser RunDetectionLimitParser;
 
         public NoTokensParser RunNoTokens(string text) => InitializeAndRunParser(ref RunNoTokensParser, text);
@@ -40,7 +41,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         public TheyWithLongTokenParser RunTheyWithLongToken(string text) => InitializeAndRunParser(ref RunTheyWithLongTokenParser, text);
         public QuoteLimitParser RunQuoteLimit(string text) => InitializeAndRunParser(ref RunQuoteLimitParser, text);
         public AngledLimitParser RunAngledLimit(string text) => InitializeAndRunParser(ref RunAngledLimitParser, text);
-        public TriviaLimitParser RunTriviaLimit(string text) => InitializeAndRunParser(ref RunTriviaLimitParser, text);
+        public WhitelistTriviaLimitParser RunWhitelistTriviaLimit(string text) => InitializeAndRunParser(ref RunWhitelistTriviaLimitParser, text);
+        public BlacklistTriviaLimitParser RunBlacklistTriviaLimit(string text) => InitializeAndRunParser(ref RunBlacklistTriviaLimitParser, text);
         public DetectionLimitParser RunDetectionLimit(string text) => InitializeAndRunParser(ref RunDetectionLimitParser, text);
     }
 }

@@ -2,17 +2,21 @@
 using ABSoftware.ABParser.Internal;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
 namespace ABSoftware.ABParser
 {
     public struct ABParserConfigurationTriviaLimit
     {
         public string Name;
         public char[] ToIgnore;
+        public bool IsWhiteList;
 
-        public void Init(string name, char[] toIgnore)
+        public void Init(string name, char[] toIgnore, bool isWhiteList)
         {
             Name = name;
             ToIgnore = toIgnore;
+            IsWhiteList = isWhiteList;
         }
     }
 
@@ -71,14 +75,14 @@ namespace ABSoftware.ABParser
             TriviaLimits = new ABParserConfigurationTriviaLimit[numberOfTriviaTokens];
         }
 
-        public ABParserConfiguration AddTriviaLimit(string name, params char[] toIgnore)
+        public ABParserConfiguration AddTriviaLimit(bool isWhiteList, string name, params char[] toIgnore)
         {
             if (name.Length > 255) throw new ABParserNameTooLong();
 
             if (TriviaLimits.Length == _triviaLimitsProvided) throw new ABParserTooManyTriviaLimits();
             else
             {
-                TriviaLimits[_triviaLimitsProvided++].Init(name, toIgnore);
+                TriviaLimits[_triviaLimitsProvided++].Init(name, toIgnore, isWhiteList);
 
                 if (TriviaLimits.Length == _triviaLimitsProvided)
                     FlushTriviaLimits();
@@ -94,6 +98,8 @@ namespace ABSoftware.ABParser
 
             var limitContents = new string[TriviaLimits.Length];
             var limitContentLengths = stackalloc ushort[TriviaLimits.Length];
+
+            var limitIsWhitelist = stackalloc bool[TriviaLimits.Length];
             
             for (int i = 0; i < TriviaLimits.Length; i++)
             {
@@ -102,9 +108,11 @@ namespace ABSoftware.ABParser
 
                 limitContents[i] = new string(TriviaLimits[i].ToIgnore);
                 limitContentLengths[i] = (ushort)TriviaLimits[i].ToIgnore.Length;
+
+                limitIsWhitelist[i] = TriviaLimits[i].IsWhiteList;
             }
 
-            NativeMethods.ConfigSetTriviaLimits(TokensStorage, limitNames, limitLengths, limitContents, limitContentLengths, TriviaLimits.Length);
+            NativeMethods.ConfigSetTriviaLimits(TokensStorage, limitIsWhitelist, limitNames, limitLengths, limitContents, limitContentLengths, TriviaLimits.Length);
         }
 
         public void Dispose()
