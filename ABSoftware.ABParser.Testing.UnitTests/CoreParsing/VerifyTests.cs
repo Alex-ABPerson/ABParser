@@ -33,5 +33,12 @@ namespace ABSoftware.ABParser.Testing.UnitTests.CoreParsing
         [DataRow(new int[] { 1, 12, 19 }, "TokenStarts")]
         [DataRow(new int[] { 5, 16, 21 }, "TokenEnds")]
         public void AllMultiChar_AllVerifyTypes_TriggersInMiddle(object expected, string toTest) => RunTheyMiddle("AtheyaBtheyCthataDthatE").Test(toTest, expected);
+
+        [TestMethod]
+        [DataRow(new string[] { "", "a" }, "Trivia")]
+        [DataRow(new string[] { "they" }, "Tokens")]
+        [DataRow(new int[] { 0 }, "TokenStarts")]
+        [DataRow(new int[] { 3 }, "TokenEnds")]
+        public void ImpossibleSituation(object expected, string toTest) => RunImpossibleVerify("theya").Test(toTest, expected);
     }
 }

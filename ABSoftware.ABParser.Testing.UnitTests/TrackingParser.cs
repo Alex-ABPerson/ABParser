@@ -30,7 +30,11 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         public List<string> OnTokenProcessedTokens;
         public List<string> OnTokenProcessedNextTokens;
 
+        public int OnFirstUnlimitedCharProcessedPos;
+
         public string EndLeading;
+
+        public TrackingParser(ABParserConfiguration config) : base(config) { }
 
         protected override void OnStart()
         {
@@ -55,9 +59,11 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             OnTokenProcessedNextTokens = new List<string>();
 
             EndLeading = null;
+
+            OnFirstUnlimitedCharProcessedPos = 0;
         }
 
-        public TrackingParser(ABParserConfiguration config) : base(config) { }
+        protected override void OnFirstUnlimitedCharacterProcessed(int pos) => OnFirstUnlimitedCharProcessedPos = pos;
 
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {
@@ -119,7 +125,8 @@ namespace ABSoftware.ABParser.Testing.UnitTests
                 "Tokens" => TestTokens((string[])expected),
                 "TokenStarts" => TestStarts((int[])expected),
                 "TokenEnds" => TestEnds((int[])expected),
-                _ => throw new Exception("INVALID TEST MODE"),
+                "OFUCP" => TestOFUCP((int)expected),
+                _ => throw new Exception("INVALID TEST MODE")
             };
         }
 
@@ -186,6 +193,12 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             CollectionAssert.AreEqual(OnTokenProcessedTokenPreviousTokenEnds, previousTokensEnds);
             CollectionAssert.AreEqual(OnTokenProcessedTokenTokenEnds, tokenEnds);
             CollectionAssert.AreEqual(OnTokenProcessedTokenNextTokenEnds, nextTokensEnds);
+            return this;
+        }
+
+        public TrackingParser TestOFUCP(int expected)
+        {
+            Assert.AreEqual(expected, OnFirstUnlimitedCharProcessedPos);
             return this;
         }
 

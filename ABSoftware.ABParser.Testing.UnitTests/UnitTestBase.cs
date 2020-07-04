@@ -11,7 +11,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
     public class UnitTestBase
     {
         T InitializeAndRunParser<T>(ref T parser, string text)
-            where T : TrackingParser
+            where T : ABParser
         {
             if (parser == null)
                 parser = (T)Activator.CreateInstance(typeof(T));
@@ -27,6 +27,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         static TheyMiddleParser RunTheyMiddleParser;
         static TheyWithSingleCharParser RunTheyWithSingleCharParser;
         static TheyWithLongTokenParser RunTheyWithLongTokenParser;
+        static ImpossibleVerifyParser RunImpossibleVerifyParser;
         static QuoteLimitParser RunQuoteLimitParser;
         static AngledLimitParser RunAngledLimitParser;
         static WhitelistTriviaLimitParser RunWhitelistTriviaLimitParser;
@@ -39,6 +40,7 @@ namespace ABSoftware.ABParser.Testing.UnitTests
         public TheyMiddleParser RunTheyMiddle(string text) => InitializeAndRunParser(ref RunTheyMiddleParser, text);
         public TheyWithSingleCharParser RunTheyWithSingleChar(string text) => InitializeAndRunParser(ref RunTheyWithSingleCharParser, text);
         public TheyWithLongTokenParser RunTheyWithLongToken(string text) => InitializeAndRunParser(ref RunTheyWithLongTokenParser, text);
+        public ImpossibleVerifyParser RunImpossibleVerify(string text) => InitializeAndRunParser(ref RunImpossibleVerifyParser, text);
         public QuoteLimitParser RunQuoteLimit(string text) => InitializeAndRunParser(ref RunQuoteLimitParser, text);
         public AngledLimitParser RunAngledLimit(string text) => InitializeAndRunParser(ref RunAngledLimitParser, text);
         public WhitelistTriviaLimitParser RunWhitelistTriviaLimit(string text) => InitializeAndRunParser(ref RunWhitelistTriviaLimitParser, text);

@@ -41,6 +41,7 @@ namespace ABSoftware.ABParser
         BeforeTokenProcessedEventArgs BeforeTokenProcessedArgs;
         OnTokenProcessedEventArgs OnTokenProcessedArgs;
         OnEndEventArgs OnEndArgs;
+        int OFUCPPos;
 
         TokenInformation OnTokenProcessedPreviousTokenInfo;
         TokenInformation OnTokenProcessedTokenInfo;
@@ -66,6 +67,7 @@ namespace ABSoftware.ABParser
             BeforeTokenProcessedArgs = new BeforeTokenProcessedEventArgs(this);
             OnTokenProcessedArgs = new OnTokenProcessedEventArgs(this);
             OnEndArgs = new OnEndEventArgs();
+            OFUCPPos = 0;
 
             OnTokenProcessedPreviousTokenInfo = new TokenInformation();
             OnTokenProcessedTokenInfo = new TokenInformation();
@@ -123,7 +125,14 @@ namespace ABSoftware.ABParser
 
         unsafe void HandleResult(ContinueExecutionResult result, ushort* data)
         {
-            if (result == ContinueExecutionResult.None) return;
+            switch (result)
+            {
+                case ContinueExecutionResult.OnFirstUnlimitedCharacterProcessed:
+                    OFUCPPos = TwoShortsToInteger(data, 0);
+                    return;
+                case ContinueExecutionResult.None:
+                    return;
+            }
 
             ResetTriviaStringCaches();
             MoveTokenInfos();
@@ -265,6 +274,10 @@ namespace ABSoftware.ABParser
                         BeforeTokenProcessed(BeforeTokenProcessedArgs);
 
                         break;
+                    case ContinueExecutionResult.OnFirstUnlimitedCharacterProcessed:
+
+                        OnFirstUnlimitedCharacterProcessed(OFUCPPos);
+                        break;
                 }
             }
 
@@ -284,9 +297,20 @@ namespace ABSoftware.ABParser
 
         #region Events
 
+        /// <summary>
+        /// Called when we start a parse.
+        /// </summary>
         protected virtual void OnStart() { }
 
+        /// <summary>
+        /// Called when we finish a parse.
+        /// </summary>
         protected virtual void OnEnd(OnEndEventArgs args) { }
+
+        /// <summary>
+        /// Called when we encounter the very first unlimited character in the document. Used to initialize data only when there's something in the document.
+        /// </summary>
+        protected virtual void OnFirstUnlimitedCharacterProcessed(int position) { }
 
         /// <summary>
         /// Called before a token's trailing has been generated - mainly used to set limits.

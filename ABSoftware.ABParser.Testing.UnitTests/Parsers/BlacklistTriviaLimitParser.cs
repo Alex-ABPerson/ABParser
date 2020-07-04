@@ -18,6 +18,12 @@ namespace ABSoftware.ABParser.Testing.UnitTests.Parsers
 
         public BlacklistTriviaLimitParser() : base(ParserConfig) { }
 
+        protected override void OnStart()
+        {
+            EnterTriviaLimit("NoWhiteSpace");
+            base.OnStart();
+        }
+
         protected override void BeforeTokenProcessed(BeforeTokenProcessedEventArgs args)
         {
             base.BeforeTokenProcessed(args);

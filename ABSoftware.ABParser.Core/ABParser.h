@@ -112,6 +112,11 @@ namespace abparser {
 
 				result = Base.ContinueExecution();
 
+				if (result == ABParserResult::OnFirstUnlimitedCharacterProcessed) {
+					OnFirstUnlimitedCharacterProcessed(Base.InternalPosition);
+					continue;
+				}
+
 				swap = otpPreviousToken;
 				otpPreviousToken = otpToken;
 				otpToken = otpNextToken;
@@ -140,7 +145,7 @@ namespace abparser {
 				case ABParserResult::StopAndFinalOnTokenProcessed:
 				{
 					if (!Base.CurrentEventToken)
-						return;
+						continue;
 
 					OnTokenProcessed(OnTokenProcessedArgs<T, U>(otpPreviousToken, otpToken, nullptr, Leading, LeadingLength, Base.CurrentTrivia, Base.CurrentTriviaLength));
 					break;
@@ -165,6 +170,7 @@ namespace abparser {
 		virtual void OnEnd(T* leading, uint32_t leadingLength) {}
 		virtual void BeforeTokenProcessed(const BeforeTokenProcessedArgs<T, U>& args) {}
 		virtual void OnTokenProcessed(const OnTokenProcessedArgs<T, U>& args) {}
+		virtual void OnFirstUnlimitedCharacterProcessed(uint32_t pos) {}
 	};
 }
 #endif

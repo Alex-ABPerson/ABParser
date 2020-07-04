@@ -13,6 +13,8 @@ namespace abparser {
 	class ABParserBase {
 	public:
 
+		uint32_t InternalPosition;
+
 		ABParserConfiguration<T, U>* Configuration;
 
 		uint32_t CurrentEventTokenStart;
@@ -30,6 +32,8 @@ namespace abparser {
 
 		ABParserResult ContinueExecution() {
 
+			TriviaLimit<T, U>* currentTriviaLimit = nullptr;
+
 			if (isFinalizingVerifyTokens) {
 				ABParserResult result = FinalizeNextVerifyToken();
 				if (result != ABParserResult::None)
@@ -38,24 +42,34 @@ namespace abparser {
 
 			if (justStarted) PrepareForParse();
 
-			_ABP_DEBUG_OUT("Continuing execution... Finished: %c ", (currentPosition < TextLength) ? 'F' : 'T');
+			if (notEncounteredFirstUnlimitedChar) {
+				if (CurrentTriviaLimits.empty()) return TriggerOnFirstUnlimitedCharacterProcessed();
+				else currentTriviaLimit = CurrentTriviaLimits.top();
+			}
+
+			_ABP_DEBUG_OUT("Continuing execution... Finished: %c ", (InternalPosition < TextLength) ? 'F' : 'T');
 
 			// The main loop - go through every character.
-			for (; currentPosition < TextLength; currentPosition++) {
-				_ABP_DEBUG_OUT("Current Position: %d", currentPosition);
+			for (; InternalPosition < TextLength; InternalPosition++) {
+				_ABP_DEBUG_OUT("Current Position: %d", InternalPosition);
+
+				if (notEncounteredFirstUnlimitedChar)
+					if (ArrContainsChar(currentTriviaLimit->Data, currentTriviaLimit->DataLength, Text[InternalPosition])) {
+						if (currentTriviaLimit->IsWhitelist) return TriggerOnFirstUnlimitedCharacterProcessed();
+					} else if (!currentTriviaLimit->IsWhitelist) return TriggerOnFirstUnlimitedCharacterProcessed();
 
 				ABParserResult res = ProcessChar();
 
 				// Return any result we got.
 				if (res != ABParserResult::None) {
-					currentPosition++;
+					InternalPosition++;
 					return res;
 				}
 			}
 
 			// If there's a token left, we'll prepare the leading and trailing for it so that when we trigger the "stop" result, it can be the final OnTokenProcessed.
 			if (CurrentEventToken)
-				PrepareLeadingAndTrailing((currentPosition - 1) - CurrentEventTokenLengthInText, buildUp, buildUpLength, false, true);
+				PrepareLeadingAndTrailing((InternalPosition - 1) - CurrentEventTokenLengthInText, buildUp, buildUpLength, false, true);
 
 			// Reset anything for next time.
 			while (!CurrentEventTokenLimits.empty())
@@ -88,7 +102,6 @@ namespace abparser {
 			CurrentEventTokenLengthInText = 0;
 			CurrentEventTokenStart = 0;
 
-			isVerifying = false;
 			isFinalizingVerifyTokens = false;
 			buildUpStart = nullptr;
 			futureTokens = nullptr;
@@ -117,7 +130,7 @@ namespace abparser {
 		void PrepareForParse() {
 			_ABP_DEBUG_OUT("Preparing for a parse.");
 
-			currentPosition = 0;
+			InternalPosition = 0;
 
 			CurrentEventToken = nullptr;
 			CurrentEventTokenLengthInText = 0;
@@ -125,10 +138,11 @@ namespace abparser {
 
 			futureTokensHead = 0;
 			futureTokensTail = 0;
-			isVerifying = false;
 			buildUpLength = 0;
 			buildUp = buildUpStart;
 			justStarted = false;
+
+			notEncounteredFirstUnlimitedChar = true;
 		}
 
 		void InitString(T* text, uint32_t textLength) {
@@ -234,15 +248,12 @@ namespace abparser {
 		}
 
 	private:
+		bool notEncounteredFirstUnlimitedChar;
 		bool justStarted;
 
 		ABParserFutureToken<T>** futureTokens;
 		uint32_t futureTokensHead;
 		uint32_t futureTokensTail;
-
-		uint32_t currentPosition;
-
-		bool isVerifying;
 
 		// When all of the triggers in a verify token gets removed, then we finalize that token! However, sometimes there may be lots of verify tokens that all had the same triggers, so, we'll finalize them all in one go with this!
 		bool isFinalizingVerifyTokens;
@@ -271,13 +282,12 @@ namespace abparser {
 		MultiCharToken<T>** multiCharCurrentTokens;
 		uint16_t multiCharCurrentTokensLength;
 
-		// DISPOSAL
 		std::vector<ABParserVerifyToken<T>*> verifyTokensToDelete;
 
 		// COLLECT
 		ABParserResult ProcessChar() {
 
-			_ABP_DEBUG_OUT("Processing character: %c", Text[currentPosition]);
+			_ABP_DEBUG_OUT("Processing character: %c", Text[InternalPosition]);
 
 			UpdateCurrentFutureTokens();
 			AddNewFutureTokens();
@@ -286,15 +296,15 @@ namespace abparser {
 			if (result != ABParserResult::None) return result;
 			if (isFinalizingVerifyTokens) return FinalizeNextVerifyToken();
 
-			AddCharToBuildUp(Text[currentPosition]);
+			AddCharToBuildUp(Text[InternalPosition]);
 			return ABParserResult::None;
 		}
 
 		void AddCharToBuildUp(T ch) {
-			if (isVerifying)
-				currentVerifyToken->TrailingBuildUp[currentVerifyToken->TrailingBuildUpLength++] = ch;
-			else
+			if (verifyTokens.empty())
 				buildUp[buildUpLength++] = ch;
+			else
+				currentVerifyToken->TrailingBuildUp[currentVerifyToken->TrailingBuildUpLength++] = ch;
 		}
 
 		void UpdateCurrentFutureTokens() {
@@ -316,11 +326,11 @@ namespace abparser {
 
 					// If this future tokens' detection limit tells us to ignore this character, then do so.
 					if (futureTokens[i][j].Token->DetectionLimitSize > 0)
-						if (ArrContainsChar(futureTokens[i][j].Token->DetectionLimit, futureTokens[i][j].Token->DetectionLimitSize, Text[currentPosition]))
+						if (ArrContainsChar(futureTokens[i][j].Token->DetectionLimit, futureTokens[i][j].Token->DetectionLimitSize, Text[InternalPosition]))
 							continue;
 
 					// Check if this character matches the next character in this token.
-					if (futureTokens[i][j].Token->TokenContents[futureTokens[i][j].NoOfCharactersMatched] == Text[currentPosition]) {
+					if (futureTokens[i][j].Token->TokenContents[futureTokens[i][j].NoOfCharactersMatched] == Text[InternalPosition]) {
 						futureTokens[i][j].NoOfCharactersMatched++;
 
 						// If all the characters have matched, then mark this token as complete.
@@ -345,10 +355,10 @@ namespace abparser {
 
 			uint16_t currentLength = 0;
 			for (uint16_t i = 0; i < multiCharCurrentTokensLength; i++)
-				if (multiCharCurrentTokens[i]->TokenContents[0] == Text[currentPosition])
+				if (multiCharCurrentTokens[i]->TokenContents[0] == Text[InternalPosition])
 					AddFutureToken(multiCharCurrentTokens[i], currentLength++);
 
-			futureTokens[currentPosition][currentLength].EndOfArray = true;
+			futureTokens[InternalPosition][currentLength].EndOfArray = true;
 		}
 
 		ABParserResult ProcessFinishedTokens() {
@@ -371,7 +381,7 @@ namespace abparser {
 						futureTokens[i][j].CollectionComplete = true;
 
 						// If we are currently verifying, then we need to do some extra checks on it.
-						if (isVerifying)
+						if (verifyTokens.size())
 							if (int result = CheckFinishedFutureToken(&futureTokens[i][j], i))
 								if (result == -1) return ABParserResult::None;
 								else return static_cast<ABParserResult>(result);
@@ -379,22 +389,27 @@ namespace abparser {
 						// Finalize it or verify it.
 						if (PrepareMultiCharForVerification(&futureTokens[i][j], i))
 							StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(&futureTokens[i][j], false, i, GenerateVerifyTrailing())));
-						else
+						else {
+							StopAllVerify();
 							return FinalizeToken(&futureTokens[i][j], i, buildUp, buildUpLength, true);
+						}
+							
 					}
 				};
 			}
 
 			for (uint16_t i = 0; i < singleCharCurrentTokensLength; i++) {
-				if (singleCharCurrentTokens[i]->TokenChar == Text[currentPosition]) {
+				if (singleCharCurrentTokens[i]->TokenChar == Text[InternalPosition]) {
 
 					_ABP_DEBUG_OUT("Finished single-char token!");
 
 					// Finalize it or verify it.
-					if (PrepareSingleCharForVerification(Text[currentPosition], singleCharCurrentTokens[i]))
-						StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(singleCharCurrentTokens[i], true, currentPosition, GenerateVerifyTrailing())));
-					else
-						return FinalizeToken(singleCharCurrentTokens[i], currentPosition, buildUp, buildUpLength, true);
+					if (PrepareSingleCharForVerification(Text[InternalPosition], singleCharCurrentTokens[i]))
+						StartVerify(LoadCurrentTriggersInto(new ABParserVerifyToken<T>(singleCharCurrentTokens[i], true, InternalPosition, GenerateVerifyTrailing())));
+					else {
+						StopAllVerify();
+						return FinalizeToken(singleCharCurrentTokens[i], InternalPosition, buildUp, buildUpLength, true);
+					}
 				}
 			}
 
@@ -405,9 +420,7 @@ namespace abparser {
 		void StartVerify(ABParserVerifyToken<T>* token) {
 			_ABP_DEBUG_OUT("Starting verify.");
 
-			isVerifying = true;
 			AddVerifyToken(token);
-
 			currentVerifyTriggers.clear();
 			currentVerifyTriggerStarts.clear();
 		}
@@ -418,18 +431,12 @@ namespace abparser {
 					verifyTokensToDelete.push_back(verifyTokens[i]);
 				verifyTokens.clear();
 			}
-
-			isVerifying = false;
 		}
 
 		void StopVerify(uint32_t tokenIndex) {
 			auto tokenToRemoveIterator = verifyTokens.begin() + tokenIndex;
 			verifyTokensToDelete.push_back(verifyTokens[tokenIndex]);
 			verifyTokens.erase(tokenToRemoveIterator);
-
-			// If that was the last of them, stop verifying.
-			if (!verifyTokens.size())
-				isVerifying = false;
 		}
 
 		bool PrepareSingleCharForVerification(T ch, SingleCharToken<T>* token) {
@@ -443,7 +450,7 @@ namespace abparser {
 					if (futureTokens[i][j].CollectionComplete) continue;
 
 					ABParserFutureToken<T>* multiCharToken = &futureTokens[i][j];
-					if (multiCharToken->Token->TokenContents[currentPosition - i] == ch) {
+					if (multiCharToken->Token->TokenContents[InternalPosition - i] == ch) {
 
 						needsToBeVerified = true;
 
@@ -454,11 +461,7 @@ namespace abparser {
 
 				}
 
-			if (needsToBeVerified) {
-				_ABP_DEBUG_OUT("Single-char token does require verification.");
-				isVerifying = true;
-			}
-			else {
+			if (!needsToBeVerified) {
 				currentVerifyTriggers.clear();
 				currentVerifyTriggerStarts.clear();
 			}
@@ -611,7 +614,7 @@ namespace abparser {
 
 				// The character we were on when we started never got added to the buildUp, so, we'll add it to the buildUp now.
 				StopAllVerify();
-				AddCharToBuildUp(Text[currentPosition - 1]);
+				AddCharToBuildUp(Text[InternalPosition - 1]);
 
 				return ABParserResult::None;
 			}
@@ -643,7 +646,7 @@ namespace abparser {
 		}
 
 		T* GenerateVerifyTrailing() {
-			return &buildUpStart[currentPosition + 1];
+			return &buildUpStart[InternalPosition + 1];
 		}
 
 		// FINALIZE
@@ -677,6 +680,9 @@ namespace abparser {
 			CurrentEventToken = token;
 			CurrentEventTokenLengthInText = lengthInText;
 			CurrentEventTokenStart = index;
+
+			// Now that we've finalized this token, stop any futureTokens we had before.
+			futureTokensHead = InternalPosition + 1;
 
 			if (firstToken)
 				return ABParserResult::FirstBeforeTokenProcessed;
@@ -724,14 +730,14 @@ namespace abparser {
 
 		// HELPERS
 		void AddFutureToken(MultiCharToken<T>* token, uint16_t currentLength) {
-			futureTokens[currentPosition][currentLength].Reset(token);
-			futureTokens[currentPosition][currentLength].LengthInText++;
-			futureTokens[currentPosition][currentLength].NoOfCharactersMatched++;
+			futureTokens[InternalPosition][currentLength].Reset(token);
+			futureTokens[InternalPosition][currentLength].LengthInText++;
+			futureTokens[InternalPosition][currentLength].NoOfCharactersMatched++;
 		}
 
 		void DisableFutureToken(ABParserFutureToken<T>* futureToken) {
 			futureToken->CollectionComplete = true;
-			if (isVerifying)
+			if (verifyTokens.size())
 				CheckDisabledFutureToken(futureToken);
 		}
 
@@ -763,6 +769,11 @@ namespace abparser {
 					return true;
 
 			return false;
+		}
+
+		ABParserResult TriggerOnFirstUnlimitedCharacterProcessed() {
+			notEncounteredFirstUnlimitedChar = false;
+			return ABParserResult::OnFirstUnlimitedCharacterProcessed;
 		}
 	};
 }

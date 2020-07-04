@@ -10,7 +10,8 @@ namespace abparser {
 		None,
 		StopAndFinalOnTokenProcessed,
 		FirstBeforeTokenProcessed,
-		OnThenBeforeTokenProcessed
+		OnThenBeforeTokenProcessed,
+		OnFirstUnlimitedCharacterProcessed
 	};
 
 	template<typename T>

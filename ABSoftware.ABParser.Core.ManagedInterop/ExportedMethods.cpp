@@ -122,6 +122,11 @@ extern "C" {
 		// SEE ABSOFTWARE DOCS:
 		// Send all of the extra data that's associated with this event.
 
+		if (result == ABParserResult::OnFirstUnlimitedCharacterProcessed) {
+			Convert32BitTo16Bit(parser->InternalPosition, outData, 0);
+			return result;
+		}
+
 		// Token
 		if (result != ABParserResult::StopAndFinalOnTokenProcessed) {
 			outData[0] = parser->CurrentEventToken->MixedIdx;
