@@ -140,11 +140,11 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             Array.Copy(expected, leadingExpected, expected.Length - 1);
             Array.Copy(expected, 1, trailingExpected, 0, expected.Length - 1);
 
-            CollectionAssert.AreEqual(BeforeTokenProcessedLeadings, leadingExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedLeadings, leadingExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedTrailings, trailingExpected);
+            CollectionAssert.AreEqual(leadingExpected, BeforeTokenProcessedLeadings);
+            CollectionAssert.AreEqual(leadingExpected, OnTokenProcessedLeadings);
+            CollectionAssert.AreEqual(trailingExpected, OnTokenProcessedTrailings);
 
-            Assert.AreEqual(EndLeading, leadingEndExpected);
+            Assert.AreEqual(leadingEndExpected, EndLeading);
             return this;
         }
 
@@ -157,12 +157,12 @@ namespace ABSoftware.ABParser.Testing.UnitTests
             Array.Copy(expected, 0, previousTokensExpected, 1, expected.Length - 1);
             Array.Copy(expected, 1, nextTokensExpected, 0, expected.Length - 1);
 
-            CollectionAssert.AreEqual(BeforeTokenProcessedPreviousTokens, previousTokensExpected);
-            CollectionAssert.AreEqual(BeforeTokenProcessedTokens, tokensExpected);
+            CollectionAssert.AreEqual(previousTokensExpected, BeforeTokenProcessedPreviousTokens);
+            CollectionAssert.AreEqual(tokensExpected, BeforeTokenProcessedTokens);
 
-            CollectionAssert.AreEqual(OnTokenProcessedPreviousTokens, previousTokensExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedTokens, tokensExpected);
-            CollectionAssert.AreEqual(OnTokenProcessedNextTokens, nextTokensExpected);
+            CollectionAssert.AreEqual(previousTokensExpected, OnTokenProcessedPreviousTokens);
+            CollectionAssert.AreEqual(tokensExpected, OnTokenProcessedTokens);
+            CollectionAssert.AreEqual(nextTokensExpected, OnTokenProcessedNextTokens);
             return this;
         }
 

@@ -52,6 +52,8 @@ int main()
 	tokens[1].SetName("they")->SetData(L"they", 4);
 	tokens[2].SetName("theyare")->SetData(L"theyare", 7);
 
+	
+
 	abparser::ABParserConfiguration<wchar_t> config(tokens, 3);
 
 	TestParser parser(&config, tokens);

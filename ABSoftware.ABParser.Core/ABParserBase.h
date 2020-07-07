@@ -27,12 +27,12 @@ namespace abparser {
 		T* CurrentTrivia;
 		uint32_t CurrentTriviaLength;
 
-		std::stack<TokenLimit<T, U>*> CurrentEventTokenLimits;
-		std::stack<TriviaLimit<T, U>*> CurrentTriviaLimits;
+		std::stack<TokenLimit<T>*> CurrentEventTokenLimits;
+		std::stack<TriviaLimit<T>*> CurrentTriviaLimits;
 
 		ABParserResult ContinueExecution() {
 
-			TriviaLimit<T, U>* currentTriviaLimit = nullptr;
+			TriviaLimit<T>* currentTriviaLimit = nullptr;
 
 			if (isFinalizingVerifyTokens) {
 				ABParserResult result = FinalizeNextVerifyToken();
@@ -168,19 +168,14 @@ namespace abparser {
 			}
 		}
 
-		bool EnterTokenLimit(U* limitName, uint8_t limitNameSize) {
-			for (uint16_t i = 0; i < Configuration->NumberOfTokenLimits; i++) {
-				TokenLimit<T, U>* currentLimit = Configuration->TokenLimits[i];
+		bool EnterTokenLimit(const std::basic_string<U>& limitName) {
+			auto item = Configuration->TokenLimits.find(limitName);
+			if (item == Configuration->TokenLimits.end()) return false;
 
-				if (Matches(limitName, (U*)currentLimit->LimitName->data(), limitNameSize, currentLimit->LimitName->length())) {
-					_ABP_DEBUG_OUT("Entered into token limit");
-					CurrentEventTokenLimits.push(currentLimit);
-					SetCurrentEventTokens(currentLimit);
-					return true;
-				}
-			}
-
-			return false;
+			_ABP_DEBUG_OUT("Entered into token limit");
+			CurrentEventTokenLimits.push(item->second);
+			SetCurrentEventTokens(item->second);
+			return true;
 		}
 
 		void ExitTokenLimit() {
@@ -192,18 +187,13 @@ namespace abparser {
 				SetCurrentEventTokens(CurrentEventTokenLimits.top());
 		}
 
-		bool EnterTriviaLimit(U* limitName, uint8_t limitNameSize) {
-			for (uint16_t i = 0; i < Configuration->NumberOfTriviaLimits; i++) {
-				TriviaLimit<T, U>* limit = &Configuration->TriviaLimits[i];
+		bool EnterTriviaLimit(const std::basic_string<U>& limitName) {
+			auto item = Configuration->TriviaLimits.find(limitName);
+			if (item == Configuration->TriviaLimits.end()) return false;
 
-				if (Matches(limitName, (U*)limit->LimitName->data(), limitNameSize, limit->LimitName->length())) {
-					_ABP_DEBUG_OUT("Entered into trivia limit");
-					CurrentTriviaLimits.push(limit);
-					return true;
-				}
-			}
-
-			return false;
+			_ABP_DEBUG_OUT("Entered into trivia limit");
+			CurrentTriviaLimits.push(item->second);
+			return true;
 		}
 
 		void ExitTriviaLimit() {
@@ -710,7 +700,7 @@ namespace abparser {
 					CurrentTrivia[CurrentTriviaLength++] = buildUpToUse[i];
 			else {
 
-				TriviaLimit<T, U>* limit = CurrentTriviaLimits.top();
+				TriviaLimit<T>* limit = CurrentTriviaLimits.top();
 
 				for (uint32_t i = 0; i < trailingLength; i++) {
 					if (ArrContainsChar(limit->Data, limit->DataLength, buildUpToUse[i])) {
@@ -749,7 +739,7 @@ namespace abparser {
 			multiCharCurrentTokensLength = Configuration->NumberOfMultiCharTokens;
 		}
 
-		void SetCurrentEventTokens(TokenLimit<T, U>* limit) {
+		void SetCurrentEventTokens(TokenLimit<T>* limit) {
 			singleCharCurrentTokens = limit->SingleCharTokens;
 			singleCharCurrentTokensLength = limit->NumberOfSingleCharTokens;
 

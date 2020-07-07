@@ -201,6 +201,7 @@ namespace ABSoftware.ABParser
             BeforeTokenProcessedArgs.LeadingAsString = null;
             OnTokenProcessedArgs.LeadingAsString = null;
             OnTokenProcessedArgs.TrailingAsString = null;
+            OnEndArgs.LeadingAsString = null;
         }
 
         unsafe void UpdateCurrentEventTokenInfo(ushort* data)

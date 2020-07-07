@@ -4,41 +4,12 @@
 #include "ABParserHelpers.h"
 #include "ABParserDebugging.h"
 #include <string>
-#include <vector>
 #include <wchar.h>
-#include <cstring>
-#include <memory>
+#include <vector>
 #include <cstdarg>
+#include <unordered_map>
 
 namespace abparser {
-	template<typename T>
-	class UnorganizedTokenLimit {
-	public:
-		T* Name;
-		uint8_t NameLength;
-
-		UnorganizedTokenLimit() {
-			Name = nullptr;
-			NameLength = 0;
-		}
-
-		~UnorganizedTokenLimit() {
-			delete[] Name;
-		}
-
-		UnorganizedTokenLimit(T* name, uint8_t nameLength) {
-			Init(name, nameLength);
-		}
-
-		void Init(T* name, uint8_t nameLength) {
-			Name = new T[nameLength];
-			for (uint8_t i = 0; i < nameLength; i++)
-				Name[i] = name[i];
-
-			NameLength = nameLength;
-		}
-	};
-
 	template<typename T, typename U = char>
 	class ABParserToken {
 	public:
@@ -48,7 +19,7 @@ namespace abparser {
 
 		const std::basic_string<U>* Name;
 
-		UnorganizedTokenLimit<U>* Limits;
+		const std::basic_string<U>** Limits;
 		uint16_t LimitsLength;
 
 		T* Data;
@@ -65,17 +36,13 @@ namespace abparser {
 			DetectionLimitSize = 0;
 		}
 
-		ABParserToken<T, U>* SetName(const U* name) {
+		ABParserToken<T, U>* SetName(const std::basic_string<U>& name) {
 			Name = new const std::basic_string<U>(name);
 
 			if (Name->size() > 255)
 				throw "Tokens names cannot be longer than 255 characters.";
 
 			return this;
-		}
-
-		ABParserToken<T, U>* SetName(U* name) {
-			return SetName((const U*)name);
 		}
 
 		ABParserToken<T, U>* SetData(T* data, uint16_t dataLength) {
@@ -88,43 +55,38 @@ namespace abparser {
 		}
 
 		ABParserToken<T, U>* SetData(const T* data, uint16_t dataLength) {
-			SetData((T*)data, dataLength);
-			return this;
+			return SetData((T*)data, dataLength);
 		}
 
-		ABParserToken<T, U>* SetLimits(uint16_t numberOfLimits, ...) {
+		ABParserToken<T, U>* SetTokenLimits(uint16_t numberOfLimits, ...) {
 			LimitsLength = numberOfLimits;
-			Limits = new UnorganizedTokenLimit<U>[numberOfLimits];
+			Limits = new const std::basic_string<U>*[numberOfLimits];
 
 			va_list args;
 			va_start(args, numberOfLimits);
 
 			for (uint16_t i = 0; i < numberOfLimits; i++) {
-				U* item = va_arg(args, U*);
+				const std::basic_string<U>& item = va_arg(args, const std::basic_string<U>&);
+				Limits[i] = new const std::basic_string<U>(item);
 
-				size_t length = strlen(item);
-				if (length > 255)
-					throw "Limit Names can only be 255 characters long at a maximum";
-
-				Limits[i].Init(item, (uint8_t)length);
+				if (Limits[i].size() > 255)
+					throw "Limit Names can only be 255 characters long at a maximum.";
 			}
 
 			return this;
 		}
 
-		ABParserToken<T, U>* SetTokenLimits(U** limits, uint8_t* limitLengths, uint16_t numberOfLimits) {
+		ABParserToken<T, U>* SetTokenLimits(const std::basic_string<U>** limits, uint16_t numberOfLimits, ...) {
 			LimitsLength = numberOfLimits;
-			Limits = new UnorganizedTokenLimit<U>[numberOfLimits];
+			Limits = new const std::basic_string<U>*[numberOfLimits];
 
-			for (uint16_t i = 0; i < numberOfLimits; i++)
-				Limits[i].Init(limits[i], limitLengths[i]);
+			for (uint16_t i = 0; i < numberOfLimits; i++) {
+				if (Limits[i].size() > 255)
+					throw "Limit Names can only be 255 characters long at a maximum.";
 
-			return this;
-		}
+				Limits[i] = new const std::basic_string<U>(limits[i]);
+			}
 
-		ABParserToken<T, U>* DirectSetTokenLimits(UnorganizedTokenLimit<U>* limits, uint16_t numberOfLimits) {
-			Limits = limits;
-			LimitsLength = numberOfLimits;
 			return this;
 		}
 
@@ -155,31 +117,30 @@ namespace abparser {
 			delete Name;
 			delete[] Data;
 
-			if (Limits != nullptr)
+			if (Limits != nullptr) {
+				for (uint32_t i = 0; i < LimitsLength; i++)
+					delete[] Limits[i];
 				delete[] Limits;
+			}
 
 			if (DetectionLimit != nullptr)
 				delete[] DetectionLimit;
 		}
 	};
 
-	template<typename T, typename U = char>
+	template<typename T>
 	class TokenLimit {
 	public:
-		std::basic_string<U>* LimitName;
-
 		SingleCharToken<T>** SingleCharTokens;
 		uint16_t NumberOfSingleCharTokens;
 		MultiCharToken<T>** MultiCharTokens;
 		uint16_t NumberOfMultiCharTokens;
 
-		TokenLimit(U* limitName, uint8_t limitNameLength, uint16_t maximumAmountOfTokens) {
-			SingleCharTokens = new SingleCharToken<T> * [maximumAmountOfTokens];
-			MultiCharTokens = new MultiCharToken<T> * [maximumAmountOfTokens];
+		TokenLimit(uint16_t maximumAmountOfTokens) {
+			SingleCharTokens = new SingleCharToken<T>*[maximumAmountOfTokens];
+			MultiCharTokens = new MultiCharToken<T>*[maximumAmountOfTokens];
 			NumberOfSingleCharTokens = 0;
 			NumberOfMultiCharTokens = 0;
-
-			LimitName = new std::basic_string<U>(limitName, limitNameLength);
 		}
 
 		~TokenLimit() {
@@ -188,37 +149,17 @@ namespace abparser {
 		}
 	};
 
-	template<typename T, typename U = char>
+	template<typename T>
 	class TriviaLimit {
 	public:
-		const std::basic_string<U>* LimitName;
-
 		T* Data;
 		uint16_t DataLength;
-
 		bool IsWhitelist;
 
 		TriviaLimit() {
-			LimitName = nullptr;
 			Data = nullptr;
 			DataLength = 0;
 			IsWhitelist = false;
-		}
-
-		void SetName(U* name) {
-			LimitName = new const std::basic_string<U>(name);
-		}
-
-		void SetName(U* name, uint8_t length) {
-			LimitName = new const std::basic_string<U>(name, length);
-		}
-
-		void SetName(const U* name) {
-			SetName((U*)name);
-		}
-
-		void SetName(const std::basic_string<U>& name) {
-			LimitName = new const std::basic_string<U>(name);
 		}
 
 		void SetIsWhitelist(bool bl) {
@@ -247,7 +188,6 @@ namespace abparser {
 		}
 
 		~TriviaLimit() {
-			delete LimitName;
 			delete[] Data;
 		}
 	};
@@ -260,11 +200,8 @@ namespace abparser {
 		MultiCharToken<T>** MultiCharTokens;
 		uint16_t NumberOfMultiCharTokens;
 
-		TokenLimit<T, U>** TokenLimits;
-		uint16_t NumberOfTokenLimits;
-
-		TriviaLimit<T, U>* TriviaLimits;
-		uint16_t NumberOfTriviaLimits;
+		std::unordered_map<std::basic_string<U>, TokenLimit<T>*> TokenLimits;
+		std::unordered_map<std::basic_string<U>, TriviaLimit<T>*> TriviaLimits;
 
 		ABParserConfiguration() {
 			SingleCharTokens = nullptr;
@@ -272,12 +209,6 @@ namespace abparser {
 
 			MultiCharTokens = nullptr;
 			NumberOfMultiCharTokens = 0;
-
-			TokenLimits = nullptr;
-			NumberOfTokenLimits = 0;
-
-			TriviaLimits = nullptr;
-			NumberOfTriviaLimits = 0;
 		}
 
 		ABParserConfiguration(ABParserToken<T, U>* tokens, uint16_t numberOfTokens) {
@@ -285,14 +216,14 @@ namespace abparser {
 		}
 		
 		void Init(ABParserToken<T, U>* tokens, uint16_t numberOfTokens) {
-			std::vector<TokenLimit<T, U>*> organizedTokens;
-
 			// Initialize the arrays the results will go into - we try to set them to the maximum potentional size it could be.
-			SingleCharTokens = new SingleCharToken<T> * [numberOfTokens];
+			SingleCharTokens = new SingleCharToken<T>*[numberOfTokens];
 			NumberOfSingleCharTokens = 0;
 
-			MultiCharTokens = new MultiCharToken<T> * [numberOfTokens];
+			MultiCharTokens = new MultiCharToken<T>*[numberOfTokens];
 			NumberOfMultiCharTokens = 0;
+
+			TokenLimits.reserve(numberOfTokens);
 
 			// One character big tokens are organized as "singleCharTokens" and multiple character-long tokens are "multiCharTokens".
 			for (int i = 0; i < numberOfTokens; i++) {
@@ -303,14 +234,14 @@ namespace abparser {
 				if (CurrentEventToken->DataLength == 1) {
 					SingleCharTokens[NumberOfSingleCharTokens] = new SingleCharToken<T>();
 					if (CurrentEventToken->Limits != nullptr)
-						ProcessTokenLimits(CurrentEventToken->Limits, CurrentEventToken->LimitsLength, &organizedTokens, SingleCharTokens[NumberOfSingleCharTokens], true, numberOfTokens);
+						ProcessTokenLimits(CurrentEventToken->Limits, CurrentEventToken->LimitsLength, SingleCharTokens[NumberOfSingleCharTokens], true, numberOfTokens);
 					SingleCharTokens[NumberOfSingleCharTokens]->MixedIdx = i;
 					SingleCharTokens[NumberOfSingleCharTokens++]->TokenChar = CurrentEventToken->Data[0];
 				}
 				else {
 					MultiCharTokens[NumberOfMultiCharTokens] = new MultiCharToken<T>();
 					if (CurrentEventToken->Limits != nullptr)
-						ProcessTokenLimits(CurrentEventToken->Limits, CurrentEventToken->LimitsLength, &organizedTokens, MultiCharTokens[NumberOfMultiCharTokens], false, numberOfTokens);
+						ProcessTokenLimits(CurrentEventToken->Limits, CurrentEventToken->LimitsLength, MultiCharTokens[NumberOfMultiCharTokens], false, numberOfTokens);
 					MultiCharTokens[NumberOfMultiCharTokens]->MixedIdx = i;
 					MultiCharTokens[NumberOfMultiCharTokens]->TokenContents = CurrentEventToken->Data;
 					MultiCharTokens[NumberOfMultiCharTokens]->DetectionLimit = CurrentEventToken->DetectionLimit;
@@ -318,19 +249,6 @@ namespace abparser {
 					MultiCharTokens[NumberOfMultiCharTokens++]->TokenLength = CurrentEventToken->DataLength;
 				}
 			}
-
-			uint16_t organizedTokensSize = (uint16_t)organizedTokens.size();
-
-			NumberOfTokenLimits = organizedTokensSize;
-			TokenLimits = new TokenLimit<T, U> * [organizedTokensSize];
-
-			TokenLimit<T, U>** vectorData = organizedTokens.data();
-
-			for (uint16_t i = 0; i < organizedTokensSize; i++)
-				TokenLimits[i] = vectorData[i];
-
-			TriviaLimits = nullptr;
-			NumberOfTriviaLimits = 0;
 		}
 
 		~ABParserConfiguration() {
@@ -347,48 +265,30 @@ namespace abparser {
 
 				delete[] MultiCharTokens;
 			}
-			
-			if (TokenLimits != nullptr)
-				delete[] TokenLimits;
-			if (TriviaLimits != nullptr)
-				delete[] TriviaLimits;
-		}
-
-		ABParserConfiguration<T, U>* SetTriviaLimits(TriviaLimit<T, U>* limits, uint16_t numberOfTriviaLimits) {
-			TriviaLimits = limits;
-			NumberOfTriviaLimits = numberOfTriviaLimits;
-			return this;
 		}
 	private:
-		void ProcessTokenLimits(UnorganizedTokenLimit<U>* unorganizedLimits, uint16_t numberOfUnorganizedLimits, std::vector<TokenLimit<T, U>*>* organizedLimits, ABParserInternalToken<T>* token, bool isSingleChar, uint16_t maximumAmountOfTokens) {
-
-			uint16_t organizedTokenSize = (uint16_t)organizedLimits->size();
+		void ProcessTokenLimits(const std::basic_string<U>** unorganizedLimits, uint16_t numberOfUnorganizedLimits, ABParserInternalToken<T>* token, bool isSingleChar, uint16_t maximumAmountOfTokens) {
 
 			for (uint16_t i = 0; i < numberOfUnorganizedLimits; i++) {
 
-				int matchedIndex = -1;
-				for (uint16_t j = 0; j < organizedTokenSize; j++)
-					if (Matches(unorganizedLimits[i].Name, (U*)(*organizedLimits)[j]->LimitName->data(), unorganizedLimits[i].NameLength, (*organizedLimits)[j]->LimitName->length())) {
-						matchedIndex = j;
-						break;
-					}
+				auto item = TokenLimits.find(*(unorganizedLimits[i]));
 
-				// If there isn't already an organized limit for this.
-				if (matchedIndex == -1) {
-					(*organizedLimits).push_back(new TokenLimit<T, U>(unorganizedLimits[i].Name, unorganizedLimits[i].NameLength, maximumAmountOfTokens));
+				// If there isn't already an organized limit for this, add one.
+				if (item == TokenLimits.end()) {
+					TokenLimit<T>* limit = new TokenLimit<T>(maximumAmountOfTokens);
 
 					if (isSingleChar)
-						(*organizedLimits)[organizedTokenSize]->SingleCharTokens[(*organizedLimits)[organizedTokenSize]->NumberOfSingleCharTokens++] = (SingleCharToken<T>*)token;
+						limit->SingleCharTokens[limit->NumberOfSingleCharTokens++] = (SingleCharToken<T>*)token;
 					else
-						(*organizedLimits)[organizedTokenSize]->MultiCharTokens[(*organizedLimits)[organizedTokenSize]->NumberOfMultiCharTokens++] = (MultiCharToken<T>*)token;
+						limit->MultiCharTokens[limit->NumberOfMultiCharTokens++] = (MultiCharToken<T>*)token;
 
-					organizedTokenSize++;
+					TokenLimits.emplace(std::move(*(unorganizedLimits[i])), limit);
 				}
 
 				else if (isSingleChar)
-					(*organizedLimits)[matchedIndex]->SingleCharTokens[(*organizedLimits)[matchedIndex]->NumberOfSingleCharTokens++] = (SingleCharToken<T>*)token;
+					item->second->SingleCharTokens[item->second->NumberOfSingleCharTokens++] = (SingleCharToken<T>*)token;
 				else
-					(*organizedLimits)[matchedIndex]->MultiCharTokens[(*organizedLimits)[matchedIndex]->NumberOfMultiCharTokens++] = (MultiCharToken<T>*)token;
+					item->second->MultiCharTokens[item->second->NumberOfMultiCharTokens++] = (MultiCharToken<T>*)token;
 			}
 		}
 	};

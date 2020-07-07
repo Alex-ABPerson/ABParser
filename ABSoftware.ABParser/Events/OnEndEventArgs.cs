@@ -7,9 +7,9 @@ namespace ABSoftware.ABParser.Events
 {
     public class OnEndEventArgs
     {
-        private string _leadingAsString;
+        internal string LeadingAsString;
 
         public char[] Leading;
-        public string GetLeadingAsString() => _leadingAsString ?? (_leadingAsString = new string(Leading));
+        public string GetLeadingAsString() => LeadingAsString ?? (LeadingAsString = new string(Leading));
     }
 }

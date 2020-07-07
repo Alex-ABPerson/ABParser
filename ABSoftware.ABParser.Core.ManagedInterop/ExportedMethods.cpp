@@ -57,14 +57,15 @@ extern "C" {
 			
 			uint16_t numberOfLimits = numberOfTokenLimitsForToken[i];
 			if (numberOfLimits) {
-				UnorganizedTokenLimit<uint16_t>* newLimits = new UnorganizedTokenLimit<uint16_t>[numberOfLimits];
+				const std::basic_string<uint16_t>** newLimits = new const std::basic_string<uint16_t>*[numberOfLimits];
 
 				for (uint16_t j = 0; j < numberOfLimits; j++) {
-					newLimits[j].Init(tokenLimitNames[currentLimitNamesPos], tokenLimitNameSizes[currentLimitNamesPos]);
+					newLimits[j] = new const std::basic_string<uint16_t>(tokenLimitNames[currentLimitNamesPos], tokenLimitNameSizes[currentLimitNamesPos]);
 					currentLimitNamesPos++;
 				}
 
-				newTokens[i].DirectSetTokenLimits(newLimits, numberOfLimits);
+				newTokens[i].Limits = newLimits;
+				newTokens[i].LimitsLength = numberOfLimits;
 			}
 		}
 
@@ -73,15 +74,18 @@ extern "C" {
 	}
 
 	EXPORT void ConfigSetTriviaLimits(ConfigAndTokens* information, uint32_t* limitIsWhiteList, uint16_t** limitNames, uint8_t* limitNameLengths, uint16_t** limitContents, uint16_t* limitContentLengths, uint16_t numberOfLimits) {
-		TriviaLimit<uint16_t, uint16_t>* limits = new TriviaLimit<uint16_t, uint16_t>[numberOfLimits];
+		
+		information->Config.TriviaLimits.reserve(numberOfLimits);
 
 		for (uint16_t i = 0; i < numberOfLimits; i++) {
-			limits[i].SetName(limitNames[i]);
-			limits[i].DirectSetData(limitContents[i], limitContentLengths[i]);
-			limits[i].SetIsWhitelist(limitIsWhiteList[i]);
+
+			TriviaLimit<uint16_t>* limit = new TriviaLimit<uint16_t>(); 
+			limit->DirectSetData(limitContents[i], limitContentLengths[i]);
+			limit->SetIsWhitelist(limitIsWhiteList[i]);
+
+			std::basic_string<uint16_t> currentLimitName(limitNames[i], limitNameLengths[i]);
+			information->Config.TriviaLimits.emplace(std::move(currentLimitName), limit);
 		}
-			
-		information->Config.SetTriviaLimits(limits, numberOfLimits);
 	}
 
 	EXPORT ABParserBase<uint16_t, uint16_t>* CreateBaseParser(ConfigAndTokens* information) {
@@ -97,7 +101,8 @@ extern "C" {
 	}
 
 	EXPORT uint32_t EnterTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
-		return parser->EnterTokenLimit(limitName, limitNameLength);
+		std::basic_string<uint16_t> asStr(limitName, limitNameLength);
+		return parser->EnterTokenLimit(asStr);
 	}
 
 	EXPORT void ExitTokenLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {
@@ -106,7 +111,8 @@ extern "C" {
 	}
 
 	EXPORT uint32_t EnterTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, uint16_t* limitName, uint8_t limitNameLength) {
-		return parser->EnterTriviaLimit(limitName, limitNameLength);
+		std::basic_string<uint16_t> asStr(limitName, limitNameLength);
+		return parser->EnterTriviaLimit(asStr);
 	}
 
 	EXPORT void ExitTriviaLimit(ABParserBase<uint16_t, uint16_t>* parser, int levels) {
