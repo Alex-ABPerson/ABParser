@@ -2,9 +2,11 @@
 
 This is the main implementation of ABParser, which is a parsing utility which can be used to help make applications that have to read through strings easier.
 
+**NOTE: Please note that this project is no longer in active development, as there doesn't appear to be any use for it.**
+
 ## Usage & Development
 
-All information about ABParser is primilarly documented on the **ABSoftware Docs**, please look at that at: https://abworld.ml/docs/abparser
+All information about ABParser is primilarly documented on the **ABSoftware Docs**, please look at that at: https://abco.live/docs/abparser
 
 Here is some extra information about compiling the project itself:
 
